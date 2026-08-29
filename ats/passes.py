@@ -165,6 +165,7 @@ def rewrite_pass(
     candidates_per_provider: int,
     margin: float,
     temperature: float,
+    synthesize: bool = True,
 ) -> ensemble.PassResult:
     """Best-of-N over both providers, selected by the split verifier in ensemble."""
     by_locator: dict[str, list[Finding]] = {}
@@ -210,6 +211,48 @@ def rewrite_pass(
                     (text, (item.get("what_changed") or "").strip()[:120], provider_name)
                 )
 
+    # Mixture-of-agents: one extra candidate per bullet, synthesized from every
+    # generated candidate rather than picking a single one. This is the one place
+    # best-of-N throws away signal -- every unselected candidate is simply discarded --
+    # so synthesis recovers it. It is still just another candidate: it goes through
+    # the exact same rank/audit/margin gates below, so it can only win by actually
+    # being better, and the reward-hacking defenses apply to it unchanged.
+    synth_errors: list[str] = []
+    synth_raw: list = []
+    if synthesize:
+        synth_jobs = []
+        for target in targets:
+            locator = target["locator"]
+            cands = by_target.get(locator, [])
+            if len(cands) < 2:
+                continue  # nothing to synthesize from
+            aggregator = ensemble.aggregator_provider(providers, [c[2] for c in cands])
+            payload_candidates = [
+                {"provider": prov, "rewritten": text, "what_changed": wc}
+                for text, wc, prov in cands
+            ]
+            synth_jobs.append(
+                lambda p=aggregator, loc=locator, orig=target["bullet"],
+                defects=target["defects"], cands=payload_candidates: (
+                    loc,
+                    p.name,
+                    call(
+                        p, prompts.SYNTHESIS_SYSTEM,
+                        prompts.synthesis_user(loc, orig, defects, cands), 0.0,
+                    ),
+                )
+            )
+
+        synth_raw, synth_errors = ensemble.gather(synth_jobs) if synth_jobs else ([], [])
+        for locator, aggregator_name, payload in synth_raw:
+            text = (payload.get("rewritten") or "").strip()
+            if text:
+                by_target.setdefault(locator, []).append((
+                    text,
+                    (payload.get("what_changed") or "").strip()[:120],
+                    f"moa:{aggregator_name}",
+                ))
+
     rewrites: list[Rewrite] = []
     selection_meta = []
     for target in targets:
@@ -222,13 +265,18 @@ def rewrite_pass(
             rewrites.append(chosen)
 
     hacks = [m for m in selection_meta if m.get("hack_detected")]
+    synthesis_wins = sum(
+        1 for r in rewrites if r.provider.startswith("moa:")
+    )
     return ensemble.PassResult(
         data=rewrites,
         providers_used=sorted({p for _, payload in raw for p in [payload and ""]} or set()),
-        errors=errors,
+        errors=errors + synth_errors,
         meta={
             "selections": selection_meta,
             "hack_detections": len(hacks),
             "candidates_per_provider": candidates_per_provider,
+            "synthesis_attempts": len(synth_raw),
+            "synthesis_wins": synthesis_wins,
         },
     )

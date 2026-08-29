@@ -102,8 +102,17 @@ Where a bullet needs a number you never supplied, you get `[add: eval metric]`,
 not a plausible figure. A fabricated stat is not a style error — it is something
 you have to defend in an interview.
 
-This is enforced, not just prompted. Pass 3 is best-of-N against a verifier, which
-is a textbook Goodhart setup, so the verifier is **split**:
+This is enforced, not just prompted. Pass 3 generates candidates from both
+providers (best-of-N), then adds one more: a **mixture-of-agents synthesis** step
+that gives every candidate to a single model and asks it to combine their distinct
+strengths into one bullet, rather than only ever picking a single winner and
+discarding the rest. The synthesizing provider is whichever one contributed
+*fewest* of the candidates — the same cross-provider-adjudication logic used
+elsewhere, so a model never grades mostly its own drafts.
+
+Synthesis is not a side channel around the verifier — the synthesized bullet is
+just one more candidate, gated by the exact same rules as any other. Best-of-N
+against a verifier is a textbook Goodhart setup, so the verifier is **split**:
 
 - **Ranking set** — selects the winner (invariants, slop patterns, length).
 - **Audit set** — never used for selection, only to detect gaming: invented
@@ -113,10 +122,13 @@ is a textbook Goodhart setup, so the verifier is **split**:
 A candidate cannot optimise against signals it is not selected on, so a rising
 ranking score with a falling audit score is the hacking signature — logged per run
 and asserted in tests. A rewrite must also beat the **original** by a margin, not
-merely beat its siblings; if nothing does, you keep your bullet.
+merely beat its siblings; if nothing does, you keep your bullet. The rule holds
+whether the winning candidate came from best-of-N or from synthesis.
 
 Run `python scripts/hacking_sweep.py` to see the ceiling check: raising N must not
-degrade the audit.
+degrade the audit. Synthesis costs one extra call per rewritten bullet, so it's on
+by default and in Thorough mode, and off in Economy — turn it off in
+`ats/weights.toml` (`[ensemble].synthesize`) if you want best-of-N alone.
 
 ## Where the rubric comes from
 

@@ -112,6 +112,33 @@ Return JSON only:
                 "what_changed": "<one clause>"}}]}}
 """.strip()
 
+SYNTHESIS_SYSTEM = f"""
+You synthesize one strong resume bullet from several candidate rewrites of the same
+bullet, each written by a different model.
+
+{NO_INVENTION}
+
+Every candidate below already fixes some defects and misses others. Do not just pick
+your favorite candidate verbatim, and do not blur them into a generic average.
+Produce ONE bullet that combines their distinct strengths.
+
+Rules:
+- Every fact, number, tool, and scope in your output must already appear in the
+  ORIGINAL bullet or in at least one candidate. Never combine two candidates' numbers
+  into a new number, and never combine two separate claims into a stronger compound
+  claim that neither one made on its own.
+- If candidates disagree on a fact (different placeholders, different phrasing of the
+  same figure), keep it as a placeholder rather than guessing which is right.
+- Keep every claim the original made -- don't let synthesis drop content to read
+  cleaner.
+- Preserve the original's voice. Do not smooth into uniform corporate register.
+- Make the MINIMUM effective edit relative to the original.
+
+Return JSON only:
+{{"locator": "<locator>", "rewritten": "<the synthesized bullet>",
+  "what_changed": "<one clause>"}}
+""".strip()
+
 CATEGORY_NAMES = [
     "Impact & quantification",
     "AI/ML relevance & depth",
@@ -157,4 +184,16 @@ def rewrite_user(targets: list[dict]) -> str:
     return (
         "Rewrite each bullet below. Fix every defect listed with it.\n\n"
         + json.dumps(targets, indent=2)
+    )
+
+
+def synthesis_user(
+    locator: str, original: str, defects: list[str], candidates: list[dict]
+) -> str:
+    return (
+        "ORIGINAL bullet:\n" + original + "\n\n"
+        "Defects to fix:\n" + "\n".join(f"- {d}" for d in defects) + "\n\n"
+        "Candidate rewrites (from different models):\n"
+        + json.dumps(candidates, indent=2)
+        + f'\n\nSynthesize one rewrite for locator "{locator}".'
     )

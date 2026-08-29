@@ -274,6 +274,22 @@ def audit_score(original: str, candidate: str) -> tuple[float, list[str]]:
     return round(score, 2), problems
 
 
+def aggregator_provider(providers: list, candidate_providers: list[str]):
+    """Pick who synthesizes a bullet's candidates into one.
+
+    Mirrors cross-provider adjudication (§5c): a model is weakest at judging its own
+    idiom, so the provider that contributed *fewest* of the candidates does the
+    synthesizing, not the one that dominated generation. With one provider available
+    there is no choice to make.
+    """
+    if len(providers) == 1:
+        return providers[0]
+    counts: dict[str, int] = {}
+    for name in candidate_providers:
+        counts[name] = counts.get(name, 0) + 1
+    return min(providers, key=lambda p: counts.get(p.name, 0))
+
+
 def select_rewrite(
     original: str,
     locator: str,

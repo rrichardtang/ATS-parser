@@ -40,15 +40,23 @@ temperature = 0.7
 # A rewrite must beat the original by this margin on the ranking set, and must not
 # regress on the audit set. Failing to improve is fine; shipping a hacked rewrite is not.
 rewrite_margin = 1.0
+# Mixture-of-agents: after generating candidates, synthesize one more from all of
+# them (via the provider that contributed fewest of them) instead of only ever
+# picking a single winner. It is not a shortcut around the verifier -- the
+# synthesized bullet is just another candidate and must clear the same rank/audit/
+# margin gates as everything else. Costs one extra call per rewritten bullet.
+synthesize = true
 
 [ensemble.thorough]
 content_samples = 1
 slop_samples = 5
 slop_vote_k = 3
 rewrite_candidates = 5
+synthesize = true
 
 [ensemble.economy]
 content_samples = 1
 slop_samples = 1
 slop_vote_k = 1
 rewrite_candidates = 1
+synthesize = false
