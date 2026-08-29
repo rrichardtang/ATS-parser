@@ -1,0 +1,18 @@
+# source: composite
+# retrieved: 2026-08-29
+# title: AI Engineer, Product
+# level: mid
+Ship LLM-backed product features end to end, from prototype to production traffic.
+
+Requirements
+- 3 years of full-stack or backend engineering with Python.
+- Direct experience calling LLM APIs in production: OpenAI, Anthropic, Gemini,
+  or self-hosted open-weight models.
+- Prompt engineering, structured outputs, function calling and tool use.
+- Agent design: planning loops, tool selection, retry and fallback behaviour.
+- You have built an evaluation set for a generative feature and used it to make
+  a ship/no-ship call.
+- Cost and latency awareness: caching, streaming, model routing, token budgets.
+- FastAPI, Postgres, Docker, and one cloud provider.
+Nice to have: fine-tuning, RLHF or DPO exposure, guardrails and safety filtering,
+red-teaming, multimodal features.

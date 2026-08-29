@@ -1,0 +1,17 @@
+# source: composite
+# retrieved: 2026-08-29
+# title: Machine Learning Engineer, Applied
+# level: mid
+Take models from notebook to production and keep them healthy there.
+
+Requirements
+- 2-4 years applied machine learning in production settings.
+- Python, PyTorch, and the HuggingFace transformers ecosystem.
+- Feature engineering and data pipelines at scale: Spark, SQL, dbt or Airflow.
+- Model deployment, versioning and rollback; CI/CD for model artifacts.
+- Experiment tracking with Weights & Biases or MLflow.
+- Monitoring for data drift, model drift and performance regression.
+- You can state the metric your model moved and by how much, on what dataset.
+- Comfortable with A/B testing and offline/online metric correlation.
+Nice to have: recommender systems, ranking models, XGBoost, ONNX, Triton,
+Kubeflow, feature stores.

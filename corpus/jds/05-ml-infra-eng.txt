@@ -1,0 +1,16 @@
+# source: composite
+# retrieved: 2026-08-29
+# title: ML Infrastructure Engineer
+# level: mid
+Build the platform other engineers train and serve models on.
+
+Requirements
+- 3-5 years infrastructure or backend engineering.
+- Kubernetes, Docker, Terraform; AWS, GCP or Azure at production scale.
+- GPU scheduling and utilization; multi-node training, distributed data parallel.
+- Python and Go or Rust.
+- CI/CD, observability, Prometheus and Grafana, incident response and on-call.
+- Experience reducing training or inference cost measurably.
+- Storage and data formats for ML: Parquet, object storage, dataset versioning.
+Nice to have: Ray, Slurm, NCCL tuning, Triton inference server, model registries,
+inference autoscaling.

@@ -1,0 +1,16 @@
+# source: composite
+# retrieved: 2026-08-29
+# title: Founding AI Engineer
+# level: mid
+Small team, broad scope. You will build features, serve models, and own reliability.
+
+Requirements
+- 3+ years shipping production software; Python and TypeScript.
+- Experience integrating LLM APIs and self-hosted open-weight models.
+- RAG pipelines end to end: ingestion, chunking, embeddings, retrieval, reranking.
+- FastAPI, Postgres, pgvector, Redis, Docker; deploying on AWS or GCP.
+- Evaluation discipline: you do not ship prompt changes without measuring them.
+- Cost management: token spend, caching, model selection by task.
+- Comfort with ambiguity, and evidence of shipping to real users.
+Nice to have: fine-tuning, vLLM, agent frameworks, observability tooling,
+frontend work in React.

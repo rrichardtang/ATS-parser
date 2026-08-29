@@ -1,0 +1,19 @@
+# source: composite
+# retrieved: 2026-08-29
+# title: AI Engineer, Retrieval
+# level: mid
+Own retrieval quality for our knowledge products. Building a RAG demo is easy;
+this role is about one that survives messy data, ambiguous queries and corpus drift.
+
+Requirements
+- 3+ years of software engineering, strong Python.
+- Production RAG experience: chunking strategy, embedding model selection, hybrid
+  search combining BM25 with dense retrieval, and reranking with a cross-encoder.
+- Vector database experience: pgvector, Pinecone, Weaviate, Qdrant or FAISS.
+- You evaluate retrieval separately from generation. You know recall@k, MRR and
+  nDCG and you measure them before touching the prompt.
+- Experience versioning embedding models and planning re-embeds.
+- SQL and data pipeline experience; Airflow, Dagster or similar.
+- Prompt engineering and structured output: function calling, JSON schema, tool use.
+Nice to have: agent frameworks, LangChain or LlamaIndex, LangSmith or RAGAS for
+tracing and evaluation, multilingual retrieval, ColBERT-style late interaction.

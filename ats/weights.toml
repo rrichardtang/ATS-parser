@@ -1,0 +1,54 @@
+# Category weights and severity costs. Edit these -- every number here is a judgment
+# call, and the report shows exactly what each one cost so you can disagree with it.
+
+[categories]
+"Parseability" = 15
+"Recruiter scan" = 15
+"Impact & quantification" = 22
+"AI/ML relevance & depth" = 18
+"Credibility & verifiability" = 10
+"Writing quality" = 10
+"Structure & formatting" = 5
+"Title & seniority alignment" = 5
+
+[severity]
+critical = 25
+major = 12
+minor = 4
+
+# Heuristic rules -- ones resting on author judgment rather than measurable evidence --
+# are capped here no matter what severity they declare.
+[provenance_caps]
+heuristic = "minor"
+
+[scoring]
+# No hard gates: a single non-fraud finding may not cost more than its category's
+# weight. A missing phone number is a two-point fix, not a verdict.
+max_single_finding_share = 1.0
+# Hidden-text injection is the one deliberate exception -- it is a fraud-flag risk,
+# not a style preference, and it caps the composite.
+fraud_cap = 40
+
+[ensemble]
+# Budget diversity before depth: the first unit of spend buys a second provider.
+mode = "default"          # economy | default | thorough
+content_samples = 1        # per provider
+slop_samples = 3           # per provider
+slop_vote_k = 2            # k-of-N within a provider
+rewrite_candidates = 3     # per provider
+temperature = 0.7
+# A rewrite must beat the original by this margin on the ranking set, and must not
+# regress on the audit set. Failing to improve is fine; shipping a hacked rewrite is not.
+rewrite_margin = 1.0
+
+[ensemble.thorough]
+content_samples = 1
+slop_samples = 5
+slop_vote_k = 3
+rewrite_candidates = 5
+
+[ensemble.economy]
+content_samples = 1
+slop_samples = 1
+slop_vote_k = 1
+rewrite_candidates = 1

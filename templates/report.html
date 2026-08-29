@@ -1,0 +1,160 @@
+{% macro finding_block(f) %}
+<article class="finding {{ f.severity.value }}">
+  <div class="diag">
+    <span class="sev">{{ f.severity.value }}</span>
+    <span class="loc">{{ f.locator or "document" }}</span>
+    <span class="rule">{{ f.rule_id }}</span>
+    {% if f.confidence == "medium" %}<span class="tag">1 of 2 models</span>{% endif %}
+    {% if f.provenance.value == "heuristic" %}<span class="tag">heuristic</span>{% endif %}
+    <span class="pts">&minus;{{ "%.1f"|format(f.points) }}</span>
+  </div>
+  <p class="msg">{{ f.message }}</p>
+  {% if f.evidence and f.evidence not in ("document", "header") %}
+  <div class="quote">{{ f.evidence }}</div>
+  {% endif %}
+  {% if f.fix %}<p class="fix">{{ f.fix }}</p>{% endif %}
+</article>
+{% endmacro %}
+
+{% macro group_block(g) %}
+<article class="finding {{ g.lead.severity.value }}">
+  <div class="diag">
+    <span class="sev">{{ g.lead.severity.value }}</span>
+    <span class="loc">{{ g.lead.locator or "document" }}{% if g.count > 1 %} +{{ g.count - 1 }}{% endif %}</span>
+    <span class="rule">{{ g.lead.rule_id }}</span>
+    {% if g.lead.confidence == "medium" %}<span class="tag">1 of 2 models</span>{% endif %}
+    {% if g.lead.provenance.value == "heuristic" %}<span class="tag">heuristic</span>{% endif %}
+    <span class="pts">&minus;{{ "%.1f"|format(g.total_points) }}</span>
+  </div>
+  <p class="msg">{{ g.lead.message }}</p>
+  {% if g.lead.evidence and g.lead.evidence not in ("document", "header") %}
+  <div class="quote">{{ g.lead.evidence }}</div>
+  {% endif %}
+  {% if g.lead.fix %}<p class="fix">{{ g.lead.fix }}</p>{% endif %}
+  {% if g.count > 1 %}
+  <details class="more">
+    <summary>{{ g.count - 1 }} more instance{{ "s" if g.count > 2 }}</summary>
+    {% for f in g.instances[1:] %}
+    <div class="instance">
+      <span class="loc">{{ f.locator }}</span>
+      <span class="q">{{ f.evidence[:110] }}</span>
+      <span class="pts">&minus;{{ "%.1f"|format(f.points) }}</span>
+    </div>
+    {% endfor %}
+  </details>
+  {% endif %}
+</article>
+{% endmacro %}
+
+{% macro gate_section(title, note, groups) %}
+<section>
+  <h2>{{ title }} <span class="count">{{ groups|sum(attribute="count") }} in {{ groups|length }} issue{{ "s" if groups|length != 1 }}</span></h2>
+  <p class="gate-note">{{ note }}</p>
+  {% if groups %}
+    {% for g in groups %}{{ group_block(g) }}{% endfor %}
+  {% else %}
+    <div class="clean">Nothing found.</div>
+  {% endif %}
+</section>
+{% endmacro %}
+
+{% if error %}
+<div class="banner bad"><strong>Could not read that file.</strong> {{ error }}</div>
+{% else %}
+<div class="report">
+  <aside class="rail">
+    <div class="ledger">
+      <h2>Score derivation</h2>
+      <table>
+        <tr class="start"><td>Starting score</td><td class="pts">100</td></tr>
+        {% for row in report.ledger %}
+        <tr class="row {% if row.points > 0 %}credit{% endif %}">
+          <td>{{ row.label }}</td>
+          <td class="pts">{{ "%+.1f"|format(row.points) }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      <div class="total">
+        <span class="num">{{ "%.0f"|format(report.composite) }}</span>
+        <span class="grade">grade {{ report.grade }}</span>
+      </div>
+      <p class="caveat">
+        A diagnostic over named defects &mdash; not a portable &ldquo;ATS score&rdquo;,
+        not a pass/fail prediction, and not comparable to another tool&rsquo;s number.
+        Each tool invents its own rubric and none is validated against interview outcomes.
+      </p>
+    </div>
+
+    <div class="gates-score">
+      <div class="gate-box"><div class="k">Parser gate</div><div class="v">{{ "%.0f"|format(report.parser_subscore) }}</div></div>
+      <div class="gate-box"><div class="k">Human gate</div><div class="v">{{ "%.0f"|format(report.human_subscore) }}</div></div>
+    </div>
+
+    <div class="cats">
+      {% for c in report.categories %}
+      <div class="cat">
+        <div class="cat-head">
+          <span>{{ c.category.value }}</span>
+          <span>{% if c.is_banded %}<span class="band">{{ "%.0f"|format(c.low) }}&ndash;{{ "%.0f"|format(c.high) }}</span>{% else %}{{ "%.0f"|format(c.score) }}{% endif %}</span>
+        </div>
+        <div class="bar"><i style="width: {{ c.score|round|int }}%"></i></div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="actions">
+      <a href="/report/{{ token }}.md" download>Markdown</a>
+      <a href="/report/{{ token }}.pdf" download>PDF</a>
+    </div>
+  </aside>
+
+  <div class="stream">
+    {% if report.partial or report.notes %}
+    <div class="banner">
+      {% if report.partial %}<strong>Partial run.</strong>{% endif %}
+      <ul>{% for n in report.notes %}<li>{{ n }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+
+    {% if report.top_fixes %}
+    <section>
+      <h2>Top 5 fixes</h2>
+      <p class="gate-note">Ordered by severity. Start here.</p>
+      {% for f in report.top_fixes %}
+        {{ finding_block(f) }}
+        {% set n = report.rule_counts[f.rule_id] %}
+        {% if n > 1 %}<p class="gate-note" style="margin:-.35rem 0 .8rem">Also on {{ n - 1 }} other line{{ "s" if n > 2 }} — see below.</p>{% endif %}
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {{ gate_section("Parser gate", "Whether an ATS can extract your fields at all. Mechanical, and mechanically checkable.", parser) }}
+    {{ gate_section("Recruiter scan", "The first human, reading for seconds — mostly the top third of page one.", recruiter) }}
+    {{ gate_section("Hiring manager read", "The second human, asking whether the work described actually happened.", manager) }}
+
+    {% if report.rewrites %}
+    <section>
+      <h2>Suggested rewrites <span class="count">{{ report.rewrites|length }}</span></h2>
+      <p class="gate-note">
+        Proposals, not changes. Nothing is applied. Where a metric was missing the
+        model asks for it rather than inventing one &mdash; a fabricated number is
+        something you have to defend in an interview.
+      </p>
+      {% for r in report.rewrites %}
+      <div class="diff">
+        <div class="head"><span>{{ r.locator }}</span><span>{{ r.provider }}</span></div>
+        <div class="line del">{{ r.original }}</div>
+        <div class="line add">{{ r.rewritten }}</div>
+        {% if r.what_changed %}<div class="why">{{ r.what_changed }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    <details class="meta">
+      <summary>Run details</summary>
+      <pre>{{ meta_json }}</pre>
+    </details>
+  </div>
+</div>
+{% endif %}

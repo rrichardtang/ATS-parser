@@ -1,0 +1,18 @@
+# source: composite
+# retrieved: 2026-08-29
+# title: AI Engineer, Evaluation
+# level: mid
+Decide whether models are good enough to ship, and build the systems that answer that.
+
+Requirements
+- 3+ years engineering with strong Python.
+- Designing evaluation harnesses for generative systems: golden datasets, rubrics,
+  LLM-as-judge with calibration against human labels.
+- Statistical literacy: sample size, confidence intervals, significance, variance
+  between runs.
+- Experience catching regressions before release; CI gating on eval metrics.
+- Annotation operations and quality control.
+- Measuring groundedness, faithfulness, hallucination rate, refusal behaviour,
+  and toxicity or safety metrics.
+Nice to have: RAGAS, LangSmith, Braintrust, Inspect, red-teaming, adversarial
+prompt generation, benchmark design.

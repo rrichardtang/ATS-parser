@@ -1,0 +1,307 @@
+/* Design tokens. Cool-toned on purpose: the two looks AI-generated design falls
+   into are warm cream + serif display + terracotta, and near-black + acid accent.
+   Neither is wrong, both are defaults. This page is a diagnostic for someone who
+   reads diffs and linter output, so it borrows that vernacular instead. */
+:root {
+  --paper: #f7f8fa;
+  --card: #ffffff;
+  --ink: #16181d;
+  --ink-soft: #5a6070;
+  --rule: #d8dce4;
+  --mark: #2b4c8c;   /* annotation, labels, links */
+  --flag: #b3261e;   /* deductions, removals, critical */
+  --keep: #1f6f4a;   /* additions, passes */
+  --warn: #8a5a00;
+
+  --display: "Archivo", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --gap: 1.5rem;
+  --radius: 3px;
+}
+
+:root[data-theme="dark"],
+:root:not([data-theme="light"]) {
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--mark); }
+
+.shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+/* ---- masthead ------------------------------------------------------- */
+.masthead {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 0.85rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.wordmark {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.wordmark span { color: var(--mark); }
+.masthead p {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* ---- intake ---------------------------------------------------------- */
+.intake { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 2.5rem; }
+@media (max-width: 900px) { .intake { grid-template-columns: 1fr; } }
+
+.lede {
+  font-size: 1.15rem;
+  line-height: 1.5;
+  margin: 0 0 1.25rem;
+  max-width: 34em;
+}
+.lede strong { font-weight: 600; }
+
+.gates {
+  border-left: 2px solid var(--rule);
+  padding-left: 1rem;
+  margin: 0 0 1.5rem;
+  color: var(--ink-soft);
+  max-width: 34em;
+}
+.gates dt {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mark);
+  margin-top: 0.7rem;
+}
+.gates dd { margin: 0.1rem 0 0; }
+
+fieldset { border: 1px solid var(--rule); border-radius: var(--radius); padding: 1rem 1.1rem 1.2rem; margin: 0 0 1.1rem; background: var(--card); }
+legend {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 0 0.4rem;
+}
+label { display: block; font-family: var(--display); font-size: 0.82rem; font-weight: 600; margin: 0.7rem 0 0.25rem; }
+label:first-of-type { margin-top: 0; }
+.hint { font-size: 0.8rem; color: var(--ink-soft); margin: 0.3rem 0 0; }
+
+input[type="file"], input[type="password"], input[type="text"], textarea, select {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+}
+textarea { min-height: 7rem; resize: vertical; font-family: var(--body); font-size: 0.9rem; }
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--mark);
+  outline-offset: 2px;
+}
+
+button.go {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: var(--ink);
+  color: var(--paper);
+  border: 0;
+  border-radius: var(--radius);
+  padding: 0.7rem 1.4rem;
+  cursor: pointer;
+  width: 100%;
+}
+button.go:hover { background: var(--mark); }
+button.go[disabled] { opacity: 0.5; cursor: progress; }
+
+.cost {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+  text-align: center;
+}
+
+/* ---- report layout --------------------------------------------------- */
+.report { display: grid; grid-template-columns: 300px 1fr; gap: 2.5rem; align-items: start; }
+@media (max-width: 900px) { .report { grid-template-columns: 1fr; } }
+
+.rail { position: sticky; top: 1.5rem; }
+@media (max-width: 900px) { .rail { position: static; } }
+
+/* ---- the ledger: this page's signature ------------------------------- */
+/* The score is a derivation, not a verdict. Rendering it as a bill rather than a
+   gauge is the honest form -- and it is the one thing on the page allowed to be
+   loud. */
+.ledger { background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1.1rem 1.2rem 1.3rem; }
+.ledger h2 {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 0 0 0.9rem;
+  font-weight: 500;
+}
+.ledger table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.74rem; }
+.ledger td { padding: 0.22rem 0; vertical-align: baseline; }
+.ledger td.pts { text-align: right; white-space: nowrap; padding-left: 0.6rem; color: var(--flag); font-variant-numeric: tabular-nums; }
+.ledger tr.start td { border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; color: var(--ink-soft); }
+.ledger tr.start td.pts { color: var(--ink); font-size: 1rem; }
+.ledger tr.credit td.pts { color: var(--keep); }
+.ledger tr.row:hover td { background: #eef1f6; cursor: pointer; }
+.ledger tr.row td:first-child { max-width: 190px; }
+
+.total { border-top: 2px solid var(--ink); margin-top: 0.7rem; padding-top: 0.7rem; display: flex; align-items: baseline; justify-content: space-between; }
+.total .num { font-family: var(--display); font-size: 2.6rem; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.total .grade { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-soft); }
+.caveat { font-size: 0.78rem; color: var(--ink-soft); margin: 0.7rem 0 0; line-height: 1.4; }
+
+.gates-score { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 1rem; }
+.gate-box { border: 1px solid var(--rule); border-radius: var(--radius); padding: 0.55rem 0.65rem; background: var(--card); }
+.gate-box .k { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-soft); }
+.gate-box .v { font-family: var(--display); font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.cats { margin-top: 1rem; font-family: var(--mono); font-size: 0.7rem; }
+.cats .cat { margin-bottom: 0.45rem; }
+.cats .cat-head { display: flex; justify-content: space-between; gap: 0.5rem; }
+.cats .bar { height: 3px; background: var(--rule); margin-top: 0.2rem; }
+.cats .bar i { display: block; height: 100%; background: var(--mark); }
+.cats .band { color: var(--warn); }
+
+/* ---- findings -------------------------------------------------------- */
+.stream > section { margin-bottom: 2.2rem; }
+.stream h2 {
+  font-family: var(--display);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.2rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+.stream h2 .count { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-soft); font-weight: 400; }
+.stream .gate-note { color: var(--ink-soft); font-size: 0.85rem; margin: 0 0 0.9rem; max-width: 46em; }
+
+.finding {
+  border-left: 3px solid var(--rule);
+  padding: 0.55rem 0 0.55rem 0.85rem;
+  margin-bottom: 0.55rem;
+  background: var(--card);
+  border-top: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.finding.critical { border-left-color: var(--flag); }
+.finding.major { border-left-color: var(--warn); }
+.finding.minor { border-left-color: var(--rule); }
+
+/* Compiler-style diagnostic line: the audience reads this format fluently. */
+.diag { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-soft); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: baseline; }
+.diag .loc { color: var(--mark); }
+.diag .rule { color: var(--ink-soft); }
+.diag .pts { margin-left: auto; color: var(--flag); font-variant-numeric: tabular-nums; }
+.diag .sev { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.62rem; }
+.finding.critical .diag .sev { color: var(--flag); font-weight: 700; }
+.finding.major .diag .sev { color: var(--warn); }
+.tag { font-family: var(--mono); font-size: 0.6rem; border: 1px solid var(--rule); border-radius: 2px; padding: 0 0.25rem; color: var(--ink-soft); }
+
+.finding .msg { margin: 0.25rem 0 0.2rem; }
+.finding .quote {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  background: #f0f2f6;
+  border-left: 2px solid var(--rule);
+  padding: 0.28rem 0.5rem;
+  margin: 0.35rem 0;
+  color: var(--ink);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.finding .fix { margin: 0.2rem 0 0; font-size: 0.9rem; }
+.finding .fix::before { content: "→ "; color: var(--keep); font-family: var(--mono); }
+
+details.more { margin-top: 0.45rem; }
+details.more summary { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-soft); cursor: pointer; }
+details.more summary:hover { color: var(--mark); }
+.instance { display: flex; gap: 0.6rem; align-items: baseline; font-family: var(--mono); font-size: 0.68rem; padding: 0.2rem 0; border-top: 1px solid var(--rule); }
+.instance .loc { color: var(--mark); flex: 0 0 auto; }
+.instance .q { color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; }
+.instance .pts { color: var(--flag); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+
+/* ---- diffs ----------------------------------------------------------- */
+.diff { border: 1px solid var(--rule); border-radius: var(--radius); margin-bottom: 0.8rem; background: var(--card); overflow: hidden; }
+.diff .head { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-soft); padding: 0.35rem 0.6rem; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 0.5rem; }
+.diff .line { font-family: var(--mono); font-size: 0.76rem; padding: 0.35rem 0.6rem; white-space: pre-wrap; word-break: break-word; }
+.diff .del { background: #fdf0ef; color: var(--flag); }
+.diff .add { background: #eef7f1; color: var(--keep); }
+.diff .line::before { display: inline-block; width: 1.1em; opacity: 0.7; }
+.diff .del::before { content: "-"; }
+.diff .add::before { content: "+"; }
+.diff .why { font-size: 0.82rem; color: var(--ink-soft); padding: 0.35rem 0.6rem; border-top: 1px solid var(--rule); }
+.diff .why em { font-style: normal; font-family: var(--mono); font-size: 0.72rem; color: var(--warn); }
+
+/* ---- misc ------------------------------------------------------------ */
+.banner { border: 1px solid var(--rule); border-left: 3px solid var(--warn); background: #fdfaf3; padding: 0.6rem 0.8rem; border-radius: 0 var(--radius) var(--radius) 0; font-size: 0.86rem; margin-bottom: 1.2rem; }
+.banner.bad { border-left-color: var(--flag); background: #fdf0ef; }
+.banner ul { margin: 0.3rem 0 0; padding-left: 1.1rem; }
+
+.clean { border: 1px dashed var(--rule); border-radius: var(--radius); padding: 1.1rem; text-align: center; color: var(--ink-soft); font-size: 0.9rem; }
+
+.actions { display: flex; gap: 0.6rem; margin-top: 1rem; flex-wrap: wrap; }
+.actions a, .actions button {
+  font-family: var(--mono); font-size: 0.72rem; text-decoration: none;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  padding: 0.4rem 0.7rem; color: var(--ink); background: var(--card); cursor: pointer;
+}
+.actions a:hover, .actions button:hover { border-color: var(--mark); color: var(--mark); }
+
+details.meta { margin-top: 2rem; font-size: 0.82rem; }
+details.meta summary { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); cursor: pointer; }
+details.meta pre { font-family: var(--mono); font-size: 0.7rem; background: var(--card); border: 1px solid var(--rule); border-radius: var(--radius); padding: 0.7rem; overflow-x: auto; }
+
+.spinner { display: none; font-family: var(--mono); font-size: 0.75rem; color: var(--ink-soft); margin-top: 0.6rem; text-align: center; }
+
+/* One orchestrated moment: ledger rows arrive as the score settles. Nothing else
+   on the page animates. */
+@keyframes rowIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+.ledger tr.row { animation: rowIn 0.28s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .ledger tr.row { animation: none; }
+  * { transition: none !important; }
+}
