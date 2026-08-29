@@ -15,7 +15,9 @@ from .models import Category, Finding, Report
 from .score import build
 from .sections import Resume, parse
 
-__all__ = ["RunInput", "analyze", "ExtractionError"]
+__all__ = [
+    "RunInput", "analyze", "generate_rewrites", "parse_resume", "ExtractionError",
+]
 
 
 @dataclass
@@ -27,6 +29,14 @@ class RunInput:
     models: dict[str, str] = field(default_factory=dict)
     ensemble_mode: str = "default"
     enable_rewrites: bool = True
+
+
+def parse_resume(pdf_path: str) -> Resume:
+    """Extract + parse only, no scoring. Lets a caller hold onto the parsed Resume
+    (bullet text by locator) for a later generate_rewrites() call without having to
+    re-run analyze() or keep the PDF around."""
+    doc = extract(pdf_path)
+    return parse(doc.text)
 
 
 def deterministic(
@@ -118,6 +128,43 @@ def analyze(run: RunInput) -> Report:
         findings, llm_categories=llm_scores, partial=partial, notes=notes, run_meta=meta
     )
     report.rewrites = rewrites
+    return report
+
+
+def generate_rewrites(
+    report: Report,
+    resume: Resume,
+    keys: dict[str, str],
+    models: dict[str, str],
+    ensemble_mode: str = "default",
+) -> Report:
+    """Pass 3 alone, run on demand against an already-scored report.
+
+    Kept separate from analyze() so a caller (the web UI) can gate generation
+    behind an explicit action -- scoring a resume never implies paying for
+    rewrite generation too. Mutates and returns `report`; `resume` is whatever
+    parse_resume() returned when the report was first built.
+    """
+    providers = providers_from(keys, models)
+    if not providers:
+        report.notes.append(
+            "No API key supplied -- nothing to generate rewrites with."
+        )
+        return report
+
+    settings = config.ensemble_settings(ensemble_mode)
+    rewrite_result = _safe(
+        None, "rewrite",
+        fn=lambda: passes.rewrite_pass(
+            providers, resume, report.findings,
+            int(settings["rewrite_objectives"]), int(settings["rewrite_samples"]),
+            bool(settings["rewrite_judge"]), float(settings["rewrite_margin"]),
+            float(settings["temperature"]),
+        ),
+    )
+    report.rewrites = rewrite_result.data
+    report.run_meta["pass3"] = rewrite_result.meta
+    report.notes += [f"Rewrite pass degraded: {e}" for e in rewrite_result.errors[:2]]
     return report
 
 

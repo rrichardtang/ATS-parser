@@ -61,7 +61,7 @@ flowchart TD
     P1 --> GEN
     P2 --> GEN
 
-    subgraph P3["Pass 3 — rewrite the worst bullets"]
+    subgraph P3["Pass 3 — rewrite the worst bullets (only on request)"]
         GEN["Generate<br/>3 objectives × 2 providers"] --> CLEAN["Fact-check filter<br/>drop invented figures, dropped claims,<br/>vacuous numbers, proper-noun padding"]
         CLEAN --> JUDGE["Quality judge<br/>ranks fact-checked candidates only —<br/>impact, clarity, credibility, ..."]
         JUDGE --> POLISH["Polish the #1 candidate<br/>#2 kept as reference only"]
@@ -100,6 +100,11 @@ above.
 
 1 and 2 run concurrently; 3 depends on both, so a rewrite cannot reintroduce the
 phrasing pass 2 flags.
+
+**Pass 3 never runs automatically.** Uploading a resume only scores it (passes 1
+and 2). A "Generate rewrite suggestions" button appears once the score is in —
+generation is a second, explicit request, so you always know when the extra calls
+are being spent and never pay for rewrites you didn't ask to see.
 
 ## Two API keys
 

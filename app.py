@@ -20,8 +20,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from ats.models import Gate, Report
-from ats.pipeline import ExtractionError, RunInput, analyze
+from ats.pipeline import ExtractionError, RunInput, analyze, generate_rewrites, parse_resume
 from ats.report import to_markdown, to_pdf
+from ats.sections import Resume
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("ats.app")
@@ -35,27 +36,34 @@ app = FastAPI(title="resume.diagnostics", docs_url=None, redoc_url=None)
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 templates = Jinja2Templates(directory=str(ROOT / "templates"))
 
-# token -> (created_at, Report). Keeps export cheap and stops a re-render from
-# re-running (or re-billing) the analysis.
-_CACHE: dict[str, tuple[float, Report]] = {}
+# token -> (created_at, Report, Resume). Keeps export cheap, stops a re-render
+# from re-running (or re-billing) the analysis, and holds onto the parsed bullet
+# text so a later "Generate rewrites" click doesn't need the PDF again.
+_CACHE: dict[str, tuple[float, Report, Resume]] = {}
 
 
-def _cache_put(report: Report, seed: str) -> str:
+def _cache_put(report: Report, resume: Resume, seed: str) -> str:
     _prune()
     token = hashlib.sha256(f"{seed}{time.time()}".encode()).hexdigest()[:16]
-    _CACHE[token] = (time.time(), report)
+    _CACHE[token] = (time.time(), report, resume)
     return token
 
 
-def _cache_get(token: str) -> Report | None:
+def _cache_get(token: str) -> tuple[Report, Resume] | None:
     _prune()
     entry = _CACHE.get(token)
-    return entry[1] if entry else None
+    return (entry[1], entry[2]) if entry else None
+
+
+def _cache_update(token: str, report: Report) -> None:
+    entry = _CACHE.get(token)
+    if entry:
+        _CACHE[token] = (entry[0], report, entry[2])
 
 
 def _prune() -> None:
     now = time.time()
-    for key in [k for k, (t, _) in _CACHE.items() if now - t > CACHE_TTL_SECONDS]:
+    for key in [k for k, (t, _, _r) in _CACHE.items() if now - t > CACHE_TTL_SECONDS]:
         _CACHE.pop(key, None)
     while len(_CACHE) > CACHE_LIMIT:
         _CACHE.pop(min(_CACHE, key=lambda k: _CACHE[k][0]), None)
@@ -66,6 +74,10 @@ async def index(request: Request):
     return templates.TemplateResponse(request, "index.html", {})
 
 
+def _mode(mode: str) -> str:
+    return mode if mode in {"economy", "default", "thorough"} else "default"
+
+
 @app.post("/analyze", response_class=HTMLResponse)
 async def do_analyze(
     request: Request,
@@ -74,7 +86,6 @@ async def do_analyze(
     anthropic_key: str = Form(""),
     openai_key: str = Form(""),
     mode: str = Form("default"),
-    rewrites: str = Form(""),
 ):
     payload = await pdf.read()
     if not payload:
@@ -92,12 +103,15 @@ async def do_analyze(
             pdf_path=path,
             jd_text=jd or "",
             keys={"anthropic": anthropic_key.strip(), "openai": openai_key.strip()},
-            ensemble_mode=mode if mode in {"economy", "default", "thorough"} else "default",
-            enable_rewrites=bool(rewrites),
+            ensemble_mode=_mode(mode),
+            # Scoring never implies generating: rewrites are a separate, explicit
+            # step the user triggers from the report -- see /generate below.
+            enable_rewrites=False,
         )
         started = time.time()
         report = analyze(run)
         report.run_meta["elapsed_seconds"] = round(time.time() - started, 1)
+        resume = parse_resume(path)
     except ExtractionError as exc:
         return _error(request, f"{exc}. If it is encrypted, remove the password and retry.")
     except Exception as exc:  # noqa: BLE001
@@ -110,7 +124,36 @@ async def do_analyze(
         except OSError:
             pass
 
-    token = _cache_put(report, hashlib.sha256(payload).hexdigest())
+    token = _cache_put(report, resume, hashlib.sha256(payload).hexdigest())
+    return _render(request, report, token)
+
+
+@app.post("/generate/{token}", response_class=HTMLResponse)
+async def do_generate(
+    request: Request,
+    token: str,
+    anthropic_key: str = Form(""),
+    openai_key: str = Form(""),
+    mode: str = Form("default"),
+):
+    """Pass 3 alone, run only when the user asks for it -- see the button at the
+    bottom of the report. Never fires as a side effect of scoring."""
+    cached = _cache_get(token)
+    if not cached:
+        return _error(request, "This report has expired. Run the analysis again.")
+    report, resume = cached
+
+    try:
+        report = generate_rewrites(
+            report, resume,
+            keys={"anthropic": anthropic_key.strip(), "openai": openai_key.strip()},
+            models={}, ensemble_mode=_mode(mode),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.exception("rewrite generation failed")
+        return _error(request, f"Generating rewrites failed: {exc}")
+
+    _cache_update(token, report)
     return _render(request, report, token)
 
 

@@ -49,16 +49,13 @@
       <legend>Depth</legend>
       <label for="mode">Ensemble</label>
       <select id="mode" name="mode">
-        <option value="economy">Economy — 3 calls, single-shot</option>
-        <option value="default" selected>Default — ~18 calls, voted</option>
-        <option value="thorough">Thorough — ~26 calls</option>
+        <option value="economy">Economy — 4 calls to score</option>
+        <option value="default" selected>Default — 8 calls to score</option>
+        <option value="thorough">Thorough — 12 calls to score</option>
       </select>
-      <label style="display:flex;gap:.45rem;align-items:center;font-weight:400;margin-top:.8rem">
-        <input type="checkbox" name="rewrites" value="1" checked style="width:auto">
-        Suggest bullet rewrites
-      </label>
-      <p class="hint">Rewrites are proposals in a diff. Nothing is applied, and no
-        figure is invented &mdash; missing metrics come back as <code>[add: …]</code>.</p>
+      <p class="hint">This analyzes and scores the resume only. Rewrite suggestions
+        are a separate step &mdash; a button appears at the bottom of the report,
+        so generating them (and spending the extra calls) is always your call.</p>
     </fieldset>
 
     <button class="go" type="submit">Analyze resume</button>

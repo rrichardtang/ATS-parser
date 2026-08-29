@@ -149,6 +149,18 @@
       </div>
       {% endfor %}
     </section>
+    {% else %}
+    <section class="generate-rewrites">
+      <h2>Rewrite suggestions</h2>
+      <p class="gate-note">
+        Not generated yet &mdash; this spends extra model calls, so it only runs
+        when you ask. Uses whichever key(s) and depth setting are set above.
+      </p>
+      <button type="button" class="go" id="generate-rewrites" data-token="{{ token }}">
+        Generate rewrite suggestions
+      </button>
+      <div class="spinner" id="generate-spinner" role="status" aria-live="polite"></div>
+    </section>
     {% endif %}
 
     <details class="meta">
