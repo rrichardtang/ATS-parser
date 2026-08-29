@@ -130,32 +130,42 @@ def test_unquotable_llm_finding_is_dropped(monkeypatch, fixtures):
 
 HONEST_REWRITE_A = json.dumps({"rewrites": [{
     "locator": "exp[0].bullet[0]",
-    "rewritten": "Built a retrieval pipeline that serves internal search queries.",
+    "rewritten": "Built an AI retrieval pipeline that serves internal search queries.",
     "what_changed": "named the system",
 }]})
 HONEST_REWRITE_B = json.dumps({"rewrites": [{
     "locator": "exp[0].bullet[0]",
-    "rewritten": "Shipped a RAG service for internal search, replacing keyword lookup.",
+    "rewritten": "Shipped an AI-powered RAG service for internal search, replacing "
+                 "keyword lookup.",
     "what_changed": "named the mechanism",
 }]})
-# The synthesis (mixture-of-agents) step invents a number found in neither honest
-# candidate nor the original bullet.
-HACKED_SYNTHESIS = json.dumps({
+JUDGE_REPLY = json.dumps({"rankings": [{
     "locator": "exp[0].bullet[0]",
-    "rewritten": "Shipped a RAG-based retrieval pipeline for internal search, cutting "
-                 "latency 40%.",
-    "what_changed": "combined both candidates",
-})
+    "order": [{"candidate_id": "c0", "why": "clearer mechanism"},
+              {"candidate_id": "c1", "why": "still solid"}],
+}]})
+# The polish step hallucinates a number found in neither honest candidate nor the
+# original bullet.
+HACKED_POLISH = json.dumps({"polished": [{
+    "locator": "exp[0].bullet[0]",
+    "rewritten": "Built an AI retrieval pipeline that serves internal search queries, "
+                 "cutting latency 40%.",
+    "what_changed": "tightened wording",
+}]})
 
 
-def test_synthesis_runs_and_is_gated_like_any_other_candidate(monkeypatch, fixtures):
-    """Mixture-of-agents adds one more candidate per bullet -- it must not bypass
-    the same rank/audit/margin gates every best-of-N candidate goes through."""
+def test_judge_and_polish_run_and_polish_is_gated_like_any_candidate(monkeypatch, fixtures):
+    """Default mode adds a quality judge and a polish-the-winner step on top of
+    fact-checked best-of-N. Both must actually run, and a hallucinated figure from
+    polish must not ship -- the final gate applies to it exactly as it would to
+    any other candidate."""
     def _dispatch(provider, system, user, temperature):
         if "detect AI-generated writing" in system:
             return SLOP_REPLY
-        if "synthesize one strong resume bullet" in system:
-            return HACKED_SYNTHESIS
+        if "rank candidate rewrites" in system.lower():
+            return JUDGE_REPLY
+        if "lightly polish" in system.lower():
+            return HACKED_POLISH
         if "rewrite weak resume bullets" in system:
             return HONEST_REWRITE_A if provider.name == "anthropic" else HONEST_REWRITE_B
         return CONTENT_REPLY
@@ -167,11 +177,37 @@ def test_synthesis_runs_and_is_gated_like_any_other_candidate(monkeypatch, fixtu
     report = analyze(RunInput(pdf_path=str(fixtures["slop"]), ensemble_mode="default"))
 
     pass3 = report.run_meta.get("pass3", {})
-    assert pass3.get("synthesis_attempts", 0) >= 1, "synthesis step never ran"
+    assert pass3.get("judge_used") is True
+    assert pass3.get("polished_count", 0) >= 1, "polish step never ran"
     for rewrite in report.rewrites:
-        assert "40%" not in rewrite.rewritten, "a synthesized fabrication shipped"
-    selections = pass3.get("selections", [])
-    assert any(s.get("rejected_for_audit") for s in selections)
+        assert "40%" not in rewrite.rewritten, "a hallucinated polish figure shipped"
+
+
+def test_economy_mode_skips_the_judge(monkeypatch, fixtures):
+    """Economy mode should never place the extra judge/polish calls."""
+    calls = {"judge": 0, "polish": 0}
+
+    def _dispatch(provider, system, user, temperature):
+        if "detect AI-generated writing" in system:
+            return SLOP_REPLY
+        if "rank candidate rewrites" in system.lower():
+            calls["judge"] += 1
+            return JUDGE_REPLY
+        if "lightly polish" in system.lower():
+            calls["polish"] += 1
+            return HACKED_POLISH
+        if "rewrite weak resume bullets" in system:
+            return HONEST_REWRITE_A if provider.name == "anthropic" else HONEST_REWRITE_B
+        return CONTENT_REPLY
+
+    monkeypatch.setattr(llm, "_dispatch", _dispatch)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
+
+    report = analyze(RunInput(pdf_path=str(fixtures["slop"]), ensemble_mode="economy"))
+
+    assert calls == {"judge": 0, "polish": 0}
+    assert report.run_meta["pass3"]["judge_used"] is False
 
 
 def test_malformed_json_is_repaired_then_used(monkeypatch):

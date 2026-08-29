@@ -162,12 +162,22 @@ def rewrite_pass(
     providers: list[Provider],
     resume: Resume,
     findings: list[Finding],
-    candidates_per_provider: int,
+    objectives: int,
+    samples: int,
+    use_judge: bool,
     margin: float,
     temperature: float,
-    synthesize: bool = True,
 ) -> ensemble.PassResult:
-    """Best-of-N over both providers, selected by the split verifier in ensemble."""
+    """Generate -> fact-check filter -> judge-rank -> polish -> final gate.
+
+    Candidates come from diverse objectives (mechanism/outcome/ownership-led) times
+    both providers, not resampling one prompt. Every candidate is fact-checked
+    (ensemble.audit_clean) before an LLM forms any opinion of its quality -- the
+    quality judge never adjudicates truthfulness, only which fact-checked candidate
+    reads best. The judge's #1 pick is lightly polished, and both the polished and
+    unpolished forms are handed to the same final gate (ensemble.select_rewrite)
+    that plain best-of-N uses, so polishing can only win by actually being better.
+    """
     by_locator: dict[str, list[Finding]] = {}
     for finding in findings:
         if finding.locator.startswith("exp["):
@@ -191,92 +201,157 @@ def rewrite_pass(
     if not targets:
         return ensemble.PassResult(meta={"reason": "no bullets needed rewriting"})
 
+    # -- 3a. Generate: diverse objectives x providers, batched across bullets --
     user = prompts.rewrite_user(targets)
+    active_objectives = prompts.OBJECTIVES[: max(1, objectives)]
     jobs = []
-    for provider in providers:
-        for _ in range(candidates_per_provider):
-            jobs.append(
-                lambda p=provider: (p.name, call(p, prompts.REWRITE_SYSTEM, user, temperature))
-            )
+    for label, instruction in active_objectives:
+        system = prompts.rewrite_system(label, instruction)
+        for provider in providers:
+            for _ in range(max(1, samples)):
+                jobs.append(
+                    lambda p=provider, sysprompt=system, obj=label: (
+                        p.name, obj, call(p, sysprompt, user, temperature)
+                    )
+                )
 
     raw, errors = ensemble.gather(jobs)
 
-    by_target: dict[str, list[tuple[str, str, str]]] = {}
-    for provider_name, payload in raw:
+    by_target: dict[str, list[tuple[str, str, str, str]]] = {}
+    for provider_name, objective, payload in raw:
         for item in payload.get("rewrites") or []:
             locator = (item.get("locator") or "").strip()
             text = (item.get("rewritten") or "").strip()
             if locator and text:
-                by_target.setdefault(locator, []).append(
-                    (text, (item.get("what_changed") or "").strip()[:120], provider_name)
-                )
-
-    # Mixture-of-agents: one extra candidate per bullet, synthesized from every
-    # generated candidate rather than picking a single one. This is the one place
-    # best-of-N throws away signal -- every unselected candidate is simply discarded --
-    # so synthesis recovers it. It is still just another candidate: it goes through
-    # the exact same rank/audit/margin gates below, so it can only win by actually
-    # being better, and the reward-hacking defenses apply to it unchanged.
-    synth_errors: list[str] = []
-    synth_raw: list = []
-    if synthesize:
-        synth_jobs = []
-        for target in targets:
-            locator = target["locator"]
-            cands = by_target.get(locator, [])
-            if len(cands) < 2:
-                continue  # nothing to synthesize from
-            aggregator = ensemble.aggregator_provider(providers, [c[2] for c in cands])
-            payload_candidates = [
-                {"provider": prov, "rewritten": text, "what_changed": wc}
-                for text, wc, prov in cands
-            ]
-            synth_jobs.append(
-                lambda p=aggregator, loc=locator, orig=target["bullet"],
-                defects=target["defects"], cands=payload_candidates: (
-                    loc,
-                    p.name,
-                    call(
-                        p, prompts.SYNTHESIS_SYSTEM,
-                        prompts.synthesis_user(loc, orig, defects, cands), 0.0,
-                    ),
-                )
-            )
-
-        synth_raw, synth_errors = ensemble.gather(synth_jobs) if synth_jobs else ([], [])
-        for locator, aggregator_name, payload in synth_raw:
-            text = (payload.get("rewritten") or "").strip()
-            if text:
                 by_target.setdefault(locator, []).append((
-                    text,
-                    (payload.get("what_changed") or "").strip()[:120],
-                    f"moa:{aggregator_name}",
+                    text, (item.get("what_changed") or "").strip()[:120],
+                    provider_name, objective,
                 ))
 
+    # -- 3b. Fact-check every candidate before any quality opinion is formed --
+    clean_by_target = {
+        target["locator"]: ensemble.audit_clean(
+            target["bullet"], by_target.get(target["locator"], [])
+        )
+        for target in targets
+    }
+    judged_locators = [loc for loc, clean in clean_by_target.items() if clean]
+
+    judge_errors: list[str] = []
+    polish_errors: list[str] = []
+    polished: dict[str, str] = {}
+    winners: dict[str, dict] = {}
+
+    if use_judge and judged_locators:
+        # -- 3c. One batched call ranks every bullet's clean candidates ------
+        judge_payload = [
+            {
+                "locator": loc,
+                "original": bullet_text.get(loc, ""),
+                "candidates": [
+                    {"candidate_id": f"c{i}", "text": c["text"]}
+                    for i, c in enumerate(clean_by_target[loc])
+                ],
+            }
+            for loc in judged_locators
+        ]
+        judge_provider = ensemble.adjudicator_provider(
+            providers,
+            [c["provider"] for clean in clean_by_target.values() for c in clean],
+        )
+        judge_raw, judge_errors = ensemble.gather([
+            lambda p=judge_provider: call(
+                p, prompts.JUDGE_SYSTEM, prompts.judge_user(judge_payload), 0.0
+            )
+        ])
+        rankings: dict[str, list[dict]] = {}
+        for payload in judge_raw:
+            for entry in payload.get("rankings") or []:
+                loc = (entry.get("locator") or "").strip()
+                if loc:
+                    rankings[loc] = entry.get("order") or []
+
+        # -- 3d. Polish each bullet's #1 (#2 kept only as reference) ---------
+        polish_payload = []
+        for loc in judged_locators:
+            clean = clean_by_target[loc]
+            id_to_candidate = {f"c{i}": c for i, c in enumerate(clean)}
+            order = rankings.get(loc) or []
+            ranked_clean = [
+                id_to_candidate[o["candidate_id"]] for o in order
+                if o.get("candidate_id") in id_to_candidate
+            ]
+            if not ranked_clean:
+                # Judge failed, skipped this bullet, or hallucinated bad ids --
+                # fall back to the deterministic ranking signal.
+                ranked_clean = sorted(clean, key=lambda c: -c["rank"])
+            winners[loc] = ranked_clean[0]
+            entry = {"locator": loc, "original": bullet_text.get(loc, ""),
+                      "winner": ranked_clean[0]["text"]}
+            if len(ranked_clean) > 1:
+                entry["runner_up"] = ranked_clean[1]["text"]
+            polish_payload.append(entry)
+
+        if polish_payload:
+            polish_provider = ensemble.adjudicator_provider(
+                providers, [w["provider"] for w in winners.values()]
+            )
+            polish_raw, polish_errors = ensemble.gather([
+                lambda p=polish_provider: call(
+                    p, prompts.POLISH_SYSTEM, prompts.polish_user(polish_payload), 0.0
+                )
+            ])
+            for payload in polish_raw:
+                for item in payload.get("polished") or []:
+                    loc = (item.get("locator") or "").strip()
+                    text = (item.get("rewritten") or "").strip()
+                    if loc and text:
+                        polished[loc] = text
+
+    # -- 3e. Final gate: the same check for every bullet, judged or not ------
+    # A judged bullet offers {polished, unpolished winner} -- both already
+    # fact-checked, so this call mainly re-verifies polish didn't regress. An
+    # unjudged bullet (Economy mode, or the judge skipped/failed it) offers the
+    # full raw candidate pool, so this call does the fact-check itself and
+    # behaves as plain best-of-N -- the graceful degradation path.
     rewrites: list[Rewrite] = []
     selection_meta = []
     for target in targets:
         locator = target["locator"]
+        winner = winners.get(locator)
+        if winner:
+            gate_candidates = [(winner["text"], winner["what_changed"], winner["provider"])]
+            if locator in polished:
+                gate_candidates.insert(
+                    0, (polished[locator], "polished", winner["provider"])
+                )
+        else:
+            gate_candidates = [
+                (text, what_changed, provider_name)
+                for text, what_changed, provider_name, _objective
+                in by_target.get(locator, [])
+            ]
+
         chosen, meta = ensemble.select_rewrite(
-            target["bullet"], locator, by_target.get(locator, []), margin
+            target["bullet"], locator, gate_candidates, margin
         )
         selection_meta.append(meta)
         if chosen:
             rewrites.append(chosen)
 
     hacks = [m for m in selection_meta if m.get("hack_detected")]
-    synthesis_wins = sum(
-        1 for r in rewrites if r.provider.startswith("moa:")
-    )
     return ensemble.PassResult(
         data=rewrites,
-        providers_used=sorted({p for _, payload in raw for p in [payload and ""]} or set()),
-        errors=errors + synth_errors,
+        providers_used=sorted({name for name, _obj, _payload in raw}),
+        errors=errors + judge_errors + polish_errors,
         meta={
             "selections": selection_meta,
             "hack_detections": len(hacks),
-            "candidates_per_provider": candidates_per_provider,
-            "synthesis_attempts": len(synth_raw),
-            "synthesis_wins": synthesis_wins,
+            "objectives": len(active_objectives),
+            "samples_per_objective": max(1, samples),
+            "judge_used": use_judge,
+            "candidates_generated": sum(len(v) for v in by_target.values()),
+            "candidates_audit_clean": sum(len(v) for v in clean_by_target.values()),
+            "polished_count": len(polished),
         },
     )

@@ -90,10 +90,30 @@ Return JSON only:
 Findings without an exact quote are discarded.
 """.strip()
 
-REWRITE_SYSTEM = f"""
+# Pass 3 generates from three lenses instead of resampling the same prompt for
+# variety. Each lens leads with a different bullet invariant (see ats/invariants.py)
+# rather than an unrelated new taxonomy, so generation stays aligned with what
+# scoring already checks for.
+OBJECTIVES = [
+    ("mechanism", "Foreground the technical HOW -- the specific method, tool, or "
+                  "design choice that made this possible. Do not bury it behind "
+                  "generic phrasing."),
+    ("outcome", "Foreground the RESULT -- what changed because of this work, "
+                "stated as plainly as the original bullet supports."),
+    ("ownership", "Foreground OWNERSHIP AND SCOPE -- what this person specifically "
+                  "did and owned, versus the team, without inflating scope beyond "
+                  "what the original states."),
+]
+
+
+def rewrite_system(objective_label: str, objective_instruction: str) -> str:
+    return f"""
 You rewrite weak resume bullets for a mid-level AI Engineer.
 
 {NO_INVENTION}
+
+This pass's lens -- {objective_label}: {objective_instruction}
+Still fix every named defect; the lens changes emphasis, not which defects get fixed.
 
 Method:
 - Make the MINIMUM effective edit. Fix the named defects; leave the rest alone.
@@ -105,38 +125,53 @@ Method:
   [add: latency] -- so they supply the real figure. NEVER invent one.
 - Do not add numbers that merely count people, tools or meetings. "Collaborated
   with 3 engineers" measures nothing.
-- Vary sentence shape across bullets. Do not apply one formula to all of them.
 
 Return JSON only:
 {{"rewrites": [{{"locator": "<locator>", "rewritten": "<the bullet>",
                 "what_changed": "<one clause>"}}]}}
 """.strip()
 
-SYNTHESIS_SYSTEM = f"""
-You synthesize one strong resume bullet from several candidate rewrites of the same
-bullet, each written by a different model.
+
+JUDGE_SYSTEM = """
+You rank candidate rewrites of resume bullets by writing quality.
+
+Every candidate you see has already passed a fact-check against its original
+bullet -- your job is judging quality, not truthfulness. Do not second-guess
+whether a claim is true; assume it is and judge only how well it's written.
+
+Rank on: impact (does it state why the work mattered), specificity (concrete
+technical detail), technical depth (real engineering complexity, not jargon),
+clarity (a recruiter understands it in one read), credibility (sounds believable,
+not inflated), ATS relevance (natural technical terminology, not stuffed).
+
+Do NOT reward: buzzwords, adjectives like "cutting-edge" or "robust", vague
+statements, or inflated impact. A shorter, plainer bullet beats a longer,
+decorated one if it says more with less.
+
+For each bullet, return its candidates in rank order (best first), each with one
+clause of rationale. Do not assign numeric scores -- rank order only.
+
+Return JSON only:
+{"rankings": [{"locator": "<locator>",
+               "order": [{"candidate_id": "<id>", "why": "<one clause>"}]}]}
+""".strip()
+
+POLISH_SYSTEM = f"""
+You lightly polish the single best-ranked rewrite of a resume bullet.
 
 {NO_INVENTION}
 
-Every candidate below already fixes some defects and misses others. Do not just pick
-your favorite candidate verbatim, and do not blur them into a generic average.
-Produce ONE bullet that combines their distinct strengths.
-
-Rules:
-- Every fact, number, tool, and scope in your output must already appear in the
-  ORIGINAL bullet or in at least one candidate. Never combine two candidates' numbers
-  into a new number, and never combine two separate claims into a stronger compound
-  claim that neither one made on its own.
-- If candidates disagree on a fact (different placeholders, different phrasing of the
-  same figure), keep it as a placeholder rather than guessing which is right.
-- Keep every claim the original made -- don't let synthesis drop content to read
-  cleaner.
-- Preserve the original's voice. Do not smooth into uniform corporate register.
-- Make the MINIMUM effective edit relative to the original.
+You are given the WINNER (already fact-checked and ranked #1 on quality) and, for
+reference only, the RUNNER-UP. Tighten the winner's wording: cut filler, sharpen a
+verb, fix an awkward clause. You may borrow a specific phrase from the runner-up
+ONLY if every fact in that phrase already appears in the winner or the original
+bullet. Never introduce an adjective, claim, or emphasis absent from the winner.
+Do not blend the two into something neither one said. If the winner is already
+tight, return it unchanged.
 
 Return JSON only:
-{{"locator": "<locator>", "rewritten": "<the synthesized bullet>",
-  "what_changed": "<one clause>"}}
+{{"polished": [{{"locator": "<locator>", "rewritten": "<the polished bullet>",
+                "what_changed": "<one clause, or 'none' if unchanged>"}}]}}
 """.strip()
 
 CATEGORY_NAMES = [
@@ -187,13 +222,17 @@ def rewrite_user(targets: list[dict]) -> str:
     )
 
 
-def synthesis_user(
-    locator: str, original: str, defects: list[str], candidates: list[dict]
-) -> str:
-    return (
-        "ORIGINAL bullet:\n" + original + "\n\n"
-        "Defects to fix:\n" + "\n".join(f"- {d}" for d in defects) + "\n\n"
-        "Candidate rewrites (from different models):\n"
-        + json.dumps(candidates, indent=2)
-        + f'\n\nSynthesize one rewrite for locator "{locator}".'
-    )
+def judge_user(targets: list[dict]) -> str:
+    """targets: [{"locator", "original", "candidates": [{"candidate_id", "text"}]}].
+
+    Provider and objective are deliberately withheld -- a judge that knew which
+    model or lens produced a candidate could favor it on that basis rather than
+    the writing itself.
+    """
+    return "Rank each bullet's candidates.\n\n" + json.dumps(targets, indent=2)
+
+
+def polish_user(targets: list[dict]) -> str:
+    """targets: [{"locator", "original", "winner", "runner_up"}]. runner_up may be
+    absent when a bullet had only one audit-clean candidate."""
+    return "Polish each bullet's winner.\n\n" + json.dumps(targets, indent=2)

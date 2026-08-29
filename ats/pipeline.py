@@ -91,8 +91,9 @@ def analyze(run: RunInput) -> Report:
             None, "rewrite",
             fn=lambda: passes.rewrite_pass(
                 providers, resume, findings,
-                int(settings["rewrite_candidates"]), float(settings["rewrite_margin"]),
-                float(settings["temperature"]), bool(settings.get("synthesize", True)),
+                int(settings["rewrite_objectives"]), int(settings["rewrite_samples"]),
+                bool(settings["rewrite_judge"]), float(settings["rewrite_margin"]),
+                float(settings["temperature"]),
             ),
         )
         rewrites = rewrite_result.data

@@ -12,8 +12,12 @@ provider is the informative detector. Intersecting would discard exactly the
 findings worth having.
 
 Pass 3 is the only place reward hacking can arise, because it is the only pass
-where output is generated to win a selection. See verify() for the ranking/audit
-split that keeps best-of-N honest.
+where output is generated to win a selection. It runs generate -> audit-filter ->
+judge-rank -> polish-the-winner -> final gate: candidates are never picked for
+truthfulness (audit_clean() enforces that before any opinion is formed), only for
+quality once truthfulness is no longer in question. select_rewrite() is the final
+gate -- rank vs. original by a margin, no audit regression, no audit problems -- and
+it is what catches a hacking attempt that made it past everything upstream.
 """
 from __future__ import annotations
 
@@ -158,7 +162,7 @@ def combine_scores(
 
 
 # --------------------------------------------------------------------------
-# Pass 3: best-of-N with a split verifier.
+# Pass 3: generate -> audit-filter -> judge-rank -> polish -> final gate.
 # --------------------------------------------------------------------------
 
 # Digits that are part of a name rather than a measurement.
@@ -274,13 +278,13 @@ def audit_score(original: str, candidate: str) -> tuple[float, list[str]]:
     return round(score, 2), problems
 
 
-def aggregator_provider(providers: list, candidate_providers: list[str]):
-    """Pick who synthesizes a bullet's candidates into one.
+def adjudicator_provider(providers: list, candidate_providers: list[str]):
+    """Pick who judges or polishes a batch of candidates.
 
-    Mirrors cross-provider adjudication (§5c): a model is weakest at judging its own
+    Mirrors cross-provider slop adjudication: a model is weakest at judging its own
     idiom, so the provider that contributed *fewest* of the candidates does the
-    synthesizing, not the one that dominated generation. With one provider available
-    there is no choice to make.
+    judging or polishing, not the one that dominated generation. With one provider
+    available there is no choice to make.
     """
     if len(providers) == 1:
         return providers[0]
@@ -290,21 +294,53 @@ def aggregator_provider(providers: list, candidate_providers: list[str]):
     return min(providers, key=lambda p: counts.get(p.name, 0))
 
 
+def audit_clean(
+    original: str, candidates: list[tuple[str, str, str, str]]
+) -> list[dict]:
+    """Filter candidates to those that already pass the fact-check.
+
+    Runs BEFORE any quality judgment: invented figures, vacuous numbers, dropped
+    claims, and proper-noun padding disqualify a candidate outright. A candidate
+    that fails this never gets an opinion on how good it sounds -- the quality
+    judge (§5c) only ever sees candidates that already cleared this gate.
+
+    candidates: (text, what_changed, provider, objective) tuples.
+    """
+    baseline_audit, _ = audit_score(original, original)
+    clean = []
+    for text, what_changed, provider, objective in candidates:
+        if not text or _norm(text) == _norm(original):
+            continue
+        audit, problems = audit_score(original, text)
+        if problems or audit < baseline_audit:
+            continue
+        clean.append({
+            "text": text, "what_changed": what_changed, "provider": provider,
+            "objective": objective, "rank": rank_score(text), "audit": audit,
+        })
+    return clean
+
+
 def select_rewrite(
     original: str,
     locator: str,
     candidates: list[tuple[str, str, str]],
     margin: float,
 ) -> tuple[Rewrite | None, dict]:
-    """Best-of-N: rank, then audit, then require a real improvement.
+    """The final gate: rank, then audit, then require a real improvement.
 
-    Three gates, and a candidate must pass all of them:
+    Three checks, and a candidate must pass all of them:
       1. beat the ORIGINAL by `margin` on the ranking set (not merely beat siblings)
       2. not regress on the audit set
       3. be clean of audit problems
 
     If nothing clears all three, the original is kept. Failing to improve is an
     acceptable outcome; shipping a hacked rewrite is not.
+
+    Doubles as the fallback path: `rewrite_pass` normally narrows candidates to a
+    judge-ranked winner (+ its polished form) before calling this, but if the judge
+    or polish call fails it can be called with the full audit-clean candidate pool
+    and behaves exactly as a plain best-of-N selector.
     """
     baseline_rank = rank_score(original)
     baseline_audit, _ = audit_score(original, original)

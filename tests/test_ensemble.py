@@ -7,6 +7,7 @@ what keeps best-of-N honest, so it is tested directly.
 import pytest
 
 from ats.ensemble import (
+    audit_clean,
     audit_score,
     combine_scores,
     combine_slop,
@@ -83,6 +84,25 @@ def test_margin_requires_beating_the_original_not_just_siblings():
     weak = "Worked on the retrieval system to improve search quality for users."
     winner, _ = select_rewrite(ORIGINAL, "x", [(weak, "c", "openai")], margin=5.0)
     assert winner is None
+
+
+# --- audit_clean: the fact-check filter that runs before any quality judgment ---
+
+def test_audit_clean_keeps_the_honest_candidate_and_drops_every_hack():
+    candidates = [(HONEST, "named the mechanism", "anthropic", "mechanism")] + [
+        (text, "changed", "openai", "outcome") for text in HACKS.values()
+    ]
+    clean = audit_clean(ORIGINAL, candidates)
+    assert [c["text"] for c in clean] == [HONEST]
+
+
+def test_audit_clean_returns_empty_when_nothing_passes():
+    candidates = [(t, "c", "openai", "outcome") for t in HACKS.values()]
+    assert audit_clean(ORIGINAL, candidates) == []
+
+
+def test_audit_clean_drops_a_candidate_identical_to_the_original():
+    assert audit_clean(ORIGINAL, [(ORIGINAL, "c", "openai", "outcome")]) == []
 
 
 # --- combination rules -----------------------------------------------------

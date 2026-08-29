@@ -45,12 +45,38 @@ fail the other and the fixes are unrelated.
 
 ## How it works
 
-```
-PDF → extract → sections → deterministic checks → LLM passes → score → report
+Everything mechanically checkable runs in Python, free and reproducible. The LLM
+only judges what rules cannot, and only pass 3 (rewrite) ever generates anything —
+passes 1 and 2 only judge, so there's nothing there for a model to game.
+
+```mermaid
+flowchart TD
+    IN["PDF resume + optional JD<br/>+ Anthropic and/or OpenAI key"] --> EX["extract.py<br/>text, layout, hidden text, columns"]
+    EX --> SEC["sections.py<br/>contact, roles, bullets, dates"]
+    SEC --> DET["Deterministic checks<br/>parseability, structure, slop patterns,<br/>recruiter scan, keyword coverage"]
+
+    DET --> P1["Pass 1 — content judge<br/>both providers, averaged + banded"]
+    DET --> P2["Pass 2 — slop judge<br/>k-of-N per provider, union across"]
+
+    P1 --> GEN
+    P2 --> GEN
+
+    subgraph P3["Pass 3 — rewrite the worst bullets"]
+        GEN["Generate<br/>3 objectives × 2 providers"] --> CLEAN["Fact-check filter<br/>drop invented figures, dropped claims,<br/>vacuous numbers, proper-noun padding"]
+        CLEAN --> JUDGE["Quality judge<br/>ranks fact-checked candidates only —<br/>impact, clarity, credibility, ..."]
+        JUDGE --> POLISH["Polish the #1 candidate<br/>#2 kept as reference only"]
+        POLISH --> GATE["Final gate<br/>beat original by margin,<br/>no audit regression"]
+    end
+
+    GATE -- "ships, or original stands" --> SCORE
+    DET --> SCORE["score.py<br/>Parser + Human subscores, ledger"]
+    SCORE --> REPORT["Report<br/>ledger, findings by gate, rewrites as diffs"]
+    REPORT --> OUT["Web UI · Markdown · PDF export"]
 ```
 
-Everything mechanically checkable runs in Python, free and reproducible. The LLM
-only judges what rules cannot.
+Pass 3's four stages are covered in detail under **Rewrites invent nothing** below;
+the two gates the deterministic checks split into are covered under **Two gates**
+above.
 
 ### Deterministic (no key needed)
 
@@ -70,7 +96,7 @@ only judges what rules cannot.
 |---|---|---|
 | 1 | Content | Substance, ownership, seniority fit, missing information |
 | 2 | Slop | Named patterns beyond regex reach — never an AI-likelihood score |
-| 3 | Rewrite | Fixes content and slop in one edit, after seeing both |
+| 3 | Rewrite | Generates, fact-checks, ranks, and polishes fixes for both content and slop in one edit, after seeing both |
 
 1 and 2 run concurrently; 3 depends on both, so a rewrite cannot reintroduce the
 phrasing pass 2 flags.
@@ -102,33 +128,52 @@ Where a bullet needs a number you never supplied, you get `[add: eval metric]`,
 not a plausible figure. A fabricated stat is not a style error — it is something
 you have to defend in an interview.
 
-This is enforced, not just prompted. Pass 3 generates candidates from both
-providers (best-of-N), then adds one more: a **mixture-of-agents synthesis** step
-that gives every candidate to a single model and asks it to combine their distinct
-strengths into one bullet, rather than only ever picking a single winner and
-discarding the rest. The synthesizing provider is whichever one contributed
-*fewest* of the candidates — the same cross-provider-adjudication logic used
-elsewhere, so a model never grades mostly its own drafts.
+This is enforced, not just prompted. There's no ground truth for "the best resume
+bullet" the way there is for a factual claim, so pass 3 doesn't try to verify
+candidates into a winner — it treats picking one as **constrained optimization**:
+generate diverse options, throw out anything that fails the fact-check, then judge
+quality only among what's left.
 
-Synthesis is not a side channel around the verifier — the synthesized bullet is
-just one more candidate, gated by the exact same rules as any other. Best-of-N
-against a verifier is a textbook Goodhart setup, so the verifier is **split**:
+1. **Generate** under three objectives — mechanism-led, outcome-led, ownership-led
+   (the same invariants scoring already checks) — from both providers, so
+   candidates differ in framing, not just in luck from resampling one prompt.
+2. **Fact-check filter.** Every candidate runs through the audit set (below) before
+   anything judges its quality. A candidate that invents a figure or drops a claim
+   is discarded outright — it never gets an opinion on how good it sounds.
+3. **Quality judge.** One model ranks the surviving, fact-checked candidates on
+   impact, specificity, technical depth, clarity, credibility, and ATS relevance —
+   ranked, not scored, since absolute 1–10 ratings from an LLM aren't calibrated
+   enough to sum into a formula. Told explicitly not to reward buzzwords or
+   inflated claims.
+4. **Polish the winner.** A single light edit pass on the #1 candidate, allowed to
+   see the runner-up only as a reference for phrasing it can borrow — never to
+   blend the two into a claim neither made. This is deliberately *not*
+   mixture-of-agents-style synthesis-from-everything: blending several candidates'
+   "strengths" is exactly how phrases like "cutting-edge ecosystem" get
+   manufactured, and manufacturing slop is what the rest of this project exists to
+   catch.
+5. **Final gate.** The polished bullet (and, as a fallback, the unpolished winner)
+   both go through the same verifier as plain best-of-N — see below. Polishing can
+   only win by clearing it; if it doesn't, the unpolished winner ships instead.
 
-- **Ranking set** — selects the winner (invariants, slop patterns, length).
-- **Audit set** — never used for selection, only to detect gaming: invented
+The final gate is a textbook Goodhart setup — selecting against a proxy invites
+gaming it — so the verifier is **split**:
+
+- **Ranking set** — the invariants, slop patterns, and length used above.
+- **Audit set** — never used for ranking, only to detect gaming: invented
   figures, vacuous numbers (`collaborated with 3 engineers`), truncation, and
   proper-noun padding.
 
 A candidate cannot optimise against signals it is not selected on, so a rising
 ranking score with a falling audit score is the hacking signature — logged per run
-and asserted in tests. A rewrite must also beat the **original** by a margin, not
-merely beat its siblings; if nothing does, you keep your bullet. The rule holds
-whether the winning candidate came from best-of-N or from synthesis.
+and asserted in tests. The winning bullet must also beat the **original** by a
+margin, not merely beat its siblings; if nothing does, you keep your bullet.
 
 Run `python scripts/hacking_sweep.py` to see the ceiling check: raising N must not
-degrade the audit. Synthesis costs one extra call per rewritten bullet, so it's on
-by default and in Thorough mode, and off in Economy — turn it off in
-`ats/weights.toml` (`[ensemble].synthesize`) if you want best-of-N alone.
+degrade the audit. The quality judge and polish step cost two extra calls total per
+run (not per bullet — both are single batched calls), so they're on by default and
+in Thorough mode, off in Economy — toggle `[ensemble].rewrite_judge` in
+`ats/weights.toml` if you want fact-checked best-of-N without them.
 
 ## Where the rubric comes from
 
