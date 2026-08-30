@@ -4,6 +4,11 @@
 A ticket is **claimed** by setting `claimed: <name>` in its header, before any work.
 The **frontier** is every ticket that is `open`, unclaimed, and whose `blocked-by` are all `closed`.
 
+**05 is closed ahead of its `blocked-by`.** It needed 04 only to confirm Coverage is a
+category, which this map already asserts, and the bands it produced do not depend on
+02's inventory. 04 and 07 should read its verdict before they are worked; the ticket
+says what it did not do.
+
 ## Destination
 
 A rubric specification for the content pass: a category set grounded in what the
@@ -13,6 +18,14 @@ same resume land within a stated tolerance of each other.
 
 This map produces the **spec and the decisions behind it**. Implementing it in
 `ats/prompts.py`, `ats/score.py` and the digest pipeline is a separate effort.
+
+## Spec so far
+
+- [coverage-bands.md](coverage-bands.md) — the first category's bands (05).
+- [coverage-bands-agreement.md](coverage-bands-agreement.md) — what they measured,
+  and the verdict on the format (05).
+- [coverage/](coverage/) — the provisional requirement set and recorded judge verdicts
+  the measurement ran on. Replaced by 02.
 
 ## Notes
 
@@ -24,6 +37,12 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   fixtures in `tests/fixtures/` plus the user's real resume. Above **8 points** is a
   failure; 5–8 is a pass that wants another look. Sample twice per resume per provider so
   sampling noise is separable from genuine provider disagreement.
+  **Not yet run against anything** — it needs 06 and provider credentials. 05 measured
+  a two-judge proxy only, and says so.
+  Two things 05 found out about the test itself: the fixture set cannot exercise a
+  content rubric (four of the seven carry the same bullets, three carry almost nothing,
+  none has agent, prompt or customer-facing content), and a tolerance stated in points
+  on a 0–100 scale is far stricter than it reads — see the decisions below.
 - **Evidence rule**: every category must be scoreable from observable evidence in the
   resume. A category no judge can point at evidence for is what produces a 22-point spread.
 - Corpus is personal data (`corpus/jds/user/`), six verbatim postings.
@@ -42,6 +61,25 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 - **Stable bands, living inputs** (provisional): band definitions are prose that changes
   only on deliberate revision; the corpus supplies which skills get checked. Revisited
   only if future postings consistently clash with the bands.
+  **Held up under 05**: the Coverage bands never name a skill, so the requirement set
+  can be replaced wholesale without touching them.
+- **A band boundary must be countable, not weighed** (05). A boundary converges when
+  both judges can point at the fact that settles it — a span is present or absent, it
+  sits inside a role or outside one. A boundary that asks a judge to weigh something
+  (is this impressive, does this read as senior) does not converge, and the band format
+  does not rescue it. This is the test a category must pass before bands are written
+  for it.
+- **A category is withheld, never guessed, when the parse cannot carry it** (05).
+  Bands that talk about resume structure have nothing to bind to on a document whose
+  structure did not survive extraction. Scoring those anyway was the largest measured
+  source of judge disagreement — 19.7 points against a 5-point tolerance — and it
+  charges one document twice for a defect the parser gate already found.
+- **Coarser bands cost agreement, they do not buy it** (05, measured). On a fixed
+  0–100 scale, collapsing four levels to three raised the worst single-step cost from
+  5.7 to 9.3 points. Agreement comes from decidable boundaries, not forgiving levels.
+- **Headroom comes from a wide, flat requirement set** (05). Nine requirements
+  weighted 6…2 give the heaviest 14.3 of 100 points, so the 5-point tolerance affords
+  zero judgment calls. Fifteen weighted evenly would give each 6.7 and absorb two.
 
 ## Not yet specified
 

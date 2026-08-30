@@ -1,0 +1,129 @@
+{
+  "provenance": "Hand-derived for ticket 05 by reading the six postings in corpus/jds/user/ verbatim. PROVISIONAL: ticket 02 produces the real inventory and replaces this file wholesale. The band definitions in ../coverage-bands.md are written not to depend on which requirements are in here -- that is the 'stable bands, living inputs' decision, and this file is the test of it.",
+  "document_count": 6,
+  "requirements": [
+    {
+      "id": "production-llm-systems",
+      "statement": "Has built LLM or ML systems that reached production and stayed owned after launch.",
+      "doc_frequency": 6,
+      "taxonomy_term": null,
+      "aliases": ["production", "in production", "shipped", "ship", "deployed", "deployment", "launch", "serving", "serve", "live traffic", "req/min", "requests per second", "rps", "qps", "uptime", "on-call", "oncall", "incident", "p99", "p95"],
+      "quotes": {
+        "American Express": "production agentic AI systems that operate on real financial data and serve real customers",
+        "Anthropic": "guide a focused portfolio of customers from technical discovery through successful deployment",
+        "Edra": "prototype solutions, and ship them to production",
+        "Fluidstack": "You've shipped ML or LLM features to production and owned them after launch.",
+        "OpenAI": "Analyze failures in production and systematically improve robustness and reliability.",
+        "Ramp": "A track record of shipping polished, production-grade product experiences"
+      }
+    },
+    {
+      "id": "agents-tool-use",
+      "statement": "Has built agentic systems: tool-calling, orchestration, or software that acts rather than advises.",
+      "doc_frequency": 6,
+      "taxonomy_term": "llm_systems/agents",
+      "aliases": ["agent", "agents", "agentic", "tool use", "tool-use", "tool calling", "tool-calling", "function calling", "orchestration", "planning loop", "mcp", "autonomous", "multi-step"],
+      "quotes": {
+        "American Express": "Build and extend agentic AI workflows that reason over context, call tools, and perform actions",
+        "Anthropic": "agent development and frameworks",
+        "Edra": "You have experience building agents and autonomous systems",
+        "Fluidstack": "Ship agentic systems with real guardrails, authorization, audit, and evals",
+        "OpenAI": "Design and iterate on agent behaviors across real-world coding tasks",
+        "Ramp": "agentic analysis, month-end close, and exploratory data experiences"
+      }
+    },
+    {
+      "id": "cross-functional-work",
+      "statement": "Has worked directly with product, design, or customers, not only inside an engineering team.",
+      "doc_frequency": 6,
+      "taxonomy_term": null,
+      "aliases": ["cross-functional", "stakeholder", "product manager", "product team", "customer", "customers", "client", "partnered", "partner with", "collaborated", "workshop", "presented", "design partner"],
+      "quotes": {
+        "American Express": "Collaborate closely with product and design partners",
+        "Anthropic": "Exceptional communication skills to convey technical concepts to diverse stakeholders",
+        "Edra": "Work directly with enterprise customers to identify new problems",
+        "Fluidstack": "Partner with data engineering and product pods",
+        "OpenAI": "Work with product teams to shape user-facing agent experiences",
+        "Ramp": "Partner on API and backend design so the full stack serves the product"
+      }
+    },
+    {
+      "id": "evaluation",
+      "statement": "Has built evaluation harnesses or measured model quality before users did.",
+      "doc_frequency": 5,
+      "taxonomy_term": "evaluation/eval-harness",
+      "aliases": ["eval", "evals", "evaluation", "eval harness", "evaluation harness", "benchmark", "golden set", "golden dataset", "held-out", "labelled", "labeled", "ground truth", "groundedness", "faithfulness", "regression suite", "a/b test", "offline metric", "annotation", "recall@", "ndcg", "mrr"],
+      "quotes": {
+        "American Express": "Contribute to shared AI infrastructure such as LLM services, orchestration components, and evaluation or monitoring tooling",
+        "Anthropic": "developing evaluation frameworks",
+        "Edra": "Build reliability and confidence systems-evaluation frameworks, confidence scoring",
+        "Fluidstack": "You've built evaluation harnesses that told you the truth about model quality before users did.",
+        "OpenAI": "develop and run evals to measure agent performance, regressions, failure modes, and edge cases"
+      }
+    },
+    {
+      "id": "reliability-guardrails",
+      "statement": "Has made an AI system safe to trust: guardrails, authorization, audit, monitoring, or escalation to a human.",
+      "doc_frequency": 5,
+      "taxonomy_term": null,
+      "aliases": ["guardrail", "guardrails", "safety", "audit", "auditability", "authorization", "monitoring", "observability", "drift", "sla", "slo", "reliability", "fallback", "escalate", "escalation", "human-in-the-loop", "confidence score", "governed", "trustworthy"],
+      "quotes": {
+        "American Express": "All systems are built to meet high standards for reliability, security, and auditability",
+        "Anthropic": "maintaining our high standards for safety and reliability",
+        "Edra": "logic for when to automate vs. when to escalate to a human",
+        "Fluidstack": "Ship agentic systems with real guardrails, authorization, audit, and evals",
+        "Ramp": "a fast, trustworthy, governed data layer that AI agents can work with"
+      }
+    },
+    {
+      "id": "backend-language",
+      "statement": "Writes production-quality code in Python or TypeScript.",
+      "doc_frequency": 5,
+      "taxonomy_term": "foundation/python",
+      "aliases": ["python", "typescript", "javascript", "react", "fastapi", "flask", "django", "node"],
+      "quotes": {
+        "American Express": "Solid engineering fundamentals in at least one backend language (Python, Go, or TypeScript)",
+        "Anthropic": "Strong programming skills with proficiency in Python or TypeScript",
+        "Fluidstack": "You write production-quality code and work fluently with AI coding tools.",
+        "OpenAI": "Are strong in Python and comfortable with modern ML tooling.",
+        "Ramp": "Deep frontend expertise: TypeScript, React, and sophisticated state management"
+      }
+    },
+    {
+      "id": "prompt-context",
+      "statement": "Has improved a model's behaviour through prompting or context construction, not only through training.",
+      "doc_frequency": 4,
+      "taxonomy_term": "llm_systems/prompt-engineering",
+      "aliases": ["prompt", "prompts", "prompting", "prompt engineering", "system prompt", "few-shot", "context window", "context engineering", "context construction", "token budget"],
+      "quotes": {
+        "American Express": "Exposure to LLM tooling, prompt engineering, RAG, or agent frameworks",
+        "Anthropic": "Production experience with LLMs including advanced prompt engineering",
+        "Edra": "prompt optimization and context engineering",
+        "OpenAI": "Improve performance through prompting, tool-use strategies, context construction"
+      }
+    },
+    {
+      "id": "ai-assisted-dev",
+      "statement": "Uses AI coding models and agentic development tools as a normal part of shipping.",
+      "doc_frequency": 3,
+      "taxonomy_term": null,
+      "aliases": ["ai coding", "ai-assisted", "coding agent", "copilot", "cursor", "claude code", "codex", "agentic development", "agentic workflows"],
+      "quotes": {
+        "American Express": "Use of AI-assisted and agentic development tools for design, implementation, testing, debugging, and refactoring",
+        "Fluidstack": "work fluently with AI coding tools",
+        "Ramp": "Fluency with the latest AI coding models and agentic development workflows. This is how the team works"
+      }
+    },
+    {
+      "id": "retrieval-rag",
+      "statement": "Has built retrieval over real documents or data that a model reads from.",
+      "doc_frequency": 2,
+      "taxonomy_term": "llm_systems/rag",
+      "aliases": ["rag", "retrieval-augmented", "retrieval augmented", "retrieval", "vector", "pgvector", "embedding", "embeddings", "reranker", "rerank", "chunk", "chunking", "bm25", "hybrid search", "knowledge base"],
+      "quotes": {
+        "American Express": "Help implement and maintain retrieval-augmented generation (RAG) pipelines over financial data",
+        "Fluidstack": "You've worked hands-on with LLM APIs, fine-tuning, or retrieval systems on real business problems."
+      }
+    }
+  ]
+}

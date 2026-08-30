@@ -1,0 +1,168 @@
+{
+  "judge": "model-claude",
+  "recorded": "2026-08-30",
+  "method": "One model judge (this session's Claude) reading each fixture's extracted text and applying the band definitions in ../../coverage-bands.md verbatim, with no sight of the deterministic judge's output. Written down rather than called live because ticket 06 is not built and no provider credentials exist in this environment; the file shape is what 06 should emit per (provider, sample) so the same probe can read real runs.",
+  "fixtures": {
+    "strong": {
+      "levels": {
+        "production-llm-systems": "L3",
+        "agents-tool-use": "L0",
+        "cross-functional-work": "L0",
+        "evaluation": "L3",
+        "reliability-guardrails": "L3",
+        "backend-language": "L3",
+        "prompt-context": "L0",
+        "ai-assisted-dev": "L0",
+        "retrieval-rag": "L3"
+      },
+      "evidence": {
+        "production-llm-systems": "Cut p99 inference latency 380ms to 95ms ... holding 1.2k req/min on 4 A10Gs -- serving load, in a role, with the before/after",
+        "agents-tool-use": "no agent, tool-calling or orchestration language anywhere",
+        "cross-functional-work": "'our RAG pipeline' is team language; no product, customer or design partner is named",
+        "evaluation": "Owned the eval harness for our RAG pipeline: 900 labelled QA pairs ... 71% to 88%",
+        "reliability-guardrails": "Wrote the retraining loop and drift monitor that caught a 9-point AUC regression before it reached production",
+        "backend-language": "Ported model serving from Flask to FastAPI with async batching; throughput went from 40 to 310 requests per second",
+        "prompt-context": "no prompting or context-construction language",
+        "ai-assisted-dev": "no AI coding tool named",
+        "retrieval-rag": "RAG pipeline ... fixing chunk overlap and adding a reranker, with groundedness numbers"
+      }
+    },
+    "slop": {
+      "levels": {
+        "production-llm-systems": "L0",
+        "agents-tool-use": "L0",
+        "cross-functional-work": "L1",
+        "evaluation": "L0",
+        "reliability-guardrails": "L0",
+        "backend-language": "L1",
+        "prompt-context": "L0",
+        "ai-assisted-dev": "L0",
+        "retrieval-rag": "L1"
+      },
+      "evidence": {
+        "production-llm-systems": "nothing shipped, deployed or served is claimed",
+        "agents-tool-use": "absent",
+        "cross-functional-work": "'empower cross-functional stakeholders' names the requirement inside a role but describes no action and names no partner -- naming is not placing, so it does not reach L2",
+        "evaluation": "absent",
+        "reliability-guardrails": "absent",
+        "backend-language": "'Python' in the skills list only",
+        "prompt-context": "absent",
+        "ai-assisted-dev": "absent",
+        "retrieval-rag": "'RAG' in the skills list only"
+      }
+    },
+    "two_column": {
+      "note": "Recorded so --score-degraded reproduces the failing measurement. The document is withheld by default: its roles do not survive extraction.",
+      "levels": {
+        "production-llm-systems": "L3",
+        "agents-tool-use": "L0",
+        "cross-functional-work": "L0",
+        "evaluation": "L3",
+        "reliability-guardrails": "L0",
+        "backend-language": "L1",
+        "prompt-context": "L0",
+        "ai-assisted-dev": "L0",
+        "retrieval-rag": "L1"
+      },
+      "evidence": {
+        "production-llm-systems": "reading across the interleaved columns: 'AI Engineer, Northwind Data' / 'Cut p99 latency 380ms to 95ms' / 'Shipped LoRA fine-tune, +11 pts exact match'",
+        "agents-tool-use": "absent",
+        "cross-functional-work": "absent",
+        "evaluation": "Built eval harness, 71% to 88% groundedness on 900 QA pairs",
+        "reliability-guardrails": "absent",
+        "backend-language": "'Python' in the skills column, not in any bullet",
+        "prompt-context": "absent",
+        "ai-assisted-dev": "absent",
+        "retrieval-rag": "'pgvector' in the skills column only"
+      }
+    },
+    "hidden_text": {
+      "note": "Recorded so --score-degraded reproduces the failing measurement. Withheld by default: an EXPERIENCE heading with no dated role under it.",
+      "levels": {
+        "production-llm-systems": "L3",
+        "agents-tool-use": "L0",
+        "cross-functional-work": "L0",
+        "evaluation": "L0",
+        "reliability-guardrails": "L0",
+        "backend-language": "L0",
+        "prompt-context": "L0",
+        "ai-assisted-dev": "L0",
+        "retrieval-rag": "L0"
+      },
+      "evidence": {
+        "production-llm-systems": "Built and shipped an LLM serving path on vLLM, 380ms to 95ms p99 -- under an EXPERIENCE heading, with the before/after",
+        "agents-tool-use": "absent from the visible text",
+        "cross-functional-work": "absent from the visible text",
+        "evaluation": "absent from the visible text",
+        "reliability-guardrails": "absent from the visible text",
+        "backend-language": "absent from the visible text",
+        "prompt-context": "absent from the visible text",
+        "ai-assisted-dev": "absent from the visible text",
+        "retrieval-rag": "absent from the visible text; the injected white-on-white span is not read"
+      }
+    },
+    "scanned": {
+      "note": "No text layer. Recorded as all-absent only so the file is complete; the probe withholds this document for every judge.",
+      "levels": {
+        "production-llm-systems": "L0",
+        "agents-tool-use": "L0",
+        "cross-functional-work": "L0",
+        "evaluation": "L0",
+        "reliability-guardrails": "L0",
+        "backend-language": "L0",
+        "prompt-context": "L0",
+        "ai-assisted-dev": "L0",
+        "retrieval-rag": "L0"
+      },
+      "evidence": {}
+    },
+    "no_phone": {
+      "levels": {
+        "production-llm-systems": "L3",
+        "agents-tool-use": "L0",
+        "cross-functional-work": "L0",
+        "evaluation": "L3",
+        "reliability-guardrails": "L3",
+        "backend-language": "L3",
+        "prompt-context": "L0",
+        "ai-assisted-dev": "L0",
+        "retrieval-rag": "L3"
+      },
+      "evidence": {
+        "production-llm-systems": "same bullets as `strong`; the missing phone number is a recruiter-gate defect and changes nothing a Coverage band reads",
+        "agents-tool-use": "absent",
+        "cross-functional-work": "absent",
+        "evaluation": "Owned the eval harness ... 900 labelled QA pairs ... 71% to 88%",
+        "reliability-guardrails": "drift monitor that caught a 9-point AUC regression before it reached production",
+        "backend-language": "Ported model serving from Flask to FastAPI ... 40 to 310 requests per second",
+        "prompt-context": "absent",
+        "ai-assisted-dev": "absent",
+        "retrieval-rag": "RAG pipeline ... chunk overlap ... reranker"
+      }
+    },
+    "buried_evidence": {
+      "levels": {
+        "production-llm-systems": "L3",
+        "agents-tool-use": "L0",
+        "cross-functional-work": "L0",
+        "evaluation": "L3",
+        "reliability-guardrails": "L0",
+        "backend-language": "L0",
+        "prompt-context": "L0",
+        "ai-assisted-dev": "L0",
+        "retrieval-rag": "L3"
+      },
+      "evidence": {
+        "production-llm-systems": "Cut p99 inference latency ... holding 1.2k req/min on 4 A10Gs",
+        "agents-tool-use": "absent",
+        "cross-functional-work": "absent",
+        "evaluation": "Owned the eval harness ... 71% to 88%",
+        "reliability-guardrails": "the drift-monitor bullet lives in the second role, which this fixture does not have",
+        "backend-language": "no skills section and no language named in any bullet",
+        "prompt-context": "absent",
+        "ai-assisted-dev": "absent",
+        "retrieval-rag": "RAG pipeline ... chunk overlap ... reranker"
+      }
+    }
+  }
+}
