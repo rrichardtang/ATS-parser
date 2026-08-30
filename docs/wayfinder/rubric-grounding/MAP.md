@@ -189,16 +189,20 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   proxy and says so.
 - **Whether the criteria can carry the report as well as the score.** 10 made the
   criteria the only vocabulary the content model has, so a defect no criterion asks
-  about is now unreportable. 04 chose categories on separability and document frequency;
+  about is now unreportable — and a category with no criteria at all is silence rather
+  than a vague score, which is what turns 11 from tidy-up into the critical path. 04 chose categories on separability and document frequency;
   exhaustiveness over defects is a demand neither 04 nor 05 was asked to meet, and it is
   the likeliest reason 10 gets reopened. The baseline names what the judges keep
   reaching for — evaluation methodology, deployment reach, scale/latency/cost — so the
   remaining criteria have a target to hit.
-- **Criteria for the other four categories.** 05 wrote one, deliberately. The
-  destination needs all five, and nothing tracks the remaining four —
-  `Agentic systems` and `Evaluation rigour` should transfer nearly directly per 05,
-  `AI-assisted coding fluency` has no rule channel so criterion agreement is its only
-  agreement, and `Resume craft` is the one 05 predicts will not converge.
+- ~~**Criteria for the other four categories.**~~ Now tracked, and it was the largest
+  untracked piece of work on the map:
+  [Criteria for the three remaining behaviour categories](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md)
+  and [Criteria for Resume craft](tickets/12-criteria-for-resume-craft.md). Split
+  because 05 predicts `Resume craft` will not converge and the other three should not
+  wait on it. 11 takes `AI-assisted coding fluency` **first** per 05 — `rule_share` 0
+  means criterion agreement is the only agreement it has, so nothing masks a bad
+  criterion — then `Evaluation rigour`, then `Agentic systems`.
 - **03's second experiment** — band-only versus band-plus-a-point-inside-it. Specified
   in `production-ownership-criteria.md`, one prompt variant and one harness run, not
   yet executed.
@@ -218,7 +222,8 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   (`Gate.RECRUITER`) with `Writing quality` (`Gate.MANAGER`) and must pick one.
   `report.py` groups findings by gate and `score.py` derives the parser and human
   sub-scores from it, so this moves visible output. A reporting question, not a rubric
-  one, which is why 04 left it.
+  one, which is why 04 left it — carried by
+  [12](tickets/12-criteria-for-resume-craft.md), the ticket with the context to close it.
 - **The weight arithmetic.** 04 fixed the principle (df sets the derived block, the
   rest is authored) but not the numbers: how the 100 points split between the derived
   and authored blocks, and whether df maps to weight proportionally or through tiers.
