@@ -22,6 +22,17 @@ MAX_REWRITE_TARGETS = 6
 CATEGORY_BY_NAME = {c.value.lower(): c for c in Category}
 
 
+def _rule_id(prefix: str, pattern: str | None, fallback: str) -> str:
+    """`<prefix>/<the defect the model named>`.
+
+    A rule id is what the report groups and the ledger totals by, so it has to
+    name the KIND of defect. A single id shared by every finding of a pass makes
+    unrelated defects one card titled after whichever scored highest.
+    """
+    slug = (pattern or "").strip().lower().replace(" ", "-")[:40].strip("-")
+    return f"{prefix}/{slug or fallback}"
+
+
 def _category(name: str) -> Category | None:
     return CATEGORY_BY_NAME.get((name or "").strip().lower())
 
@@ -78,7 +89,7 @@ def content_pass(
             seen.add(key)
             category = _category(item.get("category", "")) or Category.RELEVANCE
             findings.append(Finding(
-                rule_id="llm/content",
+                rule_id=_rule_id("llm", item.get("pattern"), "content"),
                 category=category,
                 severity=Severity.MAJOR,
                 message=message[:200],
@@ -141,7 +152,7 @@ def slop_pass(
                 locator = loc
                 break
         findings.append(Finding(
-            rule_id=f"slop/{(item.get('pattern') or 'pattern').strip().lower().replace(' ', '-')[:40]}",
+            rule_id=_rule_id("slop", item.get("pattern"), "pattern"),
             category=Category.WRITING,
             severity=Severity.MINOR,
             message=f"{item.get('pattern', 'slop pattern')}: “{quote[:90]}”",

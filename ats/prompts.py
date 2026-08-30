@@ -50,7 +50,10 @@ Return JSON only:
 {{
   "categories": {{"<category name>": {{"score": <0-100>, "why": "<one line>"}}}},
   "findings": [
-    {{"message": "<the defect, one sentence>",
+    {{"pattern": "<2-4 word name for the KIND of defect, reused verbatim across
+                  every finding of that kind, e.g. unverified outcome,
+                  activity not outcome, missing scale>",
+      "message": "<the defect in this specific place, one sentence>",
       "fix": "<what to do>",
       "evidence": "<exact quote from the resume>",
       "locator": "<e.g. exp[0].bullet[2] or summary>",

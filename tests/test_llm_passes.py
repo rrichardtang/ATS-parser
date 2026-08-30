@@ -10,6 +10,7 @@ import pytest
 from ats import llm, passes
 from ats.llm import Provider
 from ats.models import Category, Finding, Severity
+from ats.sections import Resume
 from ats.pipeline import RunInput, analyze
 
 CONTENT_REPLY = json.dumps({
@@ -254,3 +255,48 @@ def test_unrewritable_locators_do_not_consume_the_target_budget(monkeypatch):
     )
 
     assert result.meta.get("reason") != "no bullets needed rewriting"
+
+
+def test_content_findings_are_keyed_by_the_defect_the_model_named(monkeypatch):
+    """Distinct content defects must not collapse into one card and one ledger row.
+
+    Every content finding used to carry rule_id "llm/content", so Report.grouped
+    and the ledger both treated unrelated defects as instances of one rule and
+    titled the lot after whichever scored highest.
+    """
+    reply = json.dumps({"categories": {}, "findings": [
+        {"pattern": "unverified outcome", "message": "No metric for routing",
+         "fix": "Add one.", "evidence": "cutting inference passes",
+         "locator": "exp[0].bullet[1]", "category": "Credibility & verifiability"},
+        {"pattern": "unverified outcome", "message": "No metric for the mapping tool",
+         "fix": "Add one.", "evidence": "Built a concurrent mapping tool",
+         "locator": "exp[0].bullet[4]", "category": "Credibility & verifiability"},
+        {"pattern": "activity not outcome", "message": "Lists duties, not results",
+         "fix": "State the result.", "evidence": "Owned GLIDE-ME end to end",
+         "locator": "exp[0].bullet[0]", "category": "Impact & quantification"},
+    ]})
+    monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: reply))
+
+    result = passes.content_pass(
+        [Provider("anthropic", "k", "m")], Resume(), "text", "", [], samples=1,
+        temperature=0.0,
+    )
+
+    assert {f.rule_id for f in result.data} == {
+        "llm/unverified-outcome", "llm/activity-not-outcome",
+    }
+
+
+def test_content_findings_without_a_pattern_still_get_an_id(monkeypatch):
+    """The model may omit the label; the pass must not produce an empty rule id."""
+    reply = json.dumps({"categories": {}, "findings": [
+        {"message": "No metric", "fix": "Add one.", "evidence": "cutting passes",
+         "locator": "exp[0].bullet[1]", "category": "Credibility & verifiability"},
+    ]})
+    monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: reply))
+
+    result = passes.content_pass(
+        [Provider("anthropic", "k", "m")], Resume(), "text", "", [], samples=1,
+        temperature=0.0,
+    )
+    assert [f.rule_id for f in result.data] == ["llm/content"]

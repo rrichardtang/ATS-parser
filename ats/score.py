@@ -224,9 +224,14 @@ def _build_ledger(
         cost = sum(i.points for i in items)
         if cost < 0.05:
             continue
-        label = items[0].message if len(items) == 1 else f"{items[0].message.split(':')[0]} (x{len(items)})"
+        # One finding speaks for itself. Several do not: naming the row after any
+        # one of them presents a group under a single member's title. Truncate
+        # first so the count cannot be cut off, which is what hid the aggregation.
+        label = _truncate(items[0].message, 74)
+        if len(items) > 1:
+            label = f"{_truncate(items[0].message.split(':')[0], 62)} (x{len(items)})"
         rows.append(LedgerRow(
-            label=_truncate(label, 74), points=-round(cost, 1),
+            label=label, points=-round(cost, 1),
             rule_id=rule_id, category=category,
         ))
     rows.sort(key=lambda r: r.points)

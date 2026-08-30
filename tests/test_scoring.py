@@ -125,3 +125,38 @@ def test_points_never_exceed_what_was_actually_lost():
                      provenance=Provenance.PARSER_MECHANICS) for i in range(40)]
     report = build(many)
     assert abs(sum(f.points for f in report.findings) - (100 - report.composite)) < 0.5
+
+
+def test_aggregated_ledger_row_keeps_its_count_visible():
+    """A row standing for several findings must say so, whatever its label length.
+
+    The count used to be appended before truncation, so a long first message cut
+    it off and the row read as a single finding -- under that one finding's title.
+    """
+    long_message = (
+        "The routing optimization reports fewer inference passes but does not show "
+        "whether routing quality, answer quality, latency, or cost improved"
+    )
+    findings = []
+    for index in range(7):
+        finding = _finding(rule_id="llm/unverified-outcome", category=Category.CREDIBILITY,
+                           severity=Severity.MAJOR)
+        finding.message = f"{long_message} ({index})"
+        findings.append(finding)
+
+    row = next(r for r in build(findings).ledger if r.rule_id == "llm/unverified-outcome")
+    assert row.label.endswith("(x7)")
+
+
+def test_distinct_rule_ids_get_their_own_ledger_rows():
+    """Two unrelated defects must not total under one row titled after either."""
+    first = _finding(rule_id="llm/unverified-outcome", category=Category.CREDIBILITY,
+                     severity=Severity.MAJOR)
+    first.message = "No outcome is shown for the routing work"
+    second = _finding(rule_id="llm/missing-scale", category=Category.CREDIBILITY,
+                      severity=Severity.MAJOR)
+    second.message = "No scale is given for the pipeline"
+
+    labels = {r.rule_id: r.label for r in build([first, second]).ledger}
+    assert labels["llm/unverified-outcome"] == first.message
+    assert labels["llm/missing-scale"] == second.message
