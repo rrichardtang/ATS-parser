@@ -9,6 +9,7 @@ import pytest
 
 from ats import llm, passes
 from ats.llm import Provider
+from ats.models import Category, Finding, Severity
 from ats.pipeline import RunInput, analyze
 
 CONTENT_REPLY = json.dumps({
@@ -220,3 +221,36 @@ def test_malformed_json_is_repaired_then_used(monkeypatch):
     monkeypatch.setattr(llm, "_dispatch", _dispatch)
     result = llm.call(Provider("anthropic", "k", "m"), "sys", "user")
     assert result == {"findings": []}
+
+
+def test_unrewritable_locators_do_not_consume_the_target_budget(monkeypatch):
+    """Heading and invented locators must not crowd out real bullets.
+
+    The top-scoring findings are frequently on headings or on indices the model
+    made up. Cutting to MAX_REWRITE_TARGETS before checking which locators resolve
+    let those take every slot, and the pass reported "no bullets needed rewriting"
+    while real, defective bullets sat further down the ranking.
+    """
+    from ats.sections import Resume, Role
+
+    resume = Resume(roles=[Role(heading="Eng", bullets=["Owned GLIDE-ME end to end"])])
+    junk = [
+        Finding(
+            rule_id="llm/content", category=Category.RELEVANCE, severity=Severity.MAJOR,
+            message="m", fix="f", evidence="e", locator=locator, points=50.0,
+        )
+        for locator in ["exp[0].heading", *(f"exp[9].bullet[{i}]" for i in range(8))]
+    ]
+    real = Finding(
+        rule_id="llm/content", category=Category.RELEVANCE, severity=Severity.MAJOR,
+        message="No outcome", fix="Name the metric.", evidence="Owned GLIDE-ME",
+        locator="exp[0].bullet[0]", points=1.0,
+    )
+
+    monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: REWRITE_REPLY))
+    result = passes.rewrite_pass(
+        [Provider("anthropic", "k", "m")], resume, junk + [real],
+        objectives=1, samples=1, use_judge=False, margin=1.0, temperature=0.0,
+    )
+
+    assert result.meta.get("reason") != "no bullets needed rewriting"

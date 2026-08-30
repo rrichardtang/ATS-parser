@@ -180,12 +180,16 @@ def rewrite_pass(
     unpolished forms are handed to the same final gate (ensemble.select_rewrite)
     that plain best-of-N uses, so polishing can only win by actually being better.
     """
+    # A finding is rewritable only if its locator names a bullet that actually
+    # exists. Resolve that before the top-N cut, not after: a heading locator or an
+    # index the model invented would otherwise take a slot and then be dropped,
+    # leaving the pass with fewer targets than budgeted -- or none at all.
+    bullet_text = {loc: text for loc, text in resume.bullets if text}
     by_locator: dict[str, list[Finding]] = {}
     for finding in findings:
-        if finding.locator.startswith("exp["):
+        if finding.locator in bullet_text:
             by_locator.setdefault(finding.locator, []).append(finding)
 
-    bullet_text = dict(resume.bullets)
     ranked = sorted(
         by_locator.items(),
         key=lambda kv: -sum(f.points or 1 for f in kv[1]),
@@ -194,11 +198,10 @@ def rewrite_pass(
     targets = [
         {
             "locator": locator,
-            "bullet": bullet_text.get(locator, ""),
+            "bullet": bullet_text[locator],
             "defects": [f"{f.message} -> {f.fix}" for f in items][:5],
         }
         for locator, items in ranked
-        if bullet_text.get(locator)
     ]
     if not targets:
         return ensemble.PassResult(meta={"reason": "no bullets needed rewriting"})
