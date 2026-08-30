@@ -9,6 +9,7 @@ Every pass degrades on its own: if one fails, the rest of the report still rende
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 
 from . import ensemble, prompts
 from .llm import LLMError, Provider, call
@@ -37,6 +38,85 @@ def _category(name: str) -> Category | None:
     return CATEGORY_BY_NAME.get((name or "").strip().lower())
 
 
+@dataclass
+class ContentJudgment:
+    """One provider's one sample of the content pass, before anything is folded.
+
+    `categories` holds the model's raw entry per category -- `{"score": 62, "why":
+    ...}` today -- rather than a parsed number, so a caller that cares about *what*
+    the model authored does not have to re-parse the reply. Ticket 05 may add a band
+    label alongside the score; this shape carries it without a change here.
+
+    Kept per-sample because sampling noise and genuine provider disagreement are
+    only separable while the samples are still apart. content_pass folds them --
+    within a provider by averaging, then across providers in combine_scores -- and
+    by the time a score reaches the report every disagreement that produced it is
+    gone. ats/agreement.py is the reason the unfolded form exists.
+    """
+
+    provider: str
+    sample: int
+    categories: dict[str, dict]
+    findings: list[Finding]
+
+
+def content_judgments(
+    providers: list[Provider],
+    resume: Resume,
+    full_text: str,
+    jd_text: str,
+    deterministic: list[Finding],
+    samples: int,
+    temperature: float,
+    digest: dict | None = None,
+) -> tuple[list[ContentJudgment], list[str]]:
+    """Every (provider, sample) reply to the content prompt, parsed but not combined."""
+    summary = [f"{f.rule_id}: {f.message}" for f in deterministic]
+    user = prompts.content_user(resume, full_text, jd_text, summary, digest)
+
+    jobs = []
+    for provider in providers:
+        for index in range(samples):
+            temp = 0.0 if samples == 1 else temperature
+            jobs.append(
+                lambda p=provider, i=index, t=temp: (
+                    p.name, i, call(p, prompts.CONTENT_SYSTEM, user, t)
+                )
+            )
+
+    raw, errors = ensemble.gather(jobs)
+
+    judgments: list[ContentJudgment] = []
+    for provider_name, index, payload in raw:
+        categories: dict[str, dict] = {}
+        for name, entry in (payload.get("categories") or {}).items():
+            category = _category(name)
+            if category and isinstance(entry, dict):
+                categories[category.value] = entry
+
+        findings: list[Finding] = []
+        for item in payload.get("findings") or []:
+            evidence = (item.get("evidence") or "").strip()
+            message = (item.get("message") or "").strip()
+            if not evidence or not message:
+                continue  # unevidenced claims are not checkable
+            findings.append(Finding(
+                rule_id=_rule_id("llm", item.get("pattern"), "content"),
+                category=_category(item.get("category", "")) or Category.RELEVANCE,
+                severity=Severity.MAJOR,
+                message=message[:200],
+                fix=(item.get("fix") or "").strip()[:200],
+                evidence=evidence[:200],
+                locator=(item.get("locator") or "").strip()[:40],
+                provenance=Provenance.HEURISTIC,
+                source=f"llm:{provider_name}",
+            ))
+
+        judgments.append(ContentJudgment(provider_name, index, categories, findings))
+
+    return judgments, errors
+
+
 def content_pass(
     providers: list[Provider],
     resume: Resume,
@@ -48,57 +128,35 @@ def content_pass(
     digest: dict | None = None,
 ) -> ensemble.PassResult:
     """Substance, ownership, seniority fit, missing information, category scores."""
-    summary = [f"{f.rule_id}: {f.message}" for f in deterministic]
-    user = prompts.content_user(resume, full_text, jd_text, summary, digest)
+    judgments, errors = content_judgments(
+        providers, resume, full_text, jd_text, deterministic, samples,
+        temperature, digest,
+    )
 
-    jobs = []
-    for provider in providers:
-        for index in range(samples):
-            temp = 0.0 if samples == 1 else temperature
-            jobs.append(
-                lambda p=provider, t=temp: (p.name, call(p, prompts.CONTENT_SYSTEM, user, t))
-            )
-
-    raw, errors = ensemble.gather(jobs)
     per_provider: dict[str, dict[str, float]] = {}
     findings: list[Finding] = []
     seen: set[tuple[str, str]] = set()
 
-    for provider_name, payload in raw:
+    for judgment in judgments:
         scores = {}
-        for name, entry in (payload.get("categories") or {}).items():
-            category = _category(name)
-            if category and isinstance(entry, dict) and "score" in entry:
-                try:
-                    scores[category.value] = float(entry["score"])
-                except (TypeError, ValueError):
-                    continue
+        for name, entry in judgment.categories.items():
+            if "score" not in entry:
+                continue
+            try:
+                scores[name] = float(entry["score"])
+            except (TypeError, ValueError):
+                continue
         if scores:
-            existing = per_provider.setdefault(provider_name, {})
+            existing = per_provider.setdefault(judgment.provider, {})
             for key, value in scores.items():
                 existing[key] = (existing.get(key, value) + value) / 2 if key in existing else value
 
-        for item in payload.get("findings") or []:
-            evidence = (item.get("evidence") or "").strip()
-            message = (item.get("message") or "").strip()
-            if not evidence or not message:
-                continue  # unevidenced claims are not checkable
-            key = (message.lower()[:60], evidence.lower()[:60])
+        for finding in judgment.findings:
+            key = (finding.message.lower()[:60], finding.evidence.lower()[:60])
             if key in seen:
                 continue
             seen.add(key)
-            category = _category(item.get("category", "")) or Category.RELEVANCE
-            findings.append(Finding(
-                rule_id=_rule_id("llm", item.get("pattern"), "content"),
-                category=category,
-                severity=Severity.MAJOR,
-                message=message[:200],
-                fix=(item.get("fix") or "").strip()[:200],
-                evidence=evidence[:200],
-                locator=(item.get("locator") or "").strip()[:40],
-                provenance=Provenance.HEURISTIC,
-                source=f"llm:{provider_name}",
-            ))
+            findings.append(finding)
 
     scores, meta = ensemble.combine_scores(per_provider) if per_provider else ({}, {})
     return ensemble.PassResult(
