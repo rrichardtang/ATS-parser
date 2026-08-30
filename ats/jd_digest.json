@@ -11,30 +11,30 @@
   "required": [
     {
       "term": "foundation/python",
-      "doc_frequency": 1
-    },
-    {
-      "term": "foundation/cloud",
-      "doc_frequency": 1
+      "doc_frequency": 3
     },
     {
       "term": "foundation/typescript",
-      "doc_frequency": 1
+      "doc_frequency": 3
     },
     {
       "term": "llm_systems/prompt-engineering",
-      "doc_frequency": 1
-    },
-    {
-      "term": "llm_systems/agents",
-      "doc_frequency": 1
-    },
-    {
-      "term": "core_ml/fine-tuning",
-      "doc_frequency": 1
+      "doc_frequency": 3
     },
     {
       "term": "evaluation/eval-harness",
+      "doc_frequency": 3
+    },
+    {
+      "term": "llm_systems/agents",
+      "doc_frequency": 2
+    },
+    {
+      "term": "core_ml/fine-tuning",
+      "doc_frequency": 2
+    },
+    {
+      "term": "foundation/cloud",
       "doc_frequency": 1
     }
   ],
@@ -49,6 +49,26 @@
     },
     {
       "term": "llm_systems/prompt-engineering",
+      "doc_frequency": 1
+    },
+    {
+      "term": "serving/kubernetes",
+      "doc_frequency": 1
+    },
+    {
+      "term": "evaluation/eval-harness",
+      "doc_frequency": 1
+    },
+    {
+      "term": "foundation/python",
+      "doc_frequency": 1
+    },
+    {
+      "term": "foundation/cloud",
+      "doc_frequency": 1
+    },
+    {
+      "term": "foundation/typescript",
       "doc_frequency": 1
     }
   ],
