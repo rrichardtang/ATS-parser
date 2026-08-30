@@ -164,3 +164,28 @@ that also moves what it measures is not one.
   the target title exactly as `analyze()` does or it measures a different prompt.
 - `tests/test_reliability.py`, `tests/test_agreement.py` — new, 24 tests, no network.
 - `README.md`, `.gitignore` (`runs/`).
+
+## Reconciliation with ticket 04
+
+06 and 04 were worked in parallel and closed independently; this records where they
+meet, written when the two branches were merged.
+
+04 settled the output form after this ticket closed: **the judge answers binary
+criteria with a quote each, and the band is a deterministic lookup from them** — one
+step further than the band label this harness was built to read.
+
+**The harness is not invalidated.** Because the criteria-to-band mapping is
+deterministic, a band label still exists on every reply by the time the harness sees
+it, so the band-reading path and every statistic over it hold unchanged. The
+`number | band | both` channel detection also survives, since 05's second experiment
+is unaffected by how the band was arrived at.
+
+**What it does not yet do is report agreement at the criterion level**, which 04 asks
+for as the primary measurement: two judges landing in different bands should be
+traceable to the criterion they split on, and band-level disagreement alone does not
+say which. That is strictly an extension — a fourth statistic beside the three this
+ticket already prints — not a correction to anything here.
+
+Left as an open item rather than reopening this ticket. Whoever picks it up should
+decide whether it belongs to 05 (which needs it to reach a verdict on its own
+criteria) or to a ticket of its own.

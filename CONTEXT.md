@@ -18,16 +18,31 @@ _Avoid_: dimension, subgrade, axis
 
 **Band**:
 A stated range within a category, defined by the evidence a resume must show to land
-in it. What makes a score reproducible between judges rather than a matter of taste.
+in it. Never named by a judge: it is a lookup from the criteria the judge answered.
+What makes a score reproducible between judges rather than a matter of taste.
 _Avoid_: level, tier, threshold
+
+**Criterion**:
+One binary evidence question within a category, answered by a judge with the quote
+that settles it. The unit a judge answers: bands and scores are computed from criteria,
+never chosen by the judge. Findings remain the judge's other output.
+_Avoid_: check, sub-score, rule (a rule is deterministic and produces findings)
+
+**Corpus-derived weight**:
+A category weight computed from how many postings state the behaviour that category
+measures. Derived, never authored, like the digest — add a posting and it moves with
+nobody editing anything. Distinct from an **authored weight**, a judgment call someone
+can disagree with, which is all a category outside the corpus can have.
 
 **Composite**:
 The single headline score, derived from the weighted categories and every deduction.
 _Avoid_: total, overall score, grade (the grade is the letter derived from it)
 
 **Coverage**:
-Whether the resume evidences the skills the target postings require. Distinct from
-whether it evidences them *well*.
+Whether the resume evidences the skills the target postings require, measured by the
+deterministic keyword rules. Distinct from whether it evidences them *well*. Not a
+scored category: the corpus converges on behaviours rather than named tools, so
+behaviour evidence belongs to the categories and tool coverage stays here.
 
 ### Findings
 
