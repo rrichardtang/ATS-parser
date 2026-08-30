@@ -154,7 +154,11 @@ lands in is not evidence of anything.
 
 - **04** — categories must be band-definable, and bands must be phrased as *evidence
   present*, not *defects found*. A band written as a defect list re-creates the double
-  count this decision just closed.
+  count this decision just closed. And `score.py`'s `rule_share` becomes load-bearing:
+  with model findings out of the deduction channel it is no longer an inherited
+  constant but the mixing ratio between the two channels this decision named, worth
+  0.6 of a category to every band except Recruiter scan's, which gets 0.3. See
+  `scoring-mechanics.md`.
 - **05** — writes the bands for one category, and gets a concrete second experiment for
   free: same prompt, one field difference, band-only vs. band-plus-a-point-inside-it.
 - **06** — unblocked. It measures band agreement per category, and finding agreement

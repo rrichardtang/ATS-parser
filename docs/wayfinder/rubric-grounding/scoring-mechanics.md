@@ -52,9 +52,13 @@ This survives ticket 03's decision intact, because the decision changes what the
 *emits*, not how `score.build` weighs it. So it is a live question for 04 and 05:
 
 - A band's authority over its own category varies 2× by an inherited constant.
-- Under the old ±5 test this made Recruiter scan 3.3× easier to pass than Impact.
-  The restated test is exact band agreement, so that particular distortion is gone —
-  but the underlying asymmetry in how much a band is worth is not.
+- Under the old ±5 test this made Recruiter scan 2× easier to pass than Impact: a
+  category score moves by `(1 - rule_share)` × the model's disagreement, so Recruiter
+  scan absorbed 16.7 raw points of it against Impact's 8.3. (2×, the same factor as the
+  bullet above — an earlier draft said 3.3×, which measured Recruiter scan against a
+  category the model owns outright. No category is like that.) The restated test is
+  exact band agreement, so that particular distortion is gone — but the underlying
+  asymmetry in how much a band is worth is not.
 
 If Recruiter scan survives 04's redesign, someone should decide whether 0.7 is a
 position or an accident.
