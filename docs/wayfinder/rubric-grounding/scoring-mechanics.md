@@ -82,8 +82,17 @@ provider so sampling noise separates from genuine disagreement, and ticket 08's
 evidence (judges rerun on identical inputs show low intra-rater reliability) makes
 that a measurement requirement, not a nicety.
 
-`passes.content_pass` already averages a provider's repeated samples, so the config is
-the small part. Ticket 06 owns the rest.
+**Resolved by 06, and not the way this section first read it.** The config stays at 1.
+Sampling twice is a measurement requirement, and shipping it doubles the cost of every
+user's run to buy them nothing — `content_pass` averages the samples away again before
+the report sees them. `scripts/agreement_harness.py` takes `--samples` itself (default
+2) and calls `passes.content_judgments()`, the per-(provider, sample) seam extracted
+out of `content_pass` for it. Averaging was the obstacle, not the config.
+
+06 also found that `temperature` reaches **neither** current model: `ats/llm.py` never
+sends it to Anthropic and only sends it to OpenAI for the gpt-4 era. So the within-judge
+spread is each provider's default sampling noise, and it is a floor to clear rather than
+a knob to turn.
 
 ### 3. The digest still tells the model "Required in most"
 

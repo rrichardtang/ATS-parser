@@ -21,6 +21,11 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   language. **Scoring mechanics**: `scoring-mechanics.md` — what the model authors today
   (40.5 of the composite's 100 points, across five of eight categories) and the three
   code facts 04/05/06 will hit.
+- **The acceptance test is runnable**: `scripts/agreement_harness.py` (06). Judge a
+  category set or a band draft with a sweep before and after, not by argument.
+- **The noise floor is not adjustable.** 06 found `temperature` never reaches either
+  current model (`ats/llm.py`), so the within-judge spread is each provider's own
+  default sampling. Between-judge spread has to clear it; it cannot be turned down.
 - **Skills every session should consult**: `grilling` and `domain-modeling` by default;
   `research` for AFK reading tickets; `prototype` for tickets that need something concrete
   to react to.
@@ -65,6 +70,15 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 - **Stable bands, living inputs** (provisional): band definitions are prose that changes
   only on deliberate revision; the corpus supplies which skills get checked. Revisited
   only if future postings consistently clash with the bands.
+- **The bar can be measured** (06): [Build the inter-judge agreement harness](tickets/06-build-the-agreement-harness.md)
+  — `scripts/agreement_harness.py` runs the corpus past both providers twice with the
+  samples kept apart, and prints between-judge spread, within-judge spread and
+  Krippendorff's alpha per category, plus the composite against the 5 / >8 bar and
+  findings agreement keyed on (defect kind, locator). It reads a number, a band, or
+  both, so it measures today's prompt and 05's experiment without a change. Its
+  refusals carry the point: alpha is `n/a` rather than 1.00 where no resume varies,
+  no between-judge figure is printed with one judge, and a composite pinned by a cap
+  is marked rather than counted as agreement.
 
 ## Not yet specified
 

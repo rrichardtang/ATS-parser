@@ -16,7 +16,8 @@ from .score import build
 from .sections import Resume, parse
 
 __all__ = [
-    "RunInput", "analyze", "generate_rewrites", "parse_resume", "ExtractionError",
+    "RunInput", "analyze", "generate_rewrites", "parse_resume", "resolve_target_title",
+    "ExtractionError",
 ]
 
 
@@ -55,7 +56,10 @@ def deterministic(
     return findings
 
 
-def _resolve_target_title(explicit: str) -> str:
+def resolve_target_title(explicit: str) -> str:
+    """The title a run scores against: explicit, else the personal corpus's first
+    target title, else the tool's default. Public because the agreement harness has
+    to resolve it exactly as analyze() does, or it measures a different prompt."""
     if explicit:
         return explicit
     titles = config.target_titles()
@@ -65,7 +69,7 @@ def _resolve_target_title(explicit: str) -> str:
 def analyze(run: RunInput) -> Report:
     doc = extract(run.pdf_path)
     resume = parse(doc.text)
-    target_title = _resolve_target_title(run.target_title)
+    target_title = resolve_target_title(run.target_title)
     findings = deterministic(doc, resume, run.jd_text, target_title)
 
     providers = providers_from(run.keys, run.models)
