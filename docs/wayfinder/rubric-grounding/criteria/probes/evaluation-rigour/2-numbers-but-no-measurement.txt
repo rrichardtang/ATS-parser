@@ -1,0 +1,9 @@
+Tomas Beckett
+tomas.beckett@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Vellum Row    Feb 2022 - Present
+• Shipped a Mistral-7B ticket router to production, holding 1.2k requests a minute on 4 A10Gs.
+• Cut p99 latency from 2.4s to 700ms by replacing padded batching.
+• Carried the pager for the service through two incidents.

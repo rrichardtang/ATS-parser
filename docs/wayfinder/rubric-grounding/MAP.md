@@ -20,6 +20,13 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   category's criteria and its band lookup (05).
 - [production-ownership-agreement.md](production-ownership-agreement.md) — what they
   measured, and the verdict on the format (05).
+- [ai-assisted-coding-fluency-criteria.md](ai-assisted-coding-fluency-criteria.md),
+  [evaluation-rigour-criteria.md](evaluation-rigour-criteria.md) and
+  [agentic-systems-criteria.md](agentic-systems-criteria.md) — the other three
+  behaviour categories' criteria and band lookups (11).
+- [three-categories-agreement.md](three-categories-agreement.md) — what those three
+  measured, every category's leverage table, and the check on whether the criteria can
+  carry the report as well as the score (11).
 - [criteria/](criteria/) — the criteria as data, the band probes, and the recorded
   judge answers the measurement ran on.
 - [findings-identity.md](findings-identity.md) — what makes two findings the same
@@ -137,6 +144,30 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   most judgment-laden one moves it from 2 and never by more than a band. Spend the
   wording budget on the gate. Every category needs its own leverage table, and one whose
   gate is its hardest question will not converge however it is worded.
+- **The format generalises, and its proxy does not** ([Criteria for the three remaining
+  behaviour categories](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md)):
+  `Evaluation rigour` **54/55 criterion answers, 11 exact bands → PASS**; `Agentic
+  systems` **54/55, 10 exact, 1 adjacent → LOOK**, both transferring `Production
+  ownership`'s lookup shape and leverage table unchanged. `AI-assisted coding fluency`
+  is **unmeasured**: its C5 cannot be answered by a rule channel at any wording — as an
+  alias family it fired on "eval harness" and "Helped the team" — so the deterministic
+  judge abstains and 05's two-judge proxy has only one judge. `rule_share` 0 was 04's
+  decision about scoring; this is what it costs the measurement, and it is the strongest
+  case on the map for provider credentials.
+- **The band lookups are data, not code** (11). Each band declares a `when` clause and
+  `band_of` evaluates them in order; four hand-written lookups would have been four
+  totality arguments nobody could check by reading. Every property 05 pinned for one
+  category is now parametrised over all four, so the fifth inherits the suite by
+  existing.
+- **10 does not get reopened** (11). Grouped by the reading behind the name, the
+  baseline's 198 findings all land on a criterion, a deterministic rule, or `Resume
+  craft` — nothing recurring is unreportable, and no criterion was added to make that
+  true. Two readings land outside the three behaviour categories: "activity, not
+  outcome" (18 findings) rides on 12 authoring a criterion that
+  `content/bullet-invariants` answers, and "missing role or product context" is held by
+  `invariants.py`'s Mechanism check. Caveat carried: the baseline ran the *old* prompt's
+  open-ended question, so this is evidence about what judges reach for, not about what
+  these criteria surface.
 - **A category is withheld, never guessed, where the parse cannot carry it** (05).
   Every criterion asks about a bullet inside a role, so on a document whose roles did
   not survive extraction the judges disagree about what the document is rather than
@@ -145,7 +176,8 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   same bullets, three carry almost nothing, and every one that can be answered lands at
   one end of the ladder — three of five bands unreachable. 05 wrote seven band probes
   (`criteria/probes/`) for the boundaries; they test the rubric, not the parser, so they
-  are text rather than PDFs and live outside `tests/fixtures/`.
+  are text rather than PDFs and live outside `tests/fixtures/`. 11 wrote 22 more, one
+  set per category, and two of them are written to fail rather than pass.
 - **The old rubric's failure is mostly calibration** ([baseline-agreement.md](baseline-agreement.md)):
   the first real run puts openai above anthropic in **34 of 35** category-resume cells,
   mean **+18.0**, while the two rank resumes almost identically (Spearman 0.75–0.96) —
@@ -244,18 +276,17 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   about is now unreportable — and a category with no criteria at all is silence rather
   than a vague score, which is what turns 11 from tidy-up into the critical path. 04 chose categories on separability and document frequency;
   exhaustiveness over defects is a demand neither 04 nor 05 was asked to meet, and it is
-  the likeliest reason 10 gets reopened. The baseline names what the judges keep
-  reaching for — evaluation methodology, deployment reach, scale/latency/cost — so the
-  remaining criteria have a target to hit.
-- ~~**Criteria for the other four categories.**~~ Now tracked, and it was the largest
-  untracked piece of work on the map:
-  [Criteria for the three remaining behaviour categories](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md)
-  and [Criteria for Resume craft](tickets/12-criteria-for-resume-craft.md). Split
-  because 05 predicts `Resume craft` will not converge and the other three should not
-  wait on it. 11 takes `AI-assisted coding fluency` **first** per 05 — `rule_share` 0
-  means criterion agreement is the only agreement it has, so nothing masks a bad
-  criterion — then `Evaluation rigour`, then `Agentic systems`. 07 adds that `Agentic systems`
-  now has `rule_share` 0 too, and hands 12 three rules (`content/bullet-invariants`,
+  the likeliest reason 10 gets reopened. 11 checked the three behaviour categories
+  against the baseline and found nothing recurring unreportable, so this narrows to
+  `Resume craft`: 18 of the baseline's findings are the "activity, not outcome" reading,
+  and they are reportable only if 12 authors a criterion whose evidence
+  `content/bullet-invariants` answers.
+- ~~**Criteria for the other four categories.**~~ Three of the four are written and
+  measured — [11](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md),
+  closed. What remains is [Criteria for Resume craft](tickets/12-criteria-for-resume-craft.md).
+  The split was made because 05 predicts `Resume craft` will not converge and the other three
+  should not wait on it; 11 took `AI-assisted coding fluency` first per 05 and found
+  exactly what that ordering was for. 07 hands 12 three rules (`content/bullet-invariants`,
   `content/quantification`, `cred/unlinked-projects`) that deduct in `Resume craft` only
   if criteria are authored whose evidence they answer.
 - **03's second experiment** — band-only versus band-plus-a-point-inside-it. Specified
@@ -265,6 +296,11 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   destination bullet, so a resume that hedges the ship and then evidences sole
   operation of the live system answers `no`. Left open by 05 rather than patched,
   because resolving it needs the second judge 06 supplies.
+- **Two alias families that a criterion's prose rules out and its regex cannot** (11).
+  `Agentic systems` C3 answered yes off `ticket` inside *a ticket-triage agent*, and
+  `Evaluation rigour` C5's alias list does not know "before each release". Both are the
+  vocabulary-versus-channel distinction 05 named, and both are cheap to fix — but only
+  worth fixing once 09 decides whether these categories get a rule channel at all.
 
 - **A new word for the report's "banded"**. 03 leaves **band** meaning only what
   `/CONTEXT.md` defines it as, so the display of two judges disagreeing needs its own

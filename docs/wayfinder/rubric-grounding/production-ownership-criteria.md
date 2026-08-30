@@ -74,8 +74,13 @@ only disagree about the *band* when the split crosses a rule boundary.
 | **B** | Shipped and operated | C1, C2, C3, C4; C5 unmet | 78 | The full arc is evidenced, but the resume gives it to a team or hedges the candidate's part. |
 | **A** | Owned in production | all five | 95 | A named system, in production, that ran, that they stayed with, and the resume says it was them. |
 
+The rules are declared as `when` clauses in the JSON, evaluated in order, first match
+wins — 11 moved them out of hand-written conditionals when the second, third and fourth
+category would have made four lookups whose totality nobody could check by reading. The
+behaviour is unchanged: same bands, same leverage table, same measurement.
+
 Two properties the lookup has to have, both under test in
-`tests/test_criteria_probe.py`:
+`tests/test_criteria_probe.py` and now parametrised over every category:
 
 - **Total** — every one of the 32 answer sets lands in a declared band, so no judge can
   answer its way off the rubric.
@@ -96,7 +101,7 @@ concrete form of 04's claim that criteria are more diagnosable than a band label
 | C4 post-launch work | 8/32 | 2 bands |
 | C5 first-person ownership | 2/32 | 1 band |
 
-`python scripts/criteria_probe.py --leverage` prints it.
+`python scripts/criteria_probe.py --leverage -c production-ownership` prints it.
 
 C1 is a gate: it moves the band from wherever the resume was, so **agreement on C1 is
 the whole category's agreement**. C5 separates the top two bands and nothing else, so
@@ -158,5 +163,12 @@ removed.
   about the whole arc rather than the destination bullet, or the case belongs in the
   band rules. Left open rather than patched, because it needs the second judge that
   06 supplies.
-- **Where `Resume craft` and the other three categories get their criteria.** This
+- ~~**Where `Resume craft` and the other three categories get their criteria.**~~ This
   ticket wrote one category, deliberately.
+  [11](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md) wrote the
+  other three behaviours — [AI-assisted coding
+  fluency](ai-assisted-coding-fluency-criteria.md), [Evaluation
+  rigour](evaluation-rigour-criteria.md), [Agentic
+  systems](agentic-systems-criteria.md) — and measured them in
+  [three-categories-agreement.md](three-categories-agreement.md).
+  `Resume craft` is [12](tickets/12-criteria-for-resume-craft.md).

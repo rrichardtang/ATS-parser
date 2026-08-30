@@ -1,6 +1,6 @@
 type: prototype (HITL)
-status: open
-claimed:
+status: closed
+claimed: claude
 blocked-by: —
 
 # Criteria for the three remaining behaviour categories
@@ -94,3 +94,95 @@ have criteria, a total and monotone band lookup, a leverage table, band probes f
 boundaries the fixtures cannot reach, and a measured agreement verdict — with the judge
 setup named. Machine-readable alongside `criteria/production-ownership.json`, prose
 alongside `production-ownership-criteria.md`.
+
+## Answer
+
+**Written, measured, and one of the three could not be measured — which is the finding.**
+
+- [ai-assisted-coding-fluency-criteria.md](../ai-assisted-coding-fluency-criteria.md)
+- [evaluation-rigour-criteria.md](../evaluation-rigour-criteria.md)
+- [agentic-systems-criteria.md](../agentic-systems-criteria.md)
+- [three-categories-agreement.md](../three-categories-agreement.md) — the measurement,
+  the four leverage tables, and the check 10 demanded.
+
+Machine-readable beside `criteria/production-ownership.json`; 22 band probes in
+`criteria/probes/<category>/`; recorded judge answers in
+`criteria/judgments/<category>/`.
+
+### The results
+
+| category | criteria agreement | bands | verdict |
+|---|---|---|---|
+| Evaluation rigour | 54/55 | 11 exact, 0 adjacent, 0 far | **PASS** |
+| Agentic systems | 54/55 | 10 exact, 1 adjacent, 0 far | **LOOK** |
+| AI-assisted coding fluency | 44/48, C5 not comparable | — | **unmeasured** |
+
+**Judge setup, as asked: 05's proxy, not the acceptance test.** No provider credentials
+in this environment either, so `deterministic` versus one recorded model judge over
+eleven documents per category — four PDF fixtures and seven or eight band probes, with
+the three unparseable fixtures withheld.
+
+### What the leverage check found before any measurement
+
+05's failure condition — *a category whose gate is its hardest question will not
+converge however well it is worded* — does not fire for any of the three. Every gate
+asks whether a thing exists at all, and every C5 (the reading, the judgment call) moves
+the band by at most one. Both judges answered all four gates identically on all 45
+answerable documents; every split is below the gate. The two properties are now under
+test rather than argued: C1 moves the band from all 32 answer sets, C5 by at most one
+band, for every category in `SLUGS`.
+
+### The one that could not be measured, and why it was ordered first
+
+05 said to write `AI-assisted coding fluency` first because `rule_share` 0 means nothing
+masks a bad criterion. What it actually exposed is one step further out: **05's proxy
+does not exist for a model-owned category.** C5 — *did the practice reach past the
+candidate's own keyboard* — has no rule channel at any wording. Written as an alias
+family it answered `yes` on `strong` off "eval **harness**" and on `slop` off "Helped
+the **team**", because the vocabulary of a practice spreading is the vocabulary of
+ordinary engineering and only the subject makes it this category's evidence. So the
+deterministic judge abstains, names no band, and there is one judge.
+
+That is a cleaner statement of 04's decision than 04 could make: `rule_share` 0 is not
+"a weak channel", it is an absent one, and it costs the *measurement* as well as the
+score. Band probe `8-tool-not-on-the-list` is the standing demonstration — `7-fluent`
+with `Claude Code` swapped for `Goose`, four criterion splits from one substitution.
+
+### The demand 10 added
+
+Checked against the baseline's 198 findings, grouped by the reading behind each of the
+108 invented names. Nothing recurring is unreportable, and **no criterion was added to
+make that true** — the readings land on the criteria, on a deterministic rule, or on
+`Resume craft`. So 10 does not get reopened and option B stays unnecessary. Two things
+carried forward: the "activity, not outcome" reading (18 findings) is reportable only if
+12 authors a criterion `content/bullet-invariants` answers, and the check itself rests on
+a baseline that ran the *old* open-ended prompt, so it should be repeated on the first
+run of the new one.
+
+### Two things changed that 05 wrote
+
+Neither relitigates a decision; both are what a second, third and fourth category
+forced.
+
+- **The band lookup became data.** Rules are `when` clauses in the JSON, evaluated in
+  order. Four hand-written lookups would have been four totality arguments nobody could
+  check by reading. `Production ownership`'s bands, leverage table and measurement are
+  bit-identical after the change.
+- **A judge may abstain.** A criterion with no rule channel is declared unanswerable
+  rather than answered `no`, and a judge that cannot answer every criterion names no
+  band. A judge that abstains and a judge that read the resume and found nothing look
+  the same in a band, and they are not the same thing.
+
+### Changed
+
+- `docs/wayfinder/rubric-grounding/ai-assisted-coding-fluency-criteria.md`,
+  `evaluation-rigour-criteria.md`, `agentic-systems-criteria.md` — new.
+- `docs/wayfinder/rubric-grounding/three-categories-agreement.md` — new.
+- `docs/wayfinder/rubric-grounding/criteria/` — three specs, 22 probes, three judgment
+  files; probes and judgments moved into per-category directories.
+- `scripts/criteria_probe.py` — generalised over categories; declarative band lookup;
+  abstention; `--category`.
+- `tests/test_criteria_probe.py` — every property parametrised over the four categories.
+- `docs/wayfinder/rubric-grounding/MAP.md`, `production-ownership-criteria.md`,
+  `production-ownership-agreement.md` — findings recorded, open questions narrowed or
+  closed, moved paths repaired.

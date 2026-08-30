@@ -1,0 +1,138 @@
+{
+  "category": "Evaluation rigour",
+  "slug": "evaluation-rigour",
+  "measures": "Whether the resume evidences measuring model quality with something that could have returned a negative answer.",
+  "doc_frequency": 5,
+  "rule_share": 0.4,
+  "source": "Criteria drafted for ticket 11 against the category 04 defined and the 5/6 evidence 02 recorded (inventory.md section 5). Wording drawn from the baseline run: both judges, unprompted, reached for evaluation methodology, benchmark provenance, baselines, eval set and measurement method (baseline-agreement.md, findings-identity.md section 2).",
+  "criteria": [
+    {
+      "id": "C1",
+      "name": "a measurement happened",
+      "question": "Does any bullet say the quality of a model or its output was measured -- an eval, a benchmark, a test set, an A/B test, human annotation, a quality metric?",
+      "yes_requires": "A quote naming the act of measuring. The measurement may be crude; this criterion only asks that one exists.",
+      "no_looks_like": "Every bullet stops at building or shipping: 'Fine-tuned a classifier', 'built a RAG pipeline' -- nothing says anyone checked whether it worked. Serving numbers are not a quality measurement either: latency, throughput, cost and uptime say how the system ran, not whether its answers were any good, and Production ownership's C3 already asks for those.",
+      "aliases": ["eval", "evals", "evaluation", "evaluations", "evaluated", "evaluating", "benchmark", "benchmarked", "benchmarks", "test set", "held-out", "holdout", "held out", "golden set", "gold set", "a/b test", "a/b tests", "ab test", "online test", "offline test", "annotation", "annotators", "human review", "human raters", "accuracy", "precision", "recall", "f1", "auc", "roc", "bleu", "rouge", "perplexity", "win rate", "pass@", "hit rate", "measured", "measurement", "scored against", "regression suite", "regression test", "ablation", "ablations"],
+      "deterministic": {
+        "kind": "alias"
+      }
+    },
+    {
+      "id": "C2",
+      "name": "named metric and number",
+      "question": "Is the measurement stated as a named metric with a number?",
+      "yes_requires": "A metric a reader could recompute and the value it took -- 'F1 0.82', 'pass@1 from 41% to 63%', 'p95 hallucination rate under 2%'.",
+      "no_looks_like": "'Improved model quality', 'strong benchmark results', 'high accuracy'. Also a number attached to something other than quality -- a token count, a dataset size, a GPU count -- standing in for a result.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "number_in",
+        "anchor": "C1"
+      }
+    },
+    {
+      "id": "C3",
+      "name": "what it was run on",
+      "question": "Does the resume say what the measurement was run on?",
+      "yes_requires": "A named dataset, a held-out or golden set, a stated number of annotated examples, production traffic, or named human raters -- the provenance of the number, not only its value.",
+      "no_looks_like": "A metric with no subject. 'Hit 92% accuracy' -- on what, chosen how, how many examples.",
+      "aliases": ["dataset", "datasets", "test set", "held-out", "holdout", "held out", "golden set", "gold set", "eval set", "evaluation set", "validation set", "corpus", "examples", "samples", "annotated", "annotators", "labelled", "labeled", "labels", "production traffic", "live traffic", "real user", "real traffic", "queries", "transcripts", "mmlu", "humaneval", "swe-bench", "gsm8k", "hellaswag", "mt-bench", "internal benchmark", "curated"],
+      "deterministic": {
+        "kind": "alias",
+        "requires": "C1"
+      }
+    },
+    {
+      "id": "C4",
+      "name": "compared to something",
+      "question": "Is the number compared with something -- a baseline, a prior model, a before and after, a target?",
+      "yes_requires": "The other end of the comparison, named: the model or method that was beaten, the previous value, the bar that had to be cleared.",
+      "no_looks_like": "A single standalone number. '0.87 F1' is unreadable without knowing what 0.87 replaced or beat.",
+      "aliases": ["baseline", "baselines", "prior", "previous", "incumbent", "compared", "comparison", "versus", "vs", "vs.", "against", "outperformed", "beat", "improved from", "up from", "down from", "rose from", "fell from", "target", "sla", "threshold", "state of the art", "sota", "human baseline", "holdback", "relative to", "ablation"],
+      "deterministic": {
+        "kind": "alias",
+        "requires": "C1"
+      },
+      "alias_patterns": ["\\bfrom\\s+\\$?\\d", "\\b\\d+(?:\\.\\d+)?%?\\s+to\\s+\\$?\\d"]
+    },
+    {
+      "id": "C5",
+      "name": "could have returned a negative answer",
+      "question": "Does any bullet show the measurement was capable of coming back bad -- and say what happened when it did?",
+      "yes_requires": "A regression caught, a failure mode found, a model or approach rejected on the numbers, a launch gated or blocked, an eval that ran on every change. fluidstack's bar: an eval that told you the truth about model quality before users did.",
+      "no_looks_like": "Every number is a win. The evals appear only where they confirmed the work, and nothing was ever turned down because of one.",
+      "aliases": ["regression", "regressions", "caught", "failure mode", "failure modes", "edge case", "edge cases", "rejected", "ruled out", "did not ship", "blocked the release", "gated", "gating", "rolled back", "rollback", "false positive", "false negative", "drift", "degradation", "degraded", "on every change", "every pull request", "continuous integration", "pre-release", "abandoned", "shelved"],
+      "deterministic": {
+        "kind": "alias",
+        "requires": "C1"
+      }
+    }
+  ],
+  "bands": [
+    {
+      "label": "E",
+      "name": "Nothing measured",
+      "value": 10,
+      "rule": "C1 not met",
+      "when": {
+        "unmet": ["C1"]
+      },
+      "reads": "Nothing in the resume says anyone checked whether the work was any good."
+    },
+    {
+      "label": "D",
+      "name": "Measured, not reported",
+      "value": 35,
+      "rule": "C1 met, and either C2 unmet or neither C3 nor C4 met",
+      "when": {
+        "met": ["C1"],
+        "any": [
+          {
+            "unmet": ["C2"]
+          },
+          {
+            "count": {
+              "of": ["C3", "C4"],
+              "max": 0
+            }
+          }
+        ]
+      },
+      "reads": "Evaluation is claimed, but no metric and number arrive, or the number stands alone with nothing behind or beside it."
+    },
+    {
+      "label": "C",
+      "name": "A number",
+      "value": 58,
+      "rule": "C1 and C2 met, and exactly one of C3, C4",
+      "when": {
+        "met": ["C1", "C2"],
+        "count": {
+          "of": ["C3", "C4"],
+          "eq": 1
+        }
+      },
+      "reads": "A named metric with a value, and half of what makes it readable -- what it ran on, or what it beat, not both."
+    },
+    {
+      "label": "B",
+      "name": "A readable result",
+      "value": 78,
+      "rule": "C1, C2, C3 and C4 met, C5 unmet",
+      "when": {
+        "met": ["C1", "C2", "C3", "C4"],
+        "unmet": ["C5"]
+      },
+      "reads": "The number, its subject and its comparison are all present -- and every measurement in the resume came back a win."
+    },
+    {
+      "label": "A",
+      "name": "Evaluation that could say no",
+      "value": 95,
+      "rule": "all five met",
+      "when": {
+        "met": ["C1", "C2", "C3", "C4", "C5"]
+      },
+      "reads": "The resume shows a measurement that was allowed to fail, and what changed when it did."
+    }
+  ]
+}

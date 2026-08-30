@@ -3,6 +3,9 @@
 Ticket: [05](tickets/05-draft-bands-for-one-category.md). Criteria under test:
 [production-ownership-criteria.md](production-ownership-criteria.md).
 
+11 added three more categories to the same probe; the flags below now take
+`-c production-ownership` to restrict them to this one.
+
 ```
 python scripts/criteria_probe.py                  # the measurement
 python scripts/criteria_probe.py --grid           # every answer with its span
@@ -24,7 +27,7 @@ five criteria on the same documents, with no sight of each other:
   it is also the most a `rule_share` channel could ever contribute to this category.
 - **`model-claude`** — one model judge (this session) reading each document and
   answering the same five questions. Verdicts recorded with their evidence in
-  [criteria/judgments/model-claude.json](criteria/judgments/model-claude.json).
+  [criteria/judgments/production-ownership/model-claude.json](criteria/judgments/production-ownership/model-claude.json).
 
 That measures where the *criteria wording* leaves room to differ. What it cannot
 measure is whether two providers, both reading freely, diverge somewhere neither of
@@ -40,7 +43,7 @@ Three of the five bands were never reached. A rubric cannot be tested for agreem
 documents that all sit at the ends of it.
 
 So seven short **band probes** were written — plain text, in
-[criteria/probes/](criteria/probes/), one per band and one per boundary worth
+[criteria/probes/production-ownership/](criteria/probes/production-ownership/), one per band and one per boundary worth
 stressing. They are not PDFs and do not live in `tests/fixtures/`, because they test
 the rubric rather than the parser: extraction is deliberately not a variable.
 
@@ -157,12 +160,16 @@ On that test, applied to 04's remaining four:
 - **Agentic systems** and **Evaluation rigour** — the same shape. Both are "is there a
   named thing, and does the resume say what it did". Criteria should transfer nearly
   directly; `Evaluation rigour`'s gate is already written into fluidstack's phrasing
-  (*an eval that could have returned a negative answer*).
+  (*an eval that could have returned a negative answer*). **Measured by 11**: they did
+  transfer directly — identical lookup shape, identical leverage table — and scored
+  PASS and LOOK respectively.
 - **AI-assisted coding fluency** — the questions are answerable ("does a bullet name
   the tooling", "does it say what changed about the work"), but 04 already set its
   `rule_share` to 0 because no rule channel can answer them. It is the category where
   the deterministic floor is absent, so criterion agreement is the *only* agreement
-  there is. Worth measuring first, not last.
+  there is. Worth measuring first, not last. **Measured by 11**: the floor is not
+  merely low, it is missing — the deterministic judge cannot answer C5 at any wording,
+  abstains, and names no band, so this proxy does not exist for that category.
 - **Resume craft** — the one to be careful with. It merges two categories whose
   boundaries are largely weighed, not countable. Some of it is countable (identity
   above the fold, a summary present, bullets within length) and `ats/human.py` already

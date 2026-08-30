@@ -1,0 +1,138 @@
+{
+  "category": "Agentic systems",
+  "slug": "agentic-systems",
+  "measures": "Whether the resume evidences building systems that reason over context, call tools and take actions.",
+  "doc_frequency": 6,
+  "rule_share": 0.0,
+  "source": "Criteria drafted for ticket 11 against the category 04 defined and the 6/6 evidence 02 recorded (inventory.md section 2). Structure transferred from Production ownership, as 05 predicted it would: a gate, a naming criterion, a pair of mechanism criteria, and one separator on top.",
+  "criteria": [
+    {
+      "id": "C1",
+      "name": "a system that acts",
+      "question": "Does any bullet say the candidate built a system that takes actions on its own -- an agent, an agentic workflow, a tool-calling loop, a pipeline that decides its own next step?",
+      "yes_requires": "A quote naming the thing built and the fact that it acts rather than answers. Calling a model in a loop and doing something with the result counts; the word 'agent' is not required.",
+      "no_looks_like": "A model that only returns text -- a classifier, a summariser, a chatbot that answers and stops. Also using someone else's coding agent on your own work: that is AI-assisted coding fluency, and 02 warns this is the conflation to avoid.",
+      "aliases": ["agent", "agents", "agentic", "tool-calling", "tool calling", "tool use", "function calling", "multi-agent", "orchestrator", "orchestration", "autonomous", "workflow engine", "planner", "planning loop", "react loop", "mcp", "model context protocol", "langgraph", "langchain", "autogen", "crewai", "temporal", "state machine", "takes actions", "acts on"],
+      "deterministic": {
+        "kind": "alias"
+      }
+    },
+    {
+      "id": "C2",
+      "name": "named system",
+      "question": "Is the agentic system named specifically enough to ask about in an interview?",
+      "yes_requires": "A named product, service or framework in the same bullet as the system -- the triage agent, an MCP server, LangGraph, Temporal, the model it ran on.",
+      "no_looks_like": "'Built agentic AI solutions', 'delivered autonomous workflows' -- portable to any candidate.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "named_in",
+        "anchor": "C1"
+      }
+    },
+    {
+      "id": "C3",
+      "name": "what it could do",
+      "question": "Does the resume say what the system could actually do -- which tools, APIs or systems it reached, or what actions it took in the world?",
+      "yes_requires": "The action surface, named: the ticketing system it wrote to, the search index it queried, the refund it issued, the PR it opened, the internal APIs it was given.",
+      "no_looks_like": "'Reasons over context and takes actions' -- the job description's own words handed back with no tools in them. Two near-misses that are not an action surface: the domain noun inside the system's own name ('a ticket-triage agent' does not evidence reaching a ticketing system), and the escalation path, which is what C4 asks about.",
+      "aliases": ["api", "apis", "tools", "tool", "endpoint", "endpoints", "database", "queried", "queries", "search", "retrieval", "rag", "index", "webhook", "crm", "jira", "zendesk", "salesforce", "slack", "github", "shell", "browser", "calendar", "email", "ticket", "tickets", "refund", "refunds", "wrote to", "writes to", "called", "calls", "invoked", "executes", "executed", "actions", "sandbox", "function"],
+      "deterministic": {
+        "kind": "alias",
+        "requires": "C1"
+      }
+    },
+    {
+      "id": "C4",
+      "name": "what decided the next step",
+      "question": "Does the resume say what drove the system from one step to the next?",
+      "yes_requires": "The control, named: a planner, a router, a state machine, a retry or fallback policy, a confidence threshold, an escalation path to a human, a step budget.",
+      "no_looks_like": "The system is described as a single call. Nothing says how it chose, retried, stopped, or handed over.",
+      "aliases": ["planner", "planning", "router", "routing", "state machine", "workflow", "retry", "retries", "fallback", "fallbacks", "escalate", "escalation", "escalated", "confidence", "threshold", "budget", "step limit", "loop", "iterate", "iterated", "decides", "decided", "chooses", "chose", "branch", "branching", "policy", "handoff", "hand off", "human in the loop", "human-in-the-loop", "queue", "scheduler", "memory", "context window"],
+      "deterministic": {
+        "kind": "alias",
+        "requires": "C1"
+      }
+    },
+    {
+      "id": "C5",
+      "name": "what bounded it",
+      "question": "Does any bullet say what kept the system inside its limits?",
+      "yes_requires": "Guardrails, authorization or scoping of what it was allowed to touch, an approval step, an audit trail, a sandbox, a rate or spend cap, or an eval that gated its behaviour. fluidstack states this as the requirement: guardrails, authorization, audit, and evals.",
+      "no_looks_like": "The agent is described as capable and nothing says what it was not allowed to do.",
+      "aliases": ["guardrail", "guardrails", "authorization", "authorisation", "auth", "permission", "permissions", "scoped", "scope", "allowlist", "allow-list", "whitelist", "approval", "approvals", "approve", "audit", "audit trail", "logging", "logged", "traced", "tracing", "sandbox", "sandboxed", "isolated", "rate limit", "rate-limited", "spend cap", "budget cap", "dry run", "dry-run", "kill switch", "circuit breaker", "safety", "red team", "red-team", "policy check", "human approval"],
+      "deterministic": {
+        "kind": "alias",
+        "requires": "C1"
+      }
+    }
+  ],
+  "bands": [
+    {
+      "label": "E",
+      "name": "No agentic system",
+      "value": 10,
+      "rule": "C1 not met",
+      "when": {
+        "unmet": ["C1"]
+      },
+      "reads": "Nothing in the resume says the candidate built a system that acts."
+    },
+    {
+      "label": "D",
+      "name": "Claimed, not described",
+      "value": 35,
+      "rule": "C1 met, and either C2 unmet or neither C3 nor C4 met",
+      "when": {
+        "met": ["C1"],
+        "any": [
+          {
+            "unmet": ["C2"]
+          },
+          {
+            "count": {
+              "of": ["C3", "C4"],
+              "max": 0
+            }
+          }
+        ]
+      },
+      "reads": "An agent is claimed, but it is unnameable, or nothing says what it could reach or how it decided anything."
+    },
+    {
+      "label": "C",
+      "name": "Half a mechanism",
+      "value": 58,
+      "rule": "C1 and C2 met, and exactly one of C3, C4",
+      "when": {
+        "met": ["C1", "C2"],
+        "count": {
+          "of": ["C3", "C4"],
+          "eq": 1
+        }
+      },
+      "reads": "A named agent with either its tools or its control described -- not both."
+    },
+    {
+      "label": "B",
+      "name": "Mechanism, unbounded",
+      "value": 78,
+      "rule": "C1, C2, C3 and C4 met, C5 unmet",
+      "when": {
+        "met": ["C1", "C2", "C3", "C4"],
+        "unmet": ["C5"]
+      },
+      "reads": "The reader can see what it reached and what drove it, and nothing says what it was not allowed to do."
+    },
+    {
+      "label": "A",
+      "name": "Bounded agent in the world",
+      "value": 95,
+      "rule": "all five met",
+      "when": {
+        "met": ["C1", "C2", "C3", "C4", "C5"]
+      },
+      "reads": "A named system that reached real tools, decided its own next step, and had stated limits."
+    }
+  ],
+  "rule_share_source": "0, not 04's 0.4: ticket 07 (rule-mapping.md section 5) found this category has no deducting rule and no jd_dimensions.py dimension, so a non-zero rule_share blends the band against a constant 100 rather than a channel. Restored to 0.4 if 09 gives it a dimension."
+}

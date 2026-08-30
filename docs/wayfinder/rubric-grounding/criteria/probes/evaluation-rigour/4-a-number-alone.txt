@@ -1,0 +1,9 @@
+Tomas Beckett
+tomas.beckett@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Vellum Row    Feb 2022 - Present
+• Got routing accuracy to 92% on the ticket classifier.
+• Fine-tuned a Mistral-7B classifier for support ticket routing and shipped it.
+• Wrote the retraining job that refreshes the model every two weeks.

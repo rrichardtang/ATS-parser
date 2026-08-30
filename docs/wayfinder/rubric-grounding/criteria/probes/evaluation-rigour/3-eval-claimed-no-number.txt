@@ -1,0 +1,9 @@
+Tomas Beckett
+tomas.beckett@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Vellum Row    Feb 2022 - Present
+• Built an evaluation harness for the ticket router and ran it before each release.
+• Fine-tuned a Mistral-7B classifier for support ticket routing and shipped it.
+• Wrote the retraining job that refreshes the model every two weeks.

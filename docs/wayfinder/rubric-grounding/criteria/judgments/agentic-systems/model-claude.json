@@ -1,0 +1,218 @@
+{
+  "judge": "model-claude",
+  "recorded": "2026-08-30",
+  "category": "Agentic systems",
+  "method": "One model judge (this session's Claude) reading each document and answering the five Agentic systems criteria in ../../agentic-systems.json, without sight of the deterministic answers. Written down rather than called live: scripts/agreement_harness.py exists but this environment has no provider credentials, so ticket 11 used the same recorded-verdict proxy ticket 05 used. `scanned` is absent because it has no text layer at all.",
+  "fixtures": {
+    "strong": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "nothing in the resume says the candidate built a system that takes actions",
+        "C2": "nothing in the resume says the candidate built a system that takes actions",
+        "C3": "nothing in the resume says the candidate built a system that takes actions",
+        "C4": "nothing in the resume says the candidate built a system that takes actions",
+        "C5": "nothing in the resume says the candidate built a system that takes actions"
+      }
+    },
+    "no_phone": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "nothing in the resume says the candidate built a system that takes actions",
+        "C2": "nothing in the resume says the candidate built a system that takes actions",
+        "C3": "nothing in the resume says the candidate built a system that takes actions",
+        "C4": "nothing in the resume says the candidate built a system that takes actions",
+        "C5": "nothing in the resume says the candidate built a system that takes actions"
+      }
+    },
+    "buried_evidence": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "nothing in the resume says the candidate built a system that takes actions",
+        "C2": "nothing in the resume says the candidate built a system that takes actions",
+        "C3": "nothing in the resume says the candidate built a system that takes actions",
+        "C4": "nothing in the resume says the candidate built a system that takes actions",
+        "C5": "nothing in the resume says the candidate built a system that takes actions"
+      }
+    },
+    "slop": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'transformative model architectures' and 'intelligent systems' describe no system that acts",
+        "C2": "'transformative model architectures' and 'intelligent systems' describe no system that acts",
+        "C3": "'transformative model architectures' and 'intelligent systems' describe no system that acts",
+        "C4": "'transformative model architectures' and 'intelligent systems' describe no system that acts",
+        "C5": "'transformative model architectures' and 'intelligent systems' describe no system that acts"
+      }
+    },
+    "two_column": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "nothing in the resume says the candidate built a system that takes actions",
+        "C2": "nothing in the resume says the candidate built a system that takes actions",
+        "C3": "nothing in the resume says the candidate built a system that takes actions",
+        "C4": "nothing in the resume says the candidate built a system that takes actions",
+        "C5": "nothing in the resume says the candidate built a system that takes actions"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "hidden_text": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "nothing in the resume says the candidate built a system that takes actions",
+        "C2": "nothing in the resume says the candidate built a system that takes actions",
+        "C3": "nothing in the resume says the candidate built a system that takes actions",
+        "C4": "nothing in the resume says the candidate built a system that takes actions",
+        "C5": "nothing in the resume says the candidate built a system that takes actions"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "1-no-agent": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "a summariser and a fine-tuning pipeline; the model returns text and stops",
+        "C2": "a summariser and a fine-tuning pipeline; the model returns text and stops",
+        "C3": "a summariser and a fine-tuning pipeline; the model returns text and stops",
+        "C4": "a summariser and a fine-tuning pipeline; the model returns text and stops",
+        "C5": "a summariser and a fine-tuning pipeline; the model returns text and stops"
+      }
+    },
+    "2-coding-agent-user": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "Cursor is somebody else's coding agent used on the candidate's own work -- AI-assisted coding fluency, and 02 names this as the conflation to avoid",
+        "C2": "no system of the candidate's to name",
+        "C3": "no system of the candidate's",
+        "C4": "no system of the candidate's",
+        "C5": "no system of the candidate's"
+      }
+    },
+    "3-agent-unnamed": {
+      "answers": {
+        "C1": true,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Delivered autonomous workflows that reason over context'",
+        "C2": "'autonomous workflows' is portable to any candidate; nothing is named",
+        "C3": "no tool, API or action appears",
+        "C4": "nothing says what drove a next step",
+        "C5": "nothing says what it was not allowed to do"
+      }
+    },
+    "4-tools-no-control": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Built Ferrymarch, a ticket-triage agent'",
+        "C2": "Ferrymarch, Zendesk",
+        "C3": "'reads Zendesk conversations and writes replies back through their API'",
+        "C4": "described as a single pass; nothing says how it chose, retried or stopped",
+        "C5": "nothing bounds what it may write"
+      }
+    },
+    "5-control-no-tools": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": false,
+        "C4": true,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Built Ferrymarch, a ticket-triage agent on LangGraph'",
+        "C2": "Ferrymarch, LangGraph",
+        "C3": "'ticket-triage' is the agent's own name, not evidence it reached a ticketing system, and the escalation is what C4 asks about",
+        "C4": "'whose planner retries a failed step twice and then escalates the case to a human'",
+        "C5": "the escalation is a control path, not a stated limit on what it may do"
+      }
+    },
+    "6-mechanism-unbounded": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Built Ferrymarch, a ticket-triage agent on LangGraph'",
+        "C2": "Ferrymarch, LangGraph",
+        "C3": "'reads Zendesk conversations and writes replies back through their API'",
+        "C4": "'a planner that retries a failed step twice and then escalates the case to a human'",
+        "C5": "nothing says what it was not allowed to do"
+      }
+    },
+    "7-bounded-agent": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Built Ferrymarch, a ticket-triage agent on LangGraph'",
+        "C2": "Ferrymarch, LangGraph",
+        "C3": "'reads Zendesk conversations and writes replies back through their API'",
+        "C4": "'a planner that retries a failed step twice and then escalates the case to a human'",
+        "C5": "'Scoped its credentials to one Zendesk group, held refunds behind a human approval step, and logged every action it took to an audit trail'"
+      }
+    }
+  }
+}
