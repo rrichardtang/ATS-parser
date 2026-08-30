@@ -35,6 +35,11 @@ mode = "default"          # economy | default | thorough
 content_samples = 1        # per provider
 slop_samples = 3           # per provider
 slop_vote_k = 2            # k-of-N within a provider
+# Only reaches models that still accept a sampling parameter (the gpt-4 era and
+# earlier -- see ats/llm.py LEGACY_OPENAI). Current Claude and OpenAI models removed
+# it, so on those the slop pass's repeated samples buy less diversity than the
+# k-of-N vote below assumes. Diversity there has to come from the prompt, the way
+# pass 3 gets it from OBJECTIVES.
 temperature = 0.7
 # Pass 3 generation: candidates come from diverse objectives (mechanism/outcome/
 # ownership-led -- see ats/prompts.py OBJECTIVES) x providers, not resampling one

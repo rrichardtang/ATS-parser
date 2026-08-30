@@ -48,22 +48,14 @@ class _FakeOpenAI:
         self.sent.append(kwargs)
         if self.reject and self.reject in kwargs:
             raise RuntimeError(
-                f"Error code: 400 - {{'error': {{'message': \"Unsupported parameter: "
-                f"'{self.reject}' is not supported with this model. Use "
-                f"'max_completion_tokens' instead.\"}}}}"
+                f"Error code: 400 - Unsupported parameter: '{self.reject}' is not "
+                "supported with this model."
             )
         message = type("Message", (), {"content": self.reply})()
         choice = type("Choice", (), {
             "message": message, "finish_reason": self.finish_reason,
         })()
         return type("Response", (), {"choices": [choice]})()
-
-
-@pytest.fixture(autouse=True)
-def _forget_learned_spellings():
-    llm._LEARNED.clear()
-    yield
-    llm._LEARNED.clear()
 
 
 def _patch(monkeypatch, provider_module, factory):
@@ -99,17 +91,18 @@ def test_openai_legacy_model_keeps_the_old_spelling(monkeypatch):
     assert sent[0]["temperature"] == 0.7
 
 
-def test_rejected_parameter_is_renamed_then_remembered(monkeypatch):
+def test_a_rejected_parameter_surfaces_instead_of_being_papered_over(monkeypatch):
+    """A 400 must reach the ensemble log naming the parameter, not be retried away.
+
+    Silently re-spelling the request is what hid the real bug last time: the pass
+    degraded to one provider and the only trace was a warning nobody read.
+    """
     sent = []
-    _patch(monkeypatch, "openai", _FakeOpenAI(sent, reject="max_tokens"))
-    legacy = Provider("openai", "k", "gpt-4o")
+    _patch(monkeypatch, "openai", _FakeOpenAI(sent, reject="max_completion_tokens"))
 
-    llm.call(legacy, "sys", "user", 0.0)
-    assert "max_completion_tokens" in sent[-1]
-
-    llm.call(legacy, "sys", "user", 0.0)
-    assert len(sent) == 3, "the rename should be learned, not rediscovered per call"
-    assert "max_tokens" not in sent[-1]
+    with pytest.raises(LLMError, match="max_completion_tokens"):
+        llm.call(OPENAI, "sys", "user")
+    assert len(sent) == 1
 
 
 def test_truncated_reply_fails_as_truncation_not_as_bad_json(monkeypatch):
