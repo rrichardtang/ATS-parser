@@ -36,6 +36,10 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 - **Evidence rule**: every category must be scoreable from observable evidence in the
   resume. A category no judge can point at evidence for is what produces a 22-point spread.
 - Corpus is personal data (`corpus/jds/user/`), six verbatim postings.
+- **One execution exception**: this map plans, it does not build — except
+  [Teach the dimension scan the behaviours the categories name](tickets/09-derive-category-weights-from-the-corpus.md),
+  carried here because 04 made category weight a corpus derivation and the digest
+  cannot compute it. Everything else about implementation stays out of scope.
 
 ## Decisions so far
 
@@ -65,6 +69,31 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 - **Stable bands, living inputs** (provisional): band definitions are prose that changes
   only on deliberate revision; the corpus supplies which skills get checked. Revisited
   only if future postings consistently clash with the bands.
+- **The category set** ([Design the category set](tickets/04-design-the-category-set.md)): five
+  judged categories — **Production ownership** (6/6), **Agentic systems** (6/6),
+  **Evaluation rigour** (5/6), **AI-assisted coding fluency** (3/6) and **Resume
+  craft** — plus the three deterministic categories unchanged. Separability decides
+  what exists; document frequency decides what it is worth. `Coverage` dissolves into
+  the behaviours; cross-functional collaboration stays out at 6/6 on the sentence-shape
+  collision `jd_dimensions.py` already records.
+- **The judge answers criteria, not bands** ([Design the category
+  set](tickets/04-design-the-category-set.md)): binary, individually quotable evidence
+  questions, each with the quote that settles it. The band is a lookup from the
+  criteria and the score a lookup from the band — the output-form decision taken to
+  the limit it explicitly sanctioned.
+- **Category weight is corpus-derived** ([Design the category
+  set](tickets/04-design-the-category-set.md)): document frequency sets the weight of
+  the four behaviour categories; the other four stay authored, having no df to derive
+  from. So `dimension_multiplier()` retires for its four double-counting rules and
+  keeps only `title/seniority-mismatch`, whose category keeps an authored weight.
+- **`rule_share` is a claim, per category** ([Design the category
+  set](tickets/04-design-the-category-set.md)): 0.7 Resume craft, 0.4 the behaviour
+  categories, **0** for AI-assisted coding fluency — the first model-owned category,
+  because only a brittle proper-noun list could give it a rule channel. Two facts
+  found: 0.7 reaches only `Recruiter scan` in normal operation (though nothing filters
+  a provider's response, so the other two members of its set are not inert by
+  construction), and a category with no rules blends against a constant 100, not a
+  channel.
 
 ## Not yet specified
 
@@ -75,9 +104,14 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   clash with the rubric", which isn't yet a testable condition.
 - **Nice-to-have bonus mechanics.** Nice-to-haves should add "a slight bonus" to coverage;
   how much, and whether it can compensate for a missing requirement, is unspecified.
-- **What happens to `config.RULE_DIMENSION` and `dimension_multiplier()`** — the existing
-  JD-derived 1.5× rule scaling — once categories are redesigned. It may be subsumed,
-  kept alongside, or dropped.
+- **Which gate `Resume craft` belongs to.** It merges `Recruiter scan`
+  (`Gate.RECRUITER`) with `Writing quality` (`Gate.MANAGER`) and must pick one.
+  `report.py` groups findings by gate and `score.py` derives the parser and human
+  sub-scores from it, so this moves visible output. A reporting question, not a rubric
+  one, which is why 04 left it.
+- **The weight arithmetic.** 04 fixed the principle (df sets the derived block, the
+  rest is authored) but not the numbers: how the 100 points split between the derived
+  and authored blocks, and whether df maps to weight proportionally or through tiers.
 - **Whether the slop pass folds into a quality category** or stays a separate pass with
   its own findings.
 - **How the spec migrates into code** without a flag day: the composite, the ledger and
