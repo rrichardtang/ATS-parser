@@ -89,10 +89,10 @@ the report sees them. `scripts/agreement_harness.py` takes `--samples` itself (d
 2) and calls `passes.content_judgments()`, the per-(provider, sample) seam extracted
 out of `content_pass` for it. Averaging was the obstacle, not the config.
 
-06 also found that `temperature` reaches **neither** current model: `ats/llm.py` never
-sends it to Anthropic and only sends it to OpenAI for the gpt-4 era. So the within-judge
-spread is each provider's default sampling noise, and it is a floor to clear rather than
-a knob to turn.
+And the within-judge spread that sampling twice buys is each provider's **default**
+sampling noise, not a temperature anyone chose: `weights.toml`'s comment on `temperature`
+already records that the parameter reaches neither current model. It is therefore a floor
+for between-judge spread to clear, not a knob to turn.
 
 ### 3. The digest still tells the model "Required in most"
 

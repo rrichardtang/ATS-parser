@@ -23,9 +23,11 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   code facts 04/05/06 will hit.
 - **The acceptance test is runnable**: `scripts/agreement_harness.py` (06). Judge a
   category set or a band draft with a sweep before and after, not by argument.
-- **The noise floor is not adjustable.** 06 found `temperature` never reaches either
-  current model (`ats/llm.py`), so the within-judge spread is each provider's own
-  default sampling. Between-judge spread has to clear it; it cannot be turned down.
+- **The noise floor is not adjustable.** `temperature` never reaches either current
+  model — `weights.toml`'s own comment says so — which makes the within-judge spread
+  each provider's default sampling. 06's addition is what that means for the test:
+  between-judge spread has to clear the floor, and the floor cannot be lowered to
+  help it.
 - **Skills every session should consult**: `grilling` and `domain-modeling` by default;
   `research` for AFK reading tickets; `prototype` for tickets that need something concrete
   to react to.

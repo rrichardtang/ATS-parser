@@ -94,26 +94,28 @@ Findings agreement is keyed on `(rule_id, locator)` per 03 — same defect, same
 place, however differently worded — and reported as Jaccard overlap between judges
 and within each judge across its reruns.
 
-## Two facts the build turned up
+## Two facts, one already known and one a correction
 
-**1. `temperature` does not reach either current model.** `weights.toml` sets
-`temperature = 0.7` and `content_pass` passes it whenever `samples > 1`, but
-`ats/llm.py` never sends it to Anthropic and only sends it to OpenAI for the gpt-4
-era. So the within-judge column measures each provider's *own default* sampling.
-That is still a real noise floor — it is the noise a user's run actually carries —
-but it is not a knob this map can turn, and the harness says so in its own output
-rather than leaving the number looking chosen. Turning temperature down to shrink
-the noise floor is not available; the honest move is to report the floor and
-require between-judge spread to clear it.
+**1. The noise floor is not adjustable — and this was already written down.**
+`weights.toml`'s comment on `temperature` already says it: the parameter only
+reaches models of the gpt-4 era and earlier, since `ats/llm.py` never sends it to
+Anthropic and gates it behind `LEGACY_OPENAI`. Not a discovery by this ticket, and
+recorded here because the *consequence for measurement* is new. `content_pass`
+passes `temperature` whenever `samples > 1`, so the within-judge column measures
+each provider's **own default** sampling. That is still a real noise floor — it is
+the noise a user's run actually carries — but it cannot be turned down to make
+between-judge spread look better by comparison. The honest move, and what the
+harness does, is to report the floor, say in its own output that the temperature
+was not chosen, and require between-judge spread to clear it.
 
 **2. `content_samples` stays at 1 in `weights.toml`.** `scoring-mechanics.md` reads
 the acceptance test as needing the config flipped to 2. It does not, and flipping it
 would be wrong: sampling twice is a *measurement* requirement, and putting it in the
 shipped config doubles the cost of every user's run to buy them nothing — the report
 averages the samples away again. The harness takes `--samples` (default 2) itself
-and leaves production alone. The claim in `scoring-mechanics.md` that "the config is
-the small part" is corrected here rather than there, since it was true of the
-requirement and wrong about where it lands.
+and leaves production alone. `scoring-mechanics.md` §2 is corrected in place, since
+04 and 05 read it: its claim that "the config is the small part" was true about the
+requirement and wrong about where the requirement lands.
 
 ## Cost, and why the run is saved
 
