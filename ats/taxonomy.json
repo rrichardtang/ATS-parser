@@ -1,7 +1,12 @@
 {
   "generated_from": "/home/user/ATS-parser/corpus/jds/user",
-  "document_count": 2,
+  "document_count": 5,
   "sources": [
+    {
+      "title": "Applied AI Engineer",
+      "company": "Anthropic",
+      "date_added": "2026-08-30"
+    },
     {
       "title": "Forward Deployed AI Engineer",
       "company": "Edra",
@@ -10,6 +15,16 @@
     {
       "title": "Machine Learning Engineer",
       "company": "Fluidstack",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Applied AI Engineer, Codex Core Agent",
+      "company": "OpenAI",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Applied AI Engineer, Fullstack",
+      "company": "Ramp",
       "date_added": "2026-08-30"
     }
   ],
@@ -56,7 +71,7 @@
       "required_doc_frequency": 1,
       "nice_doc_frequency": 0,
       "total_mentions": 1,
-      "weight": 0.5,
+      "weight": 0.2,
       "provenance": "jd-derived"
     },
     "core_ml/lora": {
@@ -254,7 +269,7 @@
       "required_doc_frequency": 1,
       "nice_doc_frequency": 0,
       "total_mentions": 1,
-      "weight": 0.5,
+      "weight": 0.2,
       "provenance": "jd-derived"
     },
     "llm_systems/function-calling": {
@@ -281,11 +296,11 @@
         "agents",
         "planning loop"
       ],
-      "doc_frequency": 1,
+      "doc_frequency": 2,
       "required_doc_frequency": 1,
-      "nice_doc_frequency": 0,
-      "total_mentions": 1,
-      "weight": 0.5,
+      "nice_doc_frequency": 1,
+      "total_mentions": 2,
+      "weight": 0.28,
       "provenance": "jd-derived"
     },
     "llm_systems/llm-apis": {
@@ -490,7 +505,7 @@
       "required_doc_frequency": 1,
       "nice_doc_frequency": 0,
       "total_mentions": 1,
-      "weight": 0.5,
+      "weight": 0.2,
       "provenance": "jd-derived"
     },
     "evaluation/golden-dataset": {

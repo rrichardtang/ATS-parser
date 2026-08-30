@@ -1,8 +1,11 @@
 {
-  "document_count": 2,
+  "document_count": 5,
   "target_titles": [
+    "Applied AI Engineer",
     "Forward Deployed AI Engineer",
-    "Machine Learning Engineer"
+    "Machine Learning Engineer",
+    "Applied AI Engineer, Codex Core Agent",
+    "Applied AI Engineer, Fullstack"
   ],
   "required": [
     {
@@ -22,30 +25,40 @@
       "doc_frequency": 1
     }
   ],
-  "nice_to_have": [],
+  "nice_to_have": [
+    {
+      "term": "llm_systems/agents",
+      "doc_frequency": 1
+    }
+  ],
   "dimensions": {
     "ownership": {
       "count": 1,
-      "total": 2
+      "total": 5
     },
     "production": {
-      "count": 2,
-      "total": 2
+      "count": 5,
+      "total": 5
     },
     "evaluation": {
-      "count": 2,
-      "total": 2
+      "count": 3,
+      "total": 5
     },
     "seniority": {
       "count": 0,
-      "total": 2
+      "total": 5
     },
     "leadership": {
       "count": 0,
-      "total": 2
+      "total": 5
     }
   },
   "sources": [
+    {
+      "title": "Applied AI Engineer",
+      "company": "Anthropic",
+      "date_added": "2026-08-30"
+    },
     {
       "title": "Forward Deployed AI Engineer",
       "company": "Edra",
@@ -54,6 +67,16 @@
     {
       "title": "Machine Learning Engineer",
       "company": "Fluidstack",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Applied AI Engineer, Codex Core Agent",
+      "company": "OpenAI",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Applied AI Engineer, Fullstack",
+      "company": "Ramp",
       "date_added": "2026-08-30"
     }
   ]
