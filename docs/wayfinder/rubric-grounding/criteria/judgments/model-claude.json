@@ -1,0 +1,229 @@
+{
+  "judge": "model-claude",
+  "recorded": "2026-08-30",
+  "method": "One model judge (this session's Claude) reading each document and answering the five Production ownership criteria in ../production-ownership.json, without sight of the deterministic answers. Written down rather than called live: scripts/agreement_harness.py exists but this environment has no provider credentials. The file shape is one (provider, sample) worth of criterion answers, which is what 06 would have to emit for criterion agreement to be measurable.",
+  "fixtures": {
+    "strong": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Shipped a LoRA fine-tune of Mistral-7B for ticket triage'",
+        "C2": "Mistral-7B, named in the same bullet as the ship",
+        "C3": "'holding 1.2k req/min on 4 A10Gs' -- load carried in production",
+        "C4": "'profiling the serving path and replacing padded batching'; 'Ported model serving from Flask to FastAPI'",
+        "C5": "'Shipped a LoRA fine-tune' -- the candidate is the subject, unhedged"
+      }
+    },
+    "slop": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'deliver robust and scalable solutions' names no destination; nothing reaches production, users or release",
+        "C2": "no destination bullet to name anything in",
+        "C3": "no fact that could only be true after something ran",
+        "C4": "nothing describes work on a live system",
+        "C5": "no destination bullet"
+      }
+    },
+    "two_column": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Shipped LoRA fine-tune' read across the interleaved columns",
+        "C2": "LoRA, vLLM",
+        "C3": "'Cut p99 latency 380ms to 95ms'",
+        "C4": "'Cut p99 latency ... with vLLM continuous batching' reads as work on a running path",
+        "C5": "'Shipped', 'Cut' -- candidate as subject"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "hidden_text": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": false,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Built and shipped an LLM serving path on vLLM'",
+        "C2": "vLLM",
+        "C3": "'380ms to 95ms p99'",
+        "C4": "one bullet, nothing after launch",
+        "C5": "'Built and shipped' -- candidate as subject"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "scanned": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {},
+      "note": "No text layer. Withheld for every judge; recorded only for completeness."
+    },
+    "no_phone": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Shipped a LoRA fine-tune of Mistral-7B for ticket triage'",
+        "C2": "Mistral-7B",
+        "C3": "'holding 1.2k req/min on 4 A10Gs'",
+        "C4": "'profiling the serving path and replacing padded batching'; 'Ported model serving from Flask to FastAPI'",
+        "C5": "'Shipped a LoRA fine-tune' -- unhedged, candidate as subject"
+      }
+    },
+    "buried_evidence": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Shipped a LoRA fine-tune of Mistral-7B for ticket triage'",
+        "C2": "Mistral-7B",
+        "C3": "'holding 1.2k req/min on 4 A10Gs'",
+        "C4": "'profiling the serving path and replacing padded batching'",
+        "C5": "'Shipped a LoRA fine-tune' -- unhedged"
+      }
+    },
+    "1-built-not-shipped": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "every bullet stops at the artifact: Built, Designed, Explored, Prototyped",
+        "C2": "no destination bullet",
+        "C3": "'0.81 AUC on a held-out set' is an offline number",
+        "C4": "nothing was live to work on",
+        "C5": "no destination bullet"
+      }
+    },
+    "2-shipped-unnamed": {
+      "answers": {
+        "C1": true,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Deployed AI-powered solutions to production'; 'Launched multiple models into the production environment'",
+        "C2": "'solutions', 'features', 'a data-driven system', 'multiple models' -- nothing an interviewer could ask about",
+        "C3": "no fact that postdates a launch",
+        "C4": "nothing describes work on a live system",
+        "C5": "'Deployed ...' -- candidate as subject, unhedged"
+      }
+    },
+    "3-shipped-no-after": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": false,
+        "C4": false,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Shipped a Mistral-7B summariser for support tickets to production'",
+        "C2": "Mistral-7B, FastAPI, pgvector",
+        "C3": "'eleven weeks' is a duration and '200k help-centre articles' is corpus size; neither postdates the launch",
+        "C4": "'handed the service to the platform team at launch' -- the story ends there",
+        "C5": "'Shipped a Mistral-7B summariser' -- unhedged"
+      }
+    },
+    "4-shipped-operated-once": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": false,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Shipped a Mistral-7B summariser ... to production'",
+        "C2": "Mistral-7B",
+        "C3": "'now serving 40k requests a day' -- load only measurable after it ran",
+        "C4": "still handed off at launch; nothing describes work done afterwards",
+        "C5": "'Shipped ...' -- unhedged"
+      }
+    },
+    "5-team-attributed": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Helped the team ship a Mistral-7B summariser to production'",
+        "C2": "Mistral-7B",
+        "C3": "'serving 40k requests a day'; 'cut its p99 from 2.4s to 700ms'",
+        "C4": "'cut its p99 ... after launch'; 'the retraining loop that ran monthly'",
+        "C5": "'Helped the team ship' and 'We carried the pager' -- hedged and team-attributed"
+      }
+    },
+    "6-owned": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Shipped a Mistral-7B summariser to production'",
+        "C2": "Mistral-7B",
+        "C3": "'serving 40k requests a day'; 'Carried the pager for it'",
+        "C4": "'cut p99 ... after launch by adding a response cache'; 'Debugged a silent quality regression three months in'",
+        "C5": "'Shipped ...' -- candidate as subject, unhedged"
+      }
+    },
+    "7-hedged-but-operated": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Helped ship a Mistral-7B summariser to production'",
+        "C2": "Mistral-7B",
+        "C3": "'serving 40k requests a day'; 'Carried the pager for it alone'",
+        "C4": "'cut p99 ... after launch'; 'Debugged a silent quality regression'; 'Tuned the retrieval index monthly'",
+        "C5": "no, but only just: the criterion asks about the shipped work and 'Helped ship' hedges it, while 'Carried the pager for it alone' is as unhedged as ownership gets. This is the criterion's weakest wording -- see the agreement writeup."
+      },
+      "note": "Written to stress C5: everything after the ship is first-person, the ship itself is hedged."
+    }
+  }
+}

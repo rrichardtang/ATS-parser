@@ -1,0 +1,10 @@
+Dana Ruiz
+dana.ruiz@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Halstead Analytics    Jan 2023 - Present
+• Built a churn classifier on 400k customer records, reaching 0.81 AUC on a held-out set.
+• Designed a feature pipeline in Spark and documented the schema for the data team.
+• Explored three transformer architectures for document classification and wrote up the comparison.
+• Prototyped a retrieval index over the support knowledge base in a notebook.

@@ -14,6 +14,15 @@ same resume land within a stated tolerance of each other.
 This map produces the **spec and the decisions behind it**. Implementing it in
 `ats/prompts.py`, `ats/score.py` and the digest pipeline is a separate effort.
 
+## Spec so far
+
+- [production-ownership-criteria.md](production-ownership-criteria.md) — the first
+  category's criteria and its band lookup (05).
+- [production-ownership-agreement.md](production-ownership-agreement.md) — what they
+  measured, and the verdict on the format (05).
+- [criteria/](criteria/) — the criteria as data, the band probes, and the recorded
+  judge answers the measurement ran on.
+
 ## Notes
 
 - **Domain**: resume scoring against AI-engineering job postings. Glossary in `/CONTEXT.md`.
@@ -104,6 +113,27 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   a provider's response, so the other two members of its set are not inert by
   construction), and a category with no rules blends against a constant 100, not a
   channel.
+- **Criteria work, and their cost is positional** ([Draft score bands for one
+  category](tickets/05-draft-bands-for-one-category.md)): `Production ownership` written
+  as five binary criteria and a band lookup measured **53/55 criterion answers
+  identical, 10 exact bands, 1 adjacent, 0 far → LOOK** between a deterministic judge
+  and a model judge over eleven documents. 04's criteria-are-more-diagnosable claim
+  holds and does real work: the two splits are indistinguishable at band level and need
+  opposite fixes — one a vocabulary gap in the criterion, one a channel defect no regex
+  can fix. And a criterion costs what its *position in the lookup* costs, not what it
+  costs to answer: the gate criterion moves the band from all 32 answer sets, while the
+  most judgment-laden one moves it from 2 and never by more than a band. Spend the
+  wording budget on the gate. Every category needs its own leverage table, and one whose
+  gate is its hardest question will not converge however it is worded.
+- **A category is withheld, never guessed, where the parse cannot carry it** (05).
+  Every criterion asks about a bullet inside a role, so on a document whose roles did
+  not survive extraction the judges disagree about what the document is rather than
+  about the rubric — and the parser gate has already found and charged for that defect.
+- **The fixture set cannot exercise a content rubric** (05). Four of the seven carry the
+  same bullets, three carry almost nothing, and every one that can be answered lands at
+  one end of the ladder — three of five bands unreachable. 05 wrote seven band probes
+  (`criteria/probes/`) for the boundaries; they test the rubric, not the parser, so they
+  are text rather than PDFs and live outside `tests/fixtures/`.
 - **The bar can be measured** (06): [Build the inter-judge agreement harness](tickets/06-build-the-agreement-harness.md)
   — `scripts/agreement_harness.py` runs the corpus past both providers twice with the
   samples kept apart, and prints between-judge spread, within-judge spread and
@@ -115,6 +145,18 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   is marked rather than counted as agreement.
 
 ## Not yet specified
+
+- **Whether the acceptance test has ever passed.** It has not been run: 05 measured a
+  two-judge proxy and says so, and no two-provider run exists. 06 also cannot measure
+  the criterion half of it until it reads criterion answers from a judgement rather
+  than `score` and `band`.
+- **03's second experiment** — band-only versus band-plus-a-point-inside-it. Specified
+  in `production-ownership-criteria.md`, one prompt variant and one harness run, not
+  yet executed.
+- **C5's wording.** `Production ownership`'s ownership criterion asks about the
+  destination bullet, so a resume that hedges the ship and then evidences sole
+  operation of the live system answers `no`. Left open by 05 rather than patched,
+  because resolving it needs the second judge 06 supplies.
 
 - **A new word for the report's "banded"**. 03 leaves **band** meaning only what
   `/CONTEXT.md` defines it as, so the display of two judges disagreeing needs its own
