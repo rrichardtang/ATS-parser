@@ -36,9 +36,17 @@
     <summary>{{ g.count - 1 }} more instance{{ "s" if g.count > 2 }}</summary>
     {% for f in g.instances[1:] %}
     <div class="instance">
-      <span class="loc">{{ f.locator }}</span>
-      <span class="q">{{ f.evidence[:110] }}</span>
-      <span class="pts">&minus;{{ "%.1f"|format(f.points) }}</span>
+      <div class="instance-head">
+        <span class="loc">{{ f.locator }}</span>
+        <span class="pts">&minus;{{ "%.1f"|format(f.points) }}</span>
+      </div>
+      {# Each instance carries its own message and fix. Showing only the quote
+         left the reader with a deduction and no stated reason for it. #}
+      {% if f.message != g.lead.message %}<p class="msg">{{ f.message }}</p>{% endif %}
+      {% if f.evidence and f.evidence not in ("document", "header") %}
+      <div class="quote">{{ f.evidence }}</div>
+      {% endif %}
+      {% if f.fix and f.fix != g.lead.fix %}<p class="fix">{{ f.fix }}</p>{% endif %}
     </div>
     {% endfor %}
   </details>

@@ -259,10 +259,13 @@ button.go[disabled] { opacity: 0.5; cursor: progress; }
 details.more { margin-top: 0.45rem; }
 details.more summary { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-soft); cursor: pointer; }
 details.more summary:hover { color: var(--mark); }
-.instance { display: flex; gap: 0.6rem; align-items: baseline; font-family: var(--mono); font-size: 0.68rem; padding: 0.2rem 0; border-top: 1px solid var(--rule); }
-.instance .loc { color: var(--mark); flex: 0 0 auto; }
-.instance .q { color: var(--ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; }
+.instance { padding: 0.45rem 0; border-top: 1px solid var(--rule); }
+.instance-head { display: flex; gap: 0.6rem; align-items: baseline; font-family: var(--mono); font-size: 0.68rem; }
+.instance .loc { color: var(--mark); flex: 1 1 auto; }
 .instance .pts { color: var(--flag); flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.instance .msg { margin: 0.2rem 0 0.2rem; }
+.instance .fix { margin: 0.2rem 0 0; font-size: 0.9rem; }
+.instance .fix::before { content: "→ "; color: var(--keep); font-family: var(--mono); }
 
 /* ---- diffs ----------------------------------------------------------- */
 .diff { border: 1px solid var(--rule); border-radius: var(--radius); margin-bottom: 0.8rem; background: var(--card); overflow: hidden; }
