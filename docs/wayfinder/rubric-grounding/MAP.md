@@ -22,6 +22,10 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   measured, and the verdict on the format (05).
 - [criteria/](criteria/) — the criteria as data, the band probes, and the recorded
   judge answers the measurement ran on.
+- [baseline-agreement.md](baseline-agreement.md) — the first real two-provider run,
+  against the rubric still in the code. The *before* picture every change is judged
+  from, with [baseline/run-summary.json](baseline/run-summary.json) so its arithmetic
+  stays checkable.
 
 ## Notes
 
@@ -134,6 +138,24 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   one end of the ladder — three of five bands unreachable. 05 wrote seven band probes
   (`criteria/probes/`) for the boundaries; they test the rubric, not the parser, so they
   are text rather than PDFs and live outside `tests/fixtures/`.
+- **The old rubric's failure is mostly calibration** ([baseline-agreement.md](baseline-agreement.md)):
+  the first real run puts openai above anthropic in **34 of 35** category-resume cells,
+  mean **+18.0**, while the two rank resumes almost identically (Spearman 0.75–0.96) —
+  and their written justifications for cells 19 points apart say the same thing in
+  different words. The disagreement is about turning a shared reading into a number,
+  which is the one failure mode 04's output form removes by construction. Removing each
+  category's offset still leaves **7.9 points** on average, so the offset is about half
+  the problem, not all of it; that residual sits on top of readings that already agree.
+  Two smaller findings: `rule_share` 0.7 *masks* `Recruiter scan`'s disagreement rather
+  than resolving it, and 03's no-deduct column widened the composite spread on 5 of 6
+  resumes — a datum 03 did not have.
+- **Findings identity is unsettled, and it decided the answer** ([What makes two findings
+  the same finding](tickets/10-what-makes-two-findings-the-same-finding.md)): keyed on
+  `(rule_id, locator)` the judges agree 0.03; on locator alone, 0.51. The judges invented
+  **108 rule ids for 198 findings** and shared 5, because the prompt asks them to reuse a
+  name they have no list to reuse from. Criteria are already a closed vocabulary, which
+  is why the ticket's real question is whether the model needs a findings vocabulary at
+  all.
 - **The bar can be measured** (06): [Build the inter-judge agreement harness](tickets/06-build-the-agreement-harness.md)
   — `scripts/agreement_harness.py` runs the corpus past both providers twice with the
   samples kept apart, and prints between-judge spread, within-judge spread and
@@ -146,10 +168,17 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 
 ## Not yet specified
 
-- **Whether the acceptance test has ever passed.** It has not been run: 05 measured a
-  two-judge proxy and says so, and no two-provider run exists. 06 also cannot measure
-  the criterion half of it until it reads criterion answers from a judgement rather
-  than `score` and `band`.
+- **Whether the acceptance test has ever passed on the rubric being designed.** It has
+  been run once, against the rubric still in the code, and failed —
+  [baseline-agreement.md](baseline-agreement.md). The new one has never been run: it
+  needs criteria for the other four categories, a prompt that emits them, and a harness
+  that reads criterion answers rather than `score` and `band`. 05 measured a two-judge
+  proxy and says so.
+- **Criteria for the other four categories.** 05 wrote one, deliberately. The
+  destination needs all five, and nothing tracks the remaining four —
+  `Agentic systems` and `Evaluation rigour` should transfer nearly directly per 05,
+  `AI-assisted coding fluency` has no rule channel so criterion agreement is its only
+  agreement, and `Resume craft` is the one 05 predicts will not converge.
 - **03's second experiment** — band-only versus band-plus-a-point-inside-it. Specified
   in `production-ownership-criteria.md`, one prompt variant and one harness run, not
   yet executed.

@@ -1,0 +1,1896 @@
+{
+  "meta": {
+    "generated": "2026-08-30T17:21:01+00:00",
+    "providers": [
+      "anthropic:claude-sonnet-5",
+      "openai:gpt-5.6-luna"
+    ],
+    "samples_per_provider": 2,
+    "temperature": 0.7,
+    "notes": [
+      "temperature=0.7 does not reach anthropic:claude-sonnet-5, openai:gpt-5.6-luna -- current models dropped the parameter (see ats/llm.py), so the within-judge column measures each provider's own default sampling, not a temperature chosen here."
+    ],
+    "redacted": "Derived from a raw agreement run by scripts/baseline_analysis.py --extract. Quoted resume text, finding messages and category justifications removed; non-fixture resumes renamed."
+  },
+  "resumes": [
+    {
+      "name": "buried_evidence",
+      "skipped": "",
+      "judgments": [
+        {
+          "provider": "openai",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 89
+            },
+            "AI/ML relevance & depth": {
+              "score": 91
+            },
+            "Credibility & verifiability": {
+              "score": 76
+            },
+            "Recruiter scan": {
+              "score": 58
+            },
+            "Writing quality": {
+              "score": 88
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-production-context",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-detail",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-detail",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/ambiguous-outcome-scope",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "openai",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 88
+            },
+            "AI/ML relevance & depth": {
+              "score": 91
+            },
+            "Credibility & verifiability": {
+              "score": 70
+            },
+            "Recruiter scan": {
+              "score": 62
+            },
+            "Writing quality": {
+              "score": 86
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-experiment-context",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unverified-production-use",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/ambiguous-serving-scope",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unclear-cost-scope",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/limited-product-context",
+              "locator": "exp[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/narrow-ownership-evidence",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 78
+            },
+            "AI/ML relevance & depth": {
+              "score": 80
+            },
+            "Credibility & verifiability": {
+              "score": 72
+            },
+            "Recruiter scan": {
+              "score": 30
+            },
+            "Writing quality": {
+              "score": 55
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-baseline",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/irrelevant-content",
+              "locator": "interests.bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unsupported-scope-claim",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 68
+            },
+            "AI/ML relevance & depth": {
+              "score": 72
+            },
+            "Credibility & verifiability": {
+              "score": 52
+            },
+            "Recruiter scan": {
+              "score": 28
+            },
+            "Writing quality": {
+              "score": 62
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-baseline",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unverified-outcome",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/scope-inflation",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-named-tool",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/no-production-confirmation",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/bloated-non-relevant-section",
+              "locator": "interests",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "hidden_text",
+      "skipped": "",
+      "judgments": [
+        {
+          "provider": "openai",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 58
+            },
+            "AI/ML relevance & depth": {
+              "score": 43
+            },
+            "Credibility & verifiability": {
+              "score": 40
+            },
+            "Recruiter scan": {
+              "score": 35
+            },
+            "Writing quality": {
+              "score": 45
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-benchmark-context",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-user-outcome",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-quality-tradeoff",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unsupported-seniority-claim",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/ambiguous-metric-phrasing",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/insufficient-experience-evidence",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "openai",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 48
+            },
+            "AI/ML relevance & depth": {
+              "score": 42
+            },
+            "Credibility & verifiability": {
+              "score": 24
+            },
+            "Recruiter scan": {
+              "score": 22
+            },
+            "Writing quality": {
+              "score": 58
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-role-context",
+              "locator": "exp[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-context",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-deployment-evidence",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/narrow-ml-evidence",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/awkward-metric-phrasing",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 20
+            },
+            "AI/ML relevance & depth": {
+              "score": 15
+            },
+            "Credibility & verifiability": {
+              "score": 5
+            },
+            "Recruiter scan": {
+              "score": 5
+            },
+            "Writing quality": {
+              "score": 15
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/hidden-text-manipulation",
+              "locator": "experience[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/seniority-mismatch",
+              "locator": "experience[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-employment-context",
+              "locator": "experience[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "experience[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/no-evaluation-methodology",
+              "locator": "experience[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "experience[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 25
+            },
+            "AI/ML relevance & depth": {
+              "score": 10
+            },
+            "Credibility & verifiability": {
+              "score": 5
+            },
+            "Recruiter scan": {
+              "score": 5
+            },
+            "Writing quality": {
+              "score": 15
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/seniority-overclaim",
+              "locator": "exp[0].line[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/keyword-stuffing",
+              "locator": "exp[0].line[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unverified-outcome",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-model-or-dataset",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-ownership-context",
+              "locator": "exp[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "no_phone",
+      "skipped": "",
+      "judgments": [
+        {
+          "provider": "openai",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 96
+            },
+            "AI/ML relevance & depth": {
+              "score": 95
+            },
+            "Credibility & verifiability": {
+              "score": 87
+            },
+            "Recruiter scan": {
+              "score": 94
+            },
+            "Writing quality": {
+              "score": 96
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-evaluation-context",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-context",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-production-evidence",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-workload-scale",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unverified-benchmark",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "openai",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 91
+            },
+            "AI/ML relevance & depth": {
+              "score": 88
+            },
+            "Credibility & verifiability": {
+              "score": 82
+            },
+            "Recruiter scan": {
+              "score": 88
+            },
+            "Writing quality": {
+              "score": 94
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-evaluation-method",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-user-impact",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-context",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unverified-production",
+              "locator": "exp[1].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-monitoring-action",
+              "locator": "exp[1].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-business-outcome",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 82
+            },
+            "AI/ML relevance & depth": {
+              "score": 68
+            },
+            "Credibility & verifiability": {
+              "score": 72
+            },
+            "Recruiter scan": {
+              "score": 75
+            },
+            "Writing quality": {
+              "score": 85
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unverified-outcome",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 78
+            },
+            "AI/ML relevance & depth": {
+              "score": 72
+            },
+            "Credibility & verifiability": {
+              "score": 62
+            },
+            "Recruiter scan": {
+              "score": 80
+            },
+            "Writing quality": {
+              "score": 74
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-eval-methodology",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unverified-outcome",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unclear-ownership-scope",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/fragment-phrasing",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-eval-methodology",
+              "locator": "exp[1].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "scanned",
+      "skipped": "no text layer, so the content pass never runs on this document",
+      "judgments": []
+    },
+    {
+      "name": "slop",
+      "skipped": "",
+      "judgments": [
+        {
+          "provider": "openai",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 5
+            },
+            "AI/ML relevance & depth": {
+              "score": 15
+            },
+            "Credibility & verifiability": {
+              "score": 8
+            },
+            "Recruiter scan": {
+              "score": 22
+            },
+            "Writing quality": {
+              "score": 10
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/generic-positioning",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unverified-outcome",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/team-attribution",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-model-specificity",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-production-proof",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation",
+              "locator": "exp[1].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/team-attribution",
+              "locator": "exp[1].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-model-specificity",
+              "locator": "exp[1].bullet[3]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/undifferentiated-experience",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unsupported-skill-claim",
+              "locator": "skills",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "openai",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 5
+            },
+            "AI/ML relevance & depth": {
+              "score": 12
+            },
+            "Credibility & verifiability": {
+              "score": 8
+            },
+            "Recruiter scan": {
+              "score": 18
+            },
+            "Writing quality": {
+              "score": 10
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/generic-summary",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unverified-production-claim",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/activity-not-ownership",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-model-specificity",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-user-evidence",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unverified-production-claim",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unsupported-skill-claim",
+              "locator": "skills",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-operational-metrics",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unclear-career-progression",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 4
+            },
+            "AI/ML relevance & depth": {
+              "score": 8
+            },
+            "Credibility & verifiability": {
+              "score": 5
+            },
+            "Recruiter scan": {
+              "score": 12
+            },
+            "Writing quality": {
+              "score": 6
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/duplicated-experience",
+              "locator": "exp[0].bullet[0] / exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unverifiable-claim",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/skills-experience-mismatch",
+              "locator": "skills",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-production-signal",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/skills-list-padding",
+              "locator": "skills",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 3
+            },
+            "AI/ML relevance & depth": {
+              "score": 8
+            },
+            "Credibility & verifiability": {
+              "score": 2
+            },
+            "Recruiter scan": {
+              "score": 15
+            },
+            "Writing quality": {
+              "score": 5
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/duplicate-role-content",
+              "locator": "exp[0].bullet[0] / exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/skills-experience-mismatch",
+              "locator": "skills",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/empty-summary",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/seniority-mismatch",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-eval-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-production-evidence",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/skill-list-padding",
+              "locator": "skills",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "strong",
+      "skipped": "",
+      "judgments": [
+        {
+          "provider": "openai",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 92
+            },
+            "AI/ML relevance & depth": {
+              "score": 91
+            },
+            "Credibility & verifiability": {
+              "score": 79
+            },
+            "Recruiter scan": {
+              "score": 88
+            },
+            "Writing quality": {
+              "score": 94
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/incomplete-model-validation",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-benchmark-context",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-adoption-evidence",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "openai",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 93
+            },
+            "AI/ML relevance & depth": {
+              "score": 89
+            },
+            "Credibility & verifiability": {
+              "score": 79
+            },
+            "Recruiter scan": {
+              "score": 91
+            },
+            "Writing quality": {
+              "score": 94
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-evaluation-method",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/incomplete-benchmark-context",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-deployment-context",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-deployment-context",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/incomplete-model-detail",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 82
+            },
+            "AI/ML relevance & depth": {
+              "score": 74
+            },
+            "Credibility & verifiability": {
+              "score": 62
+            },
+            "Recruiter scan": {
+              "score": 85
+            },
+            "Writing quality": {
+              "score": 84
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-named-model/dataset",
+              "locator": "exp[1].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-target-role-evidence",
+              "locator": "summary",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 78
+            },
+            "AI/ML relevance & depth": {
+              "score": 72
+            },
+            "Credibility & verifiability": {
+              "score": 58
+            },
+            "Recruiter scan": {
+              "score": 68
+            },
+            "Writing quality": {
+              "score": 85
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-eval-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-context",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-context",
+              "locator": "exp[1].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/scope-beyond-mid-level",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "two_column",
+      "skipped": "",
+      "judgments": [
+        {
+          "provider": "openai",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 76
+            },
+            "AI/ML relevance & depth": {
+              "score": 82
+            },
+            "Credibility & verifiability": {
+              "score": 56
+            },
+            "Recruiter scan": {
+              "score": 43
+            },
+            "Writing quality": {
+              "score": 48
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-measurement-context",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/ambiguous-implementation",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-production-context",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-model-identity",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-production-context",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unclear-ownership",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "openai",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 76
+            },
+            "AI/ML relevance & depth": {
+              "score": 78
+            },
+            "Credibility & verifiability": {
+              "score": 54
+            },
+            "Recruiter scan": {
+              "score": 48
+            },
+            "Writing quality": {
+              "score": 57
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-method",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-model-detail",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-method",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-production-evidence",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/technical-only-outcome",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-production-evidence",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 45
+            },
+            "AI/ML relevance & depth": {
+              "score": 50
+            },
+            "Credibility & verifiability": {
+              "score": 35
+            },
+            "Recruiter scan": {
+              "score": 40
+            },
+            "Writing quality": {
+              "score": 50
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-model-name",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-production-evidence",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-dataset-detail",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/thin-scope-signal",
+              "locator": "exp[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/fragment-sentence",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 40
+            },
+            "AI/ML relevance & depth": {
+              "score": 35
+            },
+            "Credibility & verifiability": {
+              "score": 25
+            },
+            "Recruiter scan": {
+              "score": 30
+            },
+            "Writing quality": {
+              "score": 55
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-named-model",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-production-evidence",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/skill-experience-mismatch",
+              "locator": "skills",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/thin-ownership-signal",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "private_resume_1",
+      "skipped": "",
+      "judgments": [
+        {
+          "provider": "openai",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 83
+            },
+            "AI/ML relevance & depth": {
+              "score": 91
+            },
+            "Credibility & verifiability": {
+              "score": 69
+            },
+            "Recruiter scan": {
+              "score": 81
+            },
+            "Writing quality": {
+              "score": 84
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[0].bullet[4]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-dataset",
+              "locator": "exp[0].bullet[5]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-production-scale",
+              "locator": "exp[0].bullet[5]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/proxy-metric",
+              "locator": "exp[0].bullet[6]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/evaluation-gap",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-methodology",
+              "locator": "exp[1].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unverified-outcome",
+              "locator": "exp[1].bullet[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "openai",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 76
+            },
+            "AI/ML relevance & depth": {
+              "score": 89
+            },
+            "Credibility & verifiability": {
+              "score": 68
+            },
+            "Recruiter scan": {
+              "score": 79
+            },
+            "Writing quality": {
+              "score": 81
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unmeasured-outcome",
+              "locator": "exp[0].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-detail",
+              "locator": "exp[0].bullet[3]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-detail",
+              "locator": "exp[0].bullet[4]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-detail",
+              "locator": "exp[0].bullet[5]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unsupported-safety-claim",
+              "locator": "exp[0].bullet[6]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-production-reach",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/missing-evaluation-detail",
+              "locator": "exp[1].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/unclear-project-context",
+              "locator": "exp[1]",
+              "severity": "major",
+              "source": "llm:openai"
+            },
+            {
+              "rule_id": "llm/terminology-error",
+              "locator": "exp[1].bullet[2]",
+              "severity": "major",
+              "source": "llm:openai"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 1,
+          "categories": {
+            "Impact & quantification": {
+              "score": 58
+            },
+            "AI/ML relevance & depth": {
+              "score": 72
+            },
+            "Credibility & verifiability": {
+              "score": 42
+            },
+            "Recruiter scan": {
+              "score": 55
+            },
+            "Writing quality": {
+              "score": 65
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/missing-context",
+              "locator": "exp[1].header",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unverified-outcome",
+              "locator": "exp[0].bullet[4]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/seniority-mismatch",
+              "locator": "exp[0].bullet[5]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unclear-ownership-scope",
+              "locator": "exp[0].bullet[6]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[1].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-metric",
+              "locator": "exp[1].bullet[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/vague-ownership-claim",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        },
+        {
+          "provider": "anthropic",
+          "sample": 0,
+          "categories": {
+            "Impact & quantification": {
+              "score": 60
+            },
+            "AI/ML relevance & depth": {
+              "score": 72
+            },
+            "Credibility & verifiability": {
+              "score": 50
+            },
+            "Recruiter scan": {
+              "score": 65
+            },
+            "Writing quality": {
+              "score": 62
+            }
+          },
+          "findings": [
+            {
+              "rule_id": "llm/vague-ownership-claim",
+              "locator": "exp[0].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unverified-outcome",
+              "locator": "exp[0].bullet[4]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/seniority-overreach",
+              "locator": "exp[0].bullet[5]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/seniority-overreach",
+              "locator": "exp[0].bullet[6]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-dataset-detail",
+              "locator": "exp[0].bullet[5]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[1].bullet[3]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/missing-scale",
+              "locator": "exp[1].bullet[2]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/unowned-project-context",
+              "locator": "exp[1]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/activity-not-outcome",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            },
+            {
+              "rule_id": "llm/run-on-sentence",
+              "locator": "exp[1].bullet[0]",
+              "severity": "major",
+              "source": "llm:anthropic"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
