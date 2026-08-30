@@ -15,7 +15,7 @@ from typing import Any
 log = logging.getLogger("ats.llm")
 
 ANTHROPIC_MODEL = "claude-sonnet-5"
-OPENAI_MODEL = "gpt-4o"
+OPENAI_MODEL = "gpt-5.6-luna"
 
 MAX_TOKENS = 4000
 
