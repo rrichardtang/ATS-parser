@@ -29,6 +29,16 @@ from scripts.criteria_probe import (
 SPECS = {slug: load_spec(slug) for slug in SLUGS}
 ALL = pytest.mark.parametrize("slug", SLUGS)
 
+# Two lookup shapes, and which one a category has is not a style choice (ticket 12).
+# `gated` categories ask whether evidence exists at all, so C1 unmet is the floor and a
+# criterion's cost is its position. `count` categories are properties of a whole
+# document -- craft is never *absent* -- so the band is a defect count, there is no
+# gate, and every criterion costs exactly one band.
+GATED = [s for s in SLUGS if SPECS[s].get("shape", "gated") == "gated"]
+COUNTED = [s for s in SLUGS if SPECS[s].get("shape", "gated") == "count"]
+GATE = pytest.mark.parametrize("slug", GATED)
+COUNT = pytest.mark.parametrize("slug", COUNTED)
+
 
 def _ids(spec):
     return [c["id"] for c in spec["criteria"]]
@@ -81,7 +91,7 @@ def test_band_values_rise_with_the_band(slug):
     assert len(set(values)) == len(values)
 
 
-@ALL
+@GATE
 def test_the_gate_criterion_is_the_floor_whatever_else_is_met(slug):
     """C1 unmet is the bottom band in every category, by construction."""
     spec = SPECS[slug]
@@ -89,7 +99,7 @@ def test_the_gate_criterion_is_the_floor_whatever_else_is_met(slug):
     assert band_of(everything_but_c1, spec)["label"] == _order(spec)[0]
 
 
-@ALL
+@GATE
 def test_the_gate_is_c1_and_it_moves_the_band_from_anywhere(slug):
     """05's leverage finding, made a property.
 
@@ -103,7 +113,7 @@ def test_the_gate_is_c1_and_it_moves_the_band_from_anywhere(slug):
     assert moves["C1"] == max(moves.values())
 
 
-@ALL
+@GATE
 def test_the_least_reliable_criterion_sits_in_the_cheapest_position(slug):
     """C5 is the judgment call in every set, so it must cost at most one band.
 
@@ -115,6 +125,37 @@ def test_the_least_reliable_criterion_sits_in_the_cheapest_position(slug):
     moves = {cid: count for cid, count, _ in leverage(spec)}
     assert widest["C5"] == 1
     assert moves["C5"] == min(moves.values())
+
+
+@COUNT
+def test_a_counted_category_has_no_gate_and_no_cheap_seats(slug):
+    """The count shape's defining property, and the whole of its cost.
+
+    Every criterion moves the band from the same number of answer sets and none moves
+    it by more than one, so there is nowhere cheap to disagree. That is why a category
+    with this shape has to answer *more* criteria identically than a gated one to reach
+    the same verdict: one split is one adjacent band, always.
+    """
+    spec = SPECS[slug]
+    rows = leverage(spec)
+    moves = {cid: count for cid, count, _ in rows}
+    widest = {cid: reach for cid, _, reach in rows}
+    assert len(set(moves.values())) == 1, moves
+    assert set(widest.values()) == {1}, widest
+    assert moves["C1"] < 2 ** len(_ids(spec)), "a counted category must have no gate"
+
+
+@COUNT
+def test_a_counted_band_is_the_number_of_criteria_met(slug):
+    spec = SPECS[slug]
+    ids = _ids(spec)
+    order = _order(spec)
+    for combo in product([False, True], repeat=len(ids)):
+        answers = dict(zip(ids, combo))
+        met = sum(answers.values())
+        # 0 and 1 share the bottom band; above that each count is its own band.
+        expected = order[max(0, met - 1)]
+        assert band_of(answers, spec)["label"] == expected, (answers, met)
 
 
 @ALL

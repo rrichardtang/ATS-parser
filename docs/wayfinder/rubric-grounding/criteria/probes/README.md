@@ -21,6 +21,7 @@ bullets.
 | `ai-assisted-coding-fluency/` | 11 | 8 | E, D, C, B, A |
 | `evaluation-rigour/` | 11 | 7 | E, D, C, B, A |
 | `agentic-systems/` | 11 | 7 | E, D, C, B, A |
+| `resume-craft/` | 12 | 7 | E, D, C, B, A |
 
 `tests/test_criteria_probe.py` asserts each set reaches at least four of the five bands
 and that every probe parses. Two probes are written to fail rather than to pass:
@@ -30,3 +31,8 @@ and that every probe parses. Two probes are written to fail rather than to pass:
   claim that a name list for AI coding tools goes stale.
 - `agentic-systems/2-coding-agent-user.txt` is a heavy Cursor user who has built no
   agent. It holds the line 02 drew between building agents and using them.
+
+`resume-craft/` differs from the other three in what its probes vary. The behaviour
+categories ladder on *how much evidence exists*; craft ladders on *how many defects
+remain*, so its probes are the same resume with one criterion knocked out at a time —
+`6-same-job-twice` and `7-no-identity` are `5-edited` with exactly one thing wrong.

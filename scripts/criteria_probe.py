@@ -43,8 +43,17 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from ats.extract import extract  # noqa: E402
-from ats.invariants import SPECIFIC_TOKEN_RE, TEAM_ANYWHERE_RE, TEAM_SUBJECT_RE  # noqa: E402
+from ats.human import ROLE_IDENTITY_RE  # noqa: E402
+from ats.invariants import (  # noqa: E402
+    SPECIFIC_TOKEN_RE,
+    TEAM_ANYWHERE_RE,
+    TEAM_SUBJECT_RE,
+    evaluate,
+    has_metric,
+    portability,
+)
 from ats.sections import Resume, parse  # noqa: E402
+from ats.slop import PORTABILITY_LIMIT  # noqa: E402
 
 CRITERIA_DIR = ROOT / "docs" / "wayfinder" / "rubric-grounding" / "criteria"
 JUDGMENTS_DIR = CRITERIA_DIR / "judgments"
@@ -58,6 +67,7 @@ SLUGS = (
     "ai-assisted-coding-fluency",
     "evaluation-rigour",
     "agentic-systems",
+    "resume-craft",
 )
 
 NUMBER_RE = re.compile(r"\d")
@@ -210,6 +220,11 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
       named_in         -- `SPECIFIC_TOKEN_RE` inside the anchor's bullet
       unhedged_in      -- the anchor's bullet is not hedged or team-attributed
 
+    plus four that ask about the whole document rather than one bullet, each reusing
+    the predicate of the rule that already answers it -- `identity`, `outcome_per_role`,
+    `roles_differ`, `unportable`. `Resume craft` needs them because craft is a property
+    of a document, not a claim a document does or does not contain.
+
     An anchored criterion whose anchor was answered `no` has no bullet to read, so it
     is `no` too. That is a fact about the questions, not a scoring choice: "is the
     shipped thing named" has no answer when nothing shipped.
@@ -232,6 +247,13 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
         if required and not verdict.answers.get(required):
             verdict.answers[cid] = False
             verdict.evidence[cid] = f"no {required} to ask about"
+            anchors[cid] = None
+            continue
+
+        if kind in DOCUMENT_KINDS:
+            yes, evidence = DOCUMENT_KINDS[kind](doc)
+            verdict.answers[cid] = yes
+            verdict.evidence[cid] = evidence
             anchors[cid] = None
             continue
 
@@ -278,6 +300,72 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
         verdict.evidence[cid] = evidence
         anchors.setdefault(cid, None)
     return verdict
+
+
+def _says_what_it_is(doc: Doc) -> tuple[bool, str]:
+    """`Resume craft` C1, answered where the probe can see it.
+
+    `scan/no-identity-above-fold` runs `ROLE_IDENTITY_RE` over the top third of page
+    one, measured from real word boxes. The band probes are text with no geometry, so
+    the same regex runs over the summary and everything above the first role -- the
+    text a fold would contain.
+    """
+    resume = doc.resume
+    header = resume.summary or ""
+    if resume.roles:
+        head = doc.text.split(resume.roles[0].heading)[0]
+        header = f"{header} {head}"
+    match = ROLE_IDENTITY_RE.search(header)
+    return (True, f"{match.group(0)!r} above the first role") if match else (False, "")
+
+
+def _outcome_in_every_role(doc: Doc) -> tuple[bool, str]:
+    """`Resume craft` C2: `invariants.evaluate(...).outcome`, per role rather than per
+    bullet. 07 left `outcome` to this category after pricing the bundle's other three
+    predicates elsewhere."""
+    roles = doc.resume.roles
+    if not roles:
+        return False, ""
+    for role in roles:
+        if not any(evaluate(b).outcome for b in role.bullets):
+            return False, f"no bullet in {role.heading[:40]!r} names a change"
+    return True, f"every one of {len(roles)} role(s) has a bullet that names a change"
+
+
+def _roles_read_differently(doc: Doc) -> tuple[bool, str]:
+    """`Resume craft` C4: `_duplicate_bullets`' token overlap, raised to the role.
+
+    The rule compares bullets; two roles can be the same job told twice without any
+    single pair crossing 0.8, which is the gap a reader sees and the rule does not.
+    """
+    roles = doc.resume.roles
+    blobs = [({w.lower() for w in re.findall(r"\w+", " ".join(r.bullets)) if len(w) > 3},
+              r.heading) for r in roles]
+    for i, (left, left_name) in enumerate(blobs):
+        for right, right_name in blobs[i + 1:]:
+            if not left or not right:
+                continue
+            if len(left & right) / max(len(left), len(right)) > 0.8:
+                return False, f"{left_name[:30]!r} and {right_name[:30]!r} say the same thing"
+    return True, f"{len(blobs)} role(s), none a retelling of another"
+
+
+def _nothing_portable(doc: Doc) -> tuple[bool, str]:
+    """`Resume craft` C5: `slop/portable`'s own predicate, as a document-level yes/no."""
+    for role in doc.resume.roles:
+        for bullet in role.bullets:
+            score = portability(bullet)
+            if score > PORTABILITY_LIMIT and len(bullet.split()) >= 8 and not has_metric(bullet):
+                return False, f"{score:.0%} of \"{bullet[:70]}\" would fit anyone"
+    return True, "no bullet survives stripping every name, number and tool"
+
+
+DOCUMENT_KINDS = {
+    "identity": _says_what_it_is,
+    "outcome_per_role": _outcome_in_every_role,
+    "roles_differ": _roles_read_differently,
+    "unportable": _nothing_portable,
+}
 
 
 def _clause(clause: dict, met: set[str]) -> bool:

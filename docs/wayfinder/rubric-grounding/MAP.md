@@ -27,6 +27,11 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 - [three-categories-agreement.md](three-categories-agreement.md) — what those three
   measured, every category's leverage table, and the check on whether the criteria can
   carry the report as well as the score (11).
+- [resume-craft-criteria.md](resume-craft-criteria.md) — the fifth category's criteria,
+  the count lookup that replaces the ladder, and rulings on 07's three conditional
+  rules (12).
+- [resume-craft-agreement.md](resume-craft-agreement.md) — what it measured, and why a
+  category with no gate is held to a harsher bar (12).
 - [criteria/](criteria/) — the criteria as data, the band probes, and the recorded
   judge answers the measurement ran on.
 - [findings-identity.md](findings-identity.md) — what makes two findings the same
@@ -154,6 +159,23 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   judge abstains and 05's two-judge proxy has only one judge. `rule_share` 0 was 04's
   decision about scoring; this is what it costs the measurement, and it is the strongest
   case on the map for provider credentials.
+- **A category whose subject cannot be absent gets a different lookup** ([Criteria for
+  Resume craft](tickets/12-criteria-for-resume-craft.md)): the gated shape assumes band
+  E means *the evidence is not there*, and craft is never absent — every resume is
+  written somehow — so `Resume craft`'s band is the **number of criteria met**, with no
+  gate. The consequence is the whole of its cost: leverage is uniform at 30/32 and one
+  band, so there is nowhere cheap to disagree, and **two criterion splits anywhere is a
+  failure** where a gated category survives two. Measured **54/55, 10 exact, 1 adjacent →
+  LOOK**, which is the best result short of perfect on that scale. 05 predicted this
+  category would not converge; it converged as well as `Agentic systems` and better than
+  `Production ownership`, and 05's stated reason — that craft is weighed rather than
+  pointable — is not what makes it hard. The lookup shape is.
+- **Separability bites inside a criteria set, not only between categories** (12). The one
+  split is `Resume craft` C4 against C5: when every bullet could be anyone's, *"do the
+  roles read as different jobs"* has no answer, and the rule channel's token overlap says
+  yes while a reader says no. 04 and 08 both name separability as the agreement lever and
+  both apply it between categories. Left unpatched on 05's precedent, because a criterion
+  fixed against the judge that found the problem measures nothing.
 - **The band lookups are data, not code** (11). Each band declares a `when` clause and
   `band_of` evaluates them in order; four hand-written lookups would have been four
   totality arguments nobody could check by reading. Every property 05 pinned for one
@@ -267,28 +289,33 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 
 - **Whether the acceptance test has ever passed on the rubric being designed.** It has
   been run once, against the rubric still in the code, and failed —
-  [baseline-agreement.md](baseline-agreement.md). The new one has never been run: it
-  needs criteria for the other four categories, a prompt that emits them, and a harness
-  that reads criterion answers rather than `score` and `band`. 05 measured a two-judge
-  proxy and says so.
+  [baseline-agreement.md](baseline-agreement.md). The new one has never been run, and
+  after 11 and 12 the criteria are no longer what is missing: what remains is a prompt
+  that emits criterion answers and a harness that reads them rather than `score` and
+  `band`. Five recorded-verdict sets now exist in the shape 06 would have to emit. 05,
+  11 and 12 all measured the same two-judge proxy and all say so. **`Resume craft` is
+  where the real run should be expected to fail first** — its count lookup gives it no
+  cheap seats, so it fails at two criterion splits where a gated category survives them.
 - **Whether the criteria can carry the report as well as the score.** 10 made the
   criteria the only vocabulary the content model has, so a defect no criterion asks
   about is now unreportable — and a category with no criteria at all is silence rather
   than a vague score, which is what turns 11 from tidy-up into the critical path. 04 chose categories on separability and document frequency;
   exhaustiveness over defects is a demand neither 04 nor 05 was asked to meet, and it is
   the likeliest reason 10 gets reopened. 11 checked the three behaviour categories
-  against the baseline and found nothing recurring unreportable, so this narrows to
-  `Resume craft`: 18 of the baseline's findings are the "activity, not outcome" reading,
-  and they are reportable only if 12 authors a criterion whose evidence
-  `content/bullet-invariants` answers.
-- ~~**Criteria for the other four categories.**~~ Three of the four are written and
-  measured — [11](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md),
-  closed. What remains is [Criteria for Resume craft](tickets/12-criteria-for-resume-craft.md).
-  The split was made because 05 predicts `Resume craft` will not converge and the other three
-  should not wait on it; 11 took `AI-assisted coding fluency` first per 05 and found
-  exactly what that ordering was for. 07 hands 12 three rules (`content/bullet-invariants`,
-  `content/quantification`, `cred/unlinked-projects`) that deduct in `Resume craft` only
-  if criteria are authored whose evidence they answer.
+  against the baseline and found nothing recurring unreportable; 12 closed the remainder
+  by authoring `Resume craft` C2 for the "activity, not outcome" reading (18 findings)
+  and C3 for "what was the work for" (8 findings, and nothing in the repository had ever
+  checked it). **Every recurring baseline reading now has a criterion or a rule.** The
+  caveat 11 recorded stands: the baseline ran the old open-ended prompt, so this should
+  be repeated on the first run of the new one.
+- ~~**Criteria for the other four categories.**~~ All five judged categories now have
+  criteria, a total and monotone lookup, a leverage table, band probes and a measured
+  verdict — [11](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md) and
+  [12](tickets/12-criteria-for-resume-craft.md), both closed. 07's three conditional rules
+  are ruled on: `content/bullet-invariants` deducts on one predicate and is no longer a
+  bundle, `content/quantification` and `cred/unlinked-projects` become advice-only.
+  **The spec's rubric half is complete; what is unbuilt is the measurement and the
+  migration.**
 - **03's second experiment** — band-only versus band-plus-a-point-inside-it. Specified
   in `production-ownership-criteria.md`, one prompt variant and one harness run, not
   yet executed.
@@ -309,12 +336,6 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   clash with the rubric", which isn't yet a testable condition.
 - **Nice-to-have bonus mechanics.** Nice-to-haves should add "a slight bonus" to coverage;
   how much, and whether it can compensate for a missing requirement, is unspecified.
-- **Which gate `Resume craft` belongs to.** It merges `Recruiter scan`
-  (`Gate.RECRUITER`) with `Writing quality` (`Gate.MANAGER`) and must pick one.
-  `report.py` groups findings by gate and `score.py` derives the parser and human
-  sub-scores from it, so this moves visible output. A reporting question, not a rubric
-  one, which is why 04 left it — carried by
-  [12](tickets/12-criteria-for-resume-craft.md), the ticket with the context to close it.
 - **The weight arithmetic.** 04 fixed the principle (df sets the derived block, the
   rest is authored) and 09 supplies the input and a proportional derivation, but the
   budget is still authored: how many of the 100 points the derived block gets, and
@@ -324,7 +345,12 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   the report all read today's five categories. 07 adds three mechanical
   asks: a `deducts` flag (or an equivalent ledger exclusion), advice-only findings
   grouped by gate rather than category, and the `rule_share` invariant asserted where a
-  test can see it.
+  test can see it. 12 adds one more and settles a question: `content/bullet-invariants`
+  now deducts on a single predicate and should be renamed rather than left reading as a
+  bundle; and the gate question is answered — `Resume craft` is `Gate.RECRUITER`, which
+  moves **no number** (`score.py:161` takes the union of `RECRUITER` and `MANAGER`, so
+  only `PARSER` versus the rest is load-bearing) and is read by nothing at all once
+  findings carry their own gate.
 
 ## Out of scope
 

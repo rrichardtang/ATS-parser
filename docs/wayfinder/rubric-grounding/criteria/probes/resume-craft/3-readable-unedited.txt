@@ -1,0 +1,15 @@
+Marcus Idowu
+marcus.idowu@example.com
+
+SUMMARY
+AI Engineer with four years in data platforms and applied machine learning.
+
+EXPERIENCE
+
+Senior Engineer, Kestrel Group    Jun 2023 - Present
+• Maintained the Airflow DAGs behind the nightly feature refresh.
+• Developed the Postgres schema and the pgvector index alongside it.
+
+Engineer, Halloway Partners    Jan 2021 - May 2023
+• Implemented a Flask service that wrapped the scoring model.
+• Wrote the Terraform modules for the staging environment.
