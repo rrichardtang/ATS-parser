@@ -1,0 +1,11 @@
+node_modules/
+
+# AI agent config: allowlist what's meant to be shared, ignore the rest
+# (personal overrides like .claude/settings.local.json, local receipts like
+# .claude/pre-push-review.json stay out of git)
+.claude/*
+!.claude/settings.json
+!.claude/agents/
+!.claude/hooks/
+!.claude/agent-notes/
+!.claude/skills/
