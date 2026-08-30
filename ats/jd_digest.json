@@ -1,0 +1,60 @@
+{
+  "document_count": 2,
+  "target_titles": [
+    "Forward Deployed AI Engineer",
+    "Machine Learning Engineer"
+  ],
+  "required": [
+    {
+      "term": "llm_systems/prompt-engineering",
+      "doc_frequency": 1
+    },
+    {
+      "term": "llm_systems/agents",
+      "doc_frequency": 1
+    },
+    {
+      "term": "core_ml/fine-tuning",
+      "doc_frequency": 1
+    },
+    {
+      "term": "evaluation/eval-harness",
+      "doc_frequency": 1
+    }
+  ],
+  "nice_to_have": [],
+  "dimensions": {
+    "ownership": {
+      "count": 1,
+      "total": 2
+    },
+    "production": {
+      "count": 1,
+      "total": 2
+    },
+    "evaluation": {
+      "count": 2,
+      "total": 2
+    },
+    "seniority": {
+      "count": 0,
+      "total": 2
+    },
+    "leadership": {
+      "count": 0,
+      "total": 2
+    }
+  },
+  "sources": [
+    {
+      "title": "Forward Deployed AI Engineer",
+      "company": "Edra",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Machine Learning Engineer",
+      "company": "Fluidstack",
+      "date_added": "2026-08-30"
+    }
+  ]
+}

@@ -1,62 +1,16 @@
 {
-  "generated_from": "corpus/jds",
-  "document_count": 8,
+  "generated_from": "/home/user/ATS-parser/corpus/jds/user",
+  "document_count": 2,
   "sources": [
     {
-      "file": "01-llm-platform-eng.txt",
-      "source": "composite",
-      "retrieved": "2026-08-29",
-      "title": "AI Engineer, LLM Platform",
-      "level": "mid"
+      "title": "Forward Deployed AI Engineer",
+      "company": "Edra",
+      "date_added": "2026-08-30"
     },
     {
-      "file": "02-rag-systems-eng.txt",
-      "source": "composite",
-      "retrieved": "2026-08-29",
-      "title": "AI Engineer, Retrieval",
-      "level": "mid"
-    },
-    {
-      "file": "03-applied-ml-eng.txt",
-      "source": "composite",
-      "retrieved": "2026-08-29",
-      "title": "Machine Learning Engineer, Applied",
-      "level": "mid"
-    },
-    {
-      "file": "04-genai-product-eng.txt",
-      "source": "composite",
-      "retrieved": "2026-08-29",
-      "title": "AI Engineer, Product",
-      "level": "mid"
-    },
-    {
-      "file": "05-ml-infra-eng.txt",
-      "source": "composite",
-      "retrieved": "2026-08-29",
-      "title": "ML Infrastructure Engineer",
-      "level": "mid"
-    },
-    {
-      "file": "06-nlp-eng.txt",
-      "source": "composite",
-      "retrieved": "2026-08-29",
-      "title": "NLP Engineer",
-      "level": "mid"
-    },
-    {
-      "file": "07-evaluation-eng.txt",
-      "source": "composite",
-      "retrieved": "2026-08-29",
-      "title": "AI Engineer, Evaluation",
-      "level": "mid"
-    },
-    {
-      "file": "08-ai-eng-startup.txt",
-      "source": "composite",
-      "retrieved": "2026-08-29",
-      "title": "Founding AI Engineer",
-      "level": "mid"
+      "title": "Machine Learning Engineer",
+      "company": "Fluidstack",
+      "date_added": "2026-08-30"
     }
   ],
   "terms": {
@@ -67,10 +21,12 @@
         "pytorch",
         "torch"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 3,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "core_ml/transformers": {
       "group": "core_ml",
@@ -80,10 +36,12 @@
         "huggingface",
         "hugging face"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 3,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "core_ml/fine-tuning": {
       "group": "core_ml",
@@ -94,8 +52,10 @@
         "finetuning",
         "fine-tune"
       ],
-      "doc_frequency": 4,
-      "total_mentions": 4,
+      "doc_frequency": 1,
+      "required_doc_frequency": 1,
+      "nice_doc_frequency": 0,
+      "total_mentions": 1,
       "weight": 0.5,
       "provenance": "jd-derived"
     },
@@ -108,10 +68,12 @@
         "parameter-efficient",
         "peft"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 4,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "core_ml/training": {
       "group": "core_ml",
@@ -121,10 +83,12 @@
         "train",
         "distributed data parallel"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 4,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "core_ml/distillation": {
       "group": "core_ml",
@@ -133,10 +97,12 @@
         "distillation",
         "distil"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "core_ml/quantization": {
       "group": "core_ml",
@@ -146,10 +112,12 @@
         "quantized",
         "quantisation"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 2,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "core_ml/rlhf": {
       "group": "core_ml",
@@ -159,10 +127,12 @@
         "dpo",
         "preference optimization"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 2,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "core_ml/classification": {
       "group": "core_ml",
@@ -171,10 +141,12 @@
         "classification",
         "classifier"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 2,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "core_ml/embeddings": {
       "group": "core_ml",
@@ -183,10 +155,12 @@
         "embedding",
         "embeddings"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 3,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "llm_systems/rag": {
       "group": "llm_systems",
@@ -196,10 +170,12 @@
         "retrieval-augmented",
         "retrieval augmented"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 3,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "llm_systems/vector-db": {
       "group": "llm_systems",
@@ -213,10 +189,12 @@
         "vector database",
         "vector db"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 7,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "llm_systems/reranking": {
       "group": "llm_systems",
@@ -227,10 +205,12 @@
         "cross-encoder",
         "colbert"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 4,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "llm_systems/hybrid-search": {
       "group": "llm_systems",
@@ -241,10 +221,12 @@
         "dense retrieval",
         "sparse retrieval"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 2,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "llm_systems/chunking": {
       "group": "llm_systems",
@@ -253,10 +235,12 @@
         "chunking",
         "chunk"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 2,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "llm_systems/prompt-engineering": {
       "group": "llm_systems",
@@ -266,8 +250,10 @@
         "prompting",
         "prompt"
       ],
-      "doc_frequency": 4,
-      "total_mentions": 7,
+      "doc_frequency": 1,
+      "required_doc_frequency": 1,
+      "nice_doc_frequency": 0,
+      "total_mentions": 1,
       "weight": 0.5,
       "provenance": "jd-derived"
     },
@@ -280,10 +266,12 @@
         "structured output",
         "json schema"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 6,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "llm_systems/agents": {
       "group": "llm_systems",
@@ -293,9 +281,11 @@
         "agents",
         "planning loop"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 3,
-      "weight": 0.375,
+      "doc_frequency": 1,
+      "required_doc_frequency": 1,
+      "nice_doc_frequency": 0,
+      "total_mentions": 1,
+      "weight": 0.5,
       "provenance": "jd-derived"
     },
     "llm_systems/llm-apis": {
@@ -309,10 +299,12 @@
         "gpt-4",
         "open-weight"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 5,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "llm_systems/context": {
       "group": "llm_systems",
@@ -322,10 +314,12 @@
         "context window",
         "token budget"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/vllm": {
       "group": "serving",
@@ -335,10 +329,12 @@
         "tgi",
         "text generation inference"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 3,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/triton": {
       "group": "serving",
@@ -348,10 +344,12 @@
         "onnx",
         "tensorrt"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 4,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/fastapi": {
       "group": "serving",
@@ -361,10 +359,12 @@
         "flask",
         "rest api"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 3,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/docker": {
       "group": "serving",
@@ -373,10 +373,12 @@
         "docker",
         "container"
       ],
-      "doc_frequency": 4,
-      "total_mentions": 4,
-      "weight": 0.5,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/kubernetes": {
       "group": "serving",
@@ -385,10 +387,12 @@
         "kubernetes",
         "k8s"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 2,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/gpu": {
       "group": "serving",
@@ -401,10 +405,12 @@
         "a10g",
         "nccl"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 4,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/latency": {
       "group": "serving",
@@ -418,10 +424,12 @@
         "qps",
         "rps"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 9,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/batching": {
       "group": "serving",
@@ -431,10 +439,12 @@
         "continuous batching",
         "dynamic batching"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/caching": {
       "group": "serving",
@@ -444,10 +454,12 @@
         "cache",
         "redis"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 4,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "serving/streaming": {
       "group": "serving",
@@ -457,10 +469,12 @@
         "server-sent",
         "websocket"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "evaluation/eval-harness": {
       "group": "evaluation",
@@ -472,9 +486,11 @@
         "eval harness",
         "evaluation harness"
       ],
-      "doc_frequency": 6,
-      "total_mentions": 9,
-      "weight": 0.75,
+      "doc_frequency": 1,
+      "required_doc_frequency": 1,
+      "nice_doc_frequency": 0,
+      "total_mentions": 1,
+      "weight": 0.5,
       "provenance": "jd-derived"
     },
     "evaluation/golden-dataset": {
@@ -487,10 +503,12 @@
         "held-out",
         "benchmark"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "evaluation/llm-as-judge": {
       "group": "evaluation",
@@ -500,10 +518,12 @@
         "llm as judge",
         "judge model"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 2,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "evaluation/retrieval-metrics": {
       "group": "evaluation",
@@ -516,10 +536,12 @@
         "recall",
         "f1"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 7,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "evaluation/groundedness": {
       "group": "evaluation",
@@ -529,10 +551,12 @@
         "faithfulness",
         "hallucination"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 4,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "evaluation/ab-testing": {
       "group": "evaluation",
@@ -543,10 +567,12 @@
         "online metric",
         "offline metric"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "evaluation/annotation": {
       "group": "evaluation",
@@ -558,10 +584,12 @@
         "labeling",
         "ground truth"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 3,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "evaluation/regression-suite": {
       "group": "evaluation",
@@ -571,10 +599,12 @@
         "ci gating",
         "regression suite"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 3,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "data/sql": {
       "group": "data",
@@ -586,10 +616,12 @@
         "bigquery",
         "snowflake"
       ],
-      "doc_frequency": 5,
-      "total_mentions": 5,
-      "weight": 0.625,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "data/spark": {
       "group": "data",
@@ -599,10 +631,12 @@
         "pyspark",
         "databricks"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 3,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "data/pipelines": {
       "group": "data",
@@ -614,10 +648,12 @@
         "pipeline",
         "etl"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 5,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "data/feature-store": {
       "group": "data",
@@ -626,10 +662,12 @@
         "feature store",
         "feature engineering"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "data/storage": {
       "group": "data",
@@ -640,10 +678,12 @@
         "s3",
         "dataset versioning"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 3,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "data/ray": {
       "group": "data",
@@ -653,10 +693,12 @@
         "slurm",
         "kubeflow"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 4,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "mlops/experiment-tracking": {
       "group": "mlops",
@@ -667,10 +709,12 @@
         "mlflow",
         "experiment tracking"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 3,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "mlops/cicd": {
       "group": "mlops",
@@ -680,10 +724,12 @@
         "continuous integration",
         "continuous delivery"
       ],
-      "doc_frequency": 2,
-      "total_mentions": 2,
-      "weight": 0.25,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "mlops/monitoring": {
       "group": "mlops",
@@ -696,10 +742,12 @@
         "langsmith",
         "tracing"
       ],
-      "doc_frequency": 6,
-      "total_mentions": 10,
-      "weight": 0.75,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "mlops/drift": {
       "group": "mlops",
@@ -709,10 +757,12 @@
         "data drift",
         "model drift"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 6,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "mlops/cost": {
       "group": "mlops",
@@ -723,10 +773,12 @@
         "token spend",
         "spend"
       ],
-      "doc_frequency": 4,
-      "total_mentions": 8,
-      "weight": 0.5,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "mlops/oncall": {
       "group": "mlops",
@@ -739,10 +791,12 @@
         "slo",
         "uptime"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 2,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "mlops/registry": {
       "group": "mlops",
@@ -752,10 +806,12 @@
         "versioning",
         "rollback"
       ],
-      "doc_frequency": 3,
-      "total_mentions": 4,
-      "weight": 0.375,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "foundation/python": {
       "group": "foundation",
@@ -763,10 +819,12 @@
       "aliases": [
         "python"
       ],
-      "doc_frequency": 8,
-      "total_mentions": 8,
-      "weight": 1.0,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "foundation/cloud": {
       "group": "foundation",
@@ -777,10 +835,12 @@
         "azure",
         "cloud"
       ],
-      "doc_frequency": 4,
-      "total_mentions": 9,
-      "weight": 0.5,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "foundation/terraform": {
       "group": "foundation",
@@ -789,10 +849,12 @@
         "terraform",
         "infrastructure as code"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "foundation/go-rust": {
       "group": "foundation",
@@ -802,10 +864,12 @@
         " go ",
         "rust"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 1,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "foundation/typescript": {
       "group": "foundation",
@@ -815,10 +879,12 @@
         "javascript",
         "react"
       ],
-      "doc_frequency": 1,
-      "total_mentions": 2,
-      "weight": 0.125,
-      "provenance": "jd-derived"
+      "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
+      "total_mentions": 0,
+      "weight": 0.0,
+      "provenance": "heuristic"
     },
     "foundation/testing": {
       "group": "foundation",
@@ -829,6 +895,8 @@
         "pytest"
       ],
       "doc_frequency": 0,
+      "required_doc_frequency": 0,
+      "nice_doc_frequency": 0,
       "total_mentions": 0,
       "weight": 0.0,
       "provenance": "heuristic"

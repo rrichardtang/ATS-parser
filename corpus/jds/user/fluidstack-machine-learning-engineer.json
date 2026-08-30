@@ -1,0 +1,7 @@
+{
+  "title": "Machine Learning Engineer",
+  "company": "Fluidstack",
+  "source_url": "https://jobs.ashbyhq.com/fluidstack/05c2e69c-42f9-4fcb-9cf0-a467aaf98f1c",
+  "date_added": "2026-08-30",
+  "raw_text": "Role Scope\n\n* Build ML and LLM systems that run inside the company's operations: forecasting build timelines, flagging schedule risk, and extracting structure from vendor documents.\n* Own models end to end, from problem framing and data through deployment, evaluation, and iteration in production.\n* Ship agentic systems with real guardrails, authorization, audit, and evals, so agents act on company systems instead of just advising.\n* Partner with data engineering and product pods to put predictions in the tools people already use.\n\nWhat We're Looking For\n\n* The below is a starting point. We always make space for exceptional people, so if you don't fit this role exactly, tell us where you would.\n* You've shipped ML or LLM features to production and owned them after launch.\n* You've built evaluation harnesses that told you the truth about model quality before users did.\n* You reach for the simplest model that works and can defend the choice.\n* You've worked hands-on with LLM APIs, fine-tuning, or retrieval systems on real business problems.\n* You write production-quality code and work fluently with AI coding tools.\n* Bonus: Forecasting or scheduling problems. Document extraction at scale. Agentic frameworks and MCP. Temporal or workflow engines."
+}
