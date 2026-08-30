@@ -24,6 +24,8 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   judge answers the measurement ran on.
 - [findings-identity.md](findings-identity.md) — what makes two findings the same
   finding, and what `prompts.py` has to emit for it (10).
+- [rule-mapping.md](rule-mapping.md) — where every deterministic rule files under the
+  new categories, which ones stop deducting, and the collisions found (07).
 - [baseline-agreement.md](baseline-agreement.md) — the first real two-provider run,
   against the rubric still in the code. The *before* picture every change is judged
   from, with [baseline/run-summary.json](baseline/run-summary.json) so its arithmetic
@@ -178,6 +180,29 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   refusals carry the point: alpha is `n/a` rather than 1.00 where no resume varies,
   no between-judge figure is printed with one judge, and a composite pinned by a cap
   is marked rather than counted as agreement.
+- **Every rule files, and tool coverage stops deducting** ([Which category does each
+  keyword rule file into](tickets/07-which-category-does-each-keyword-rule-file-into.md),
+  spec in [rule-mapping.md](rule-mapping.md)): three dispositions — deducts against a
+  named category, fires as advice with no cost, or retired. All three `jd/*` rules, the
+  seven `kw/thin-*` and `kw/unsupported-skills` become advice-only, because no category
+  measures nouns, because 02's disjunction defect is structural rather than a bug (df
+  over terms cannot express *"Python, Go, or TypeScript"*), and because the advice
+  survives without the number — 03's move one layer down. `cred/no-named-models` is
+  retired outright; C2 owns naming and 05 measured that no regex can answer it.
+- **Cross-channel is a blend, within-channel is a sum** (same ticket): a rule answering
+  the same question as a criterion is the design — `rule_score * share + band * (1 -
+  share)` averages, it does not double-charge — while `deductions[category] += cost`
+  adds. Three real collisions found and resolved on *one property, one deducting rule*:
+  `cred/no-production`/`cred/notebook-only` cannot fire apart (both require
+  `not PRODUCTION_RE`), `content/quantification`/`content/bullet-invariants` are the same
+  `measurability` predicate, and `invariants.ownership` is literally
+  `content/ownership`'s regex — the last of these priced one defect in two categories.
+  The test 11 and 12 inherit is on *evidence*, not category.
+- **`rule_share` > 0 requires at least one deducting rule** (same ticket): `Agentic
+  systems` has neither a rule nor a dimension, so at 0.4 it would blend against a
+  constant 100 and never score below 40 — 04's latent mechanism, reached. It drops to
+  **0**, making three of five judged categories model-owned where 04 had one. A
+  dimension for it (09) is now worth building for the channel, not only for the weight.
 
 ## Not yet specified
 
@@ -202,7 +227,10 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   because 05 predicts `Resume craft` will not converge and the other three should not
   wait on it. 11 takes `AI-assisted coding fluency` **first** per 05 — `rule_share` 0
   means criterion agreement is the only agreement it has, so nothing masks a bad
-  criterion — then `Evaluation rigour`, then `Agentic systems`.
+  criterion — then `Evaluation rigour`, then `Agentic systems`. 07 adds that `Agentic systems`
+  now has `rule_share` 0 too, and hands 12 three rules (`content/bullet-invariants`,
+  `content/quantification`, `cred/unlinked-projects`) that deduct in `Resume craft` only
+  if criteria are authored whose evidence they answer.
 - **03's second experiment** — band-only versus band-plus-a-point-inside-it. Specified
   in `production-ownership-criteria.md`, one prompt variant and one harness run, not
   yet executed.
@@ -227,10 +255,11 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 - **The weight arithmetic.** 04 fixed the principle (df sets the derived block, the
   rest is authored) but not the numbers: how the 100 points split between the derived
   and authored blocks, and whether df maps to weight proportionally or through tiers.
-- **Whether the slop pass folds into a quality category** or stays a separate pass with
-  its own findings.
 - **How the spec migrates into code** without a flag day: the composite, the ledger and
-  the report all read today's five categories.
+  the report all read today's five categories. 07 adds three mechanical
+  asks: a `deducts` flag (or an equivalent ledger exclusion), advice-only findings
+  grouped by gate rather than category, and the `rule_share` invariant asserted where a
+  test can see it.
 
 ## Out of scope
 
@@ -238,4 +267,6 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 - Pass 3 (rewrite generation) and its judge/polish machinery.
 - The report UI and score-derivation rendering.
 - The deterministic rule set (`ats/human.py`, `ats/keywords.py`) except where a new
-  category demonstrably overlaps it — see ticket 07.
+  category demonstrably overlaps it — settled by
+  [07](tickets/07-which-category-does-each-keyword-rule-file-into.md), which changed
+  which rules deduct but wrote no new ones.
