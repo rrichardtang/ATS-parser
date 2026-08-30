@@ -4,11 +4,6 @@
 A ticket is **claimed** by setting `claimed: <name>` in its header, before any work.
 The **frontier** is every ticket that is `open`, unclaimed, and whose `blocked-by` are all `closed`.
 
-**05 is closed ahead of its `blocked-by`.** It needed 04 only to confirm Coverage is a
-category, which this map already asserts, and the bands it produced do not depend on
-02's inventory. 04 and 07 should read its verdict before they are worked; the ticket
-says what it did not do.
-
 ## Destination
 
 A rubric specification for the content pass: a category set grounded in what the
@@ -19,77 +14,123 @@ same resume land within a stated tolerance of each other.
 This map produces the **spec and the decisions behind it**. Implementing it in
 `ats/prompts.py`, `ats/score.py` and the digest pipeline is a separate effort.
 
-## Spec so far
-
-- [coverage-bands.md](coverage-bands.md) — the first category's bands (05).
-- [coverage-bands-agreement.md](coverage-bands-agreement.md) — what they measured,
-  and the verdict on the format (05).
-- [coverage/](coverage/) — the provisional requirement set and recorded judge verdicts
-  the measurement ran on. Replaced by 02.
-
 ## Notes
 
 - **Domain**: resume scoring against AI-engineering job postings. Glossary in `/CONTEXT.md`.
+- **Corpus inventory**: `inventory.md` — what the six postings require, in their own
+  language. **Scoring mechanics**: `scoring-mechanics.md` — what the model authors today
+  (40.5 of the composite's 100 points, across five of eight categories) and the three
+  code facts 04/05/06 will hit.
+- **The acceptance test is runnable**: `scripts/agreement_harness.py` (06). Judge a
+  category set or a band draft with a sweep before and after, not by argument.
+- **The noise floor is not adjustable.** `temperature` never reaches either current
+  model — `weights.toml`'s own comment says so — which makes the within-judge spread
+  each provider's default sampling. 06's addition is what that means for the test:
+  between-judge spread has to clear the floor, and the floor cannot be lowered to
+  help it.
 - **Skills every session should consult**: `grilling` and `domain-modeling` by default;
   `research` for AFK reading tickets; `prototype` for tickets that need something concrete
   to react to.
-- **Acceptance test**: two providers within **5 points** on every category, on all seven
-  fixtures in `tests/fixtures/` plus the user's real resume. Above **8 points** is a
-  failure; 5–8 is a pass that wants another look. Sample twice per resume per provider so
-  sampling noise is separable from genuine provider disagreement.
-  **Not yet run against anything** — it needs 06 and provider credentials. 05 measured
-  a two-judge proxy only, and says so.
-  Two things 05 found out about the test itself: the fixture set cannot exercise a
-  content rubric (four of the seven carry the same bullets, three carry almost nothing,
-  none has agent, prompt or customer-facing content), and a tolerance stated in points
-  on a 0–100 scale is far stricter than it reads — see the decisions below.
+- **Acceptance test** (restated by 03, now that the model emits a band rather than a
+  number): per category, two providers must name the **same band**; one adjacent-band
+  disagreement per resume is a pass that wants another look, and any non-adjacent
+  disagreement — or more than one adjacent — is a failure. The **5 points / above 8 fails**
+  bar survives as the composite-level statement. Measured on all seven fixtures in
+  `tests/fixtures/` plus the user's real resume, sampling twice per resume per provider so
+  sampling noise is separable from genuine provider disagreement. Per 08, a
+  chance-corrected statistic is reported beside the raw agreement: judges agreeing on a
+  band nearly every resume lands in is a coincidence, not a rubric.
 - **Evidence rule**: every category must be scoreable from observable evidence in the
   resume. A category no judge can point at evidence for is what produces a 22-point spread.
 - Corpus is personal data (`corpus/jds/user/`), six verbatim postings.
+- **Execution rides in `task` tickets only.** This map plans; the two tickets that
+  build are both `task`, which is the type that does rather than decides:
+  [Build the inter-judge agreement harness](tickets/06-build-the-agreement-harness.md),
+  because 05 cannot be verified by argument, and
+  [Teach the dimension scan the behaviours the categories name](tickets/09-derive-category-weights-from-the-corpus.md),
+  because 04 made category weight a corpus derivation the digest cannot yet compute.
+  Everything else about implementation stays out of scope.
 
 ## Decisions so far
 
 - **Destination named**: the deliverable is a rubric spec, not an implementation.
-- **Agreement is the bar**: ≤5 points between judges per category is the target, >8 fails.
-  A rubric that cannot hit this is not a good rubric, whatever it reads like.
+- **Agreement is the bar**: two judges must land in the same place on every category, and
+  within 5 composite points, >8 fails. A rubric that cannot hit this is not a good rubric,
+  whatever it reads like. (The per-category half of this was a point tolerance until 03
+  replaced the model's number with a band; see the acceptance test above.)
 - **Categories are replaced, not evolved**: the current five (`Impact & quantification`,
   `AI/ML relevance & depth`, `Credibility & verifiability`, `Recruiter scan`,
   `Writing quality`) are not a starting point. The new set is derived from what the
   postings actually ask for.
-- **Model-authored scores are questionable**: whether the model emits a 0–100 score at
-  all is open, not assumed. See ticket 03.
+- **Discrete levels are the precondition** (08): 0–100 is the worst-performing scale
+  tested, judges quantize a fine scale into ~20 buckets whatever range they are given,
+  and reliability peaks at 7–10 categories. Sources are named but were unopened — see
+  `anchored-rubrics.md` — so the numbers are leads, not settled. This is the evidential
+  basis 03 rests on.
+- **The model authors no number** (03): it names one **band** per category and cites the
+  evidence placing it there; the band's value is a rubric lookup. Findings-only was
+  rejected on arithmetic — a finding count is unbounded and unanchored, so two judges
+  splitting the same defects 3 ways vs 7 move the composite 34 points, against 2.9 for the
+  worst score spread observed. Continuous movement comes from the deterministic rules
+  (zero inter-judge variance); the band supplies placement.
+- **One opinion, one channel** (03): findings from the model are evidence for the band and
+  the fix list, and no longer deduct. Band definitions must therefore be phrased as
+  evidence *present*, not defects *found*, or the double count returns.
 - **Stable bands, living inputs** (provisional): band definitions are prose that changes
   only on deliberate revision; the corpus supplies which skills get checked. Revisited
   only if future postings consistently clash with the bands.
-  **Held up under 05**: the Coverage bands never name a skill, so the requirement set
-  can be replaced wholesale without touching them.
-- **A band boundary must be countable, not weighed** (05). A boundary converges when
-  both judges can point at the fact that settles it — a span is present or absent, it
-  sits inside a role or outside one. A boundary that asks a judge to weigh something
-  (is this impressive, does this read as senior) does not converge, and the band format
-  does not rescue it. This is the test a category must pass before bands are written
-  for it.
-- **A category is withheld, never guessed, when the parse cannot carry it** (05).
-  Bands that talk about resume structure have nothing to bind to on a document whose
-  structure did not survive extraction. Scoring those anyway was the largest measured
-  source of judge disagreement — 19.7 points against a 5-point tolerance — and it
-  charges one document twice for a defect the parser gate already found.
-- **Coarser bands cost agreement, they do not buy it** (05, measured). On a fixed
-  0–100 scale, collapsing four levels to three raised the worst single-step cost from
-  5.7 to 9.3 points. Agreement comes from decidable boundaries, not forgiving levels.
-- **Headroom comes from a wide, flat requirement set** (05). Nine requirements
-  weighted 6…2 give the heaviest 14.3 of 100 points, so the 5-point tolerance affords
-  zero judgment calls. Fifteen weighted evenly would give each 6.7 and absorb two.
+- **The category set** ([Design the category set](tickets/04-design-the-category-set.md)): five
+  judged categories — **Production ownership** (6/6), **Agentic systems** (6/6),
+  **Evaluation rigour** (5/6), **AI-assisted coding fluency** (3/6) and **Resume
+  craft** — plus the three deterministic categories unchanged. Separability decides
+  what exists; document frequency decides what it is worth. `Coverage` dissolves into
+  the behaviours; cross-functional collaboration stays out at 6/6 on the sentence-shape
+  collision `jd_dimensions.py` already records.
+- **The judge answers criteria, not bands** ([Design the category
+  set](tickets/04-design-the-category-set.md)): binary, individually quotable evidence
+  questions, each with the quote that settles it. The band is a lookup from the
+  criteria and the score a lookup from the band — the output-form decision taken to
+  the limit it explicitly sanctioned.
+- **Category weight is corpus-derived** ([Design the category
+  set](tickets/04-design-the-category-set.md)): document frequency sets the weight of
+  the four behaviour categories; the other four stay authored, having no df to derive
+  from. So `dimension_multiplier()` retires for its four double-counting rules and
+  keeps only `title/seniority-mismatch`, whose category keeps an authored weight.
+- **`rule_share` is a claim, per category** ([Design the category
+  set](tickets/04-design-the-category-set.md)): 0.7 Resume craft, 0.4 the behaviour
+  categories, **0** for AI-assisted coding fluency — the first model-owned category,
+  because only a brittle proper-noun list could give it a rule channel. Two facts
+  found: 0.7 reaches only `Recruiter scan` in normal operation (though nothing filters
+  a provider's response, so the other two members of its set are not inert by
+  construction), and a category with no rules blends against a constant 100, not a
+  channel.
+- **The bar can be measured** (06): [Build the inter-judge agreement harness](tickets/06-build-the-agreement-harness.md)
+  — `scripts/agreement_harness.py` runs the corpus past both providers twice with the
+  samples kept apart, and prints between-judge spread, within-judge spread and
+  Krippendorff's alpha per category, plus the composite against the 5 / >8 bar and
+  findings agreement keyed on (defect kind, locator). It reads a number, a band, or
+  both, so it measures today's prompt and 05's experiment without a change. Its
+  refusals carry the point: alpha is `n/a` rather than 1.00 where no resume varies,
+  no between-judge figure is printed with one judge, and a composite pinned by a cap
+  is marked rather than counted as agreement.
 
 ## Not yet specified
 
+- **A new word for the report's "banded"**. 03 leaves **band** meaning only what
+  `/CONTEXT.md` defines it as, so the display of two judges disagreeing needs its own
+  term — *contested* is the placeholder.
 - **When the rubric gets revised.** Deferred: the trigger is "future inputs consistently
   clash with the rubric", which isn't yet a testable condition.
 - **Nice-to-have bonus mechanics.** Nice-to-haves should add "a slight bonus" to coverage;
   how much, and whether it can compensate for a missing requirement, is unspecified.
-- **What happens to `config.RULE_DIMENSION` and `dimension_multiplier()`** — the existing
-  JD-derived 1.5× rule scaling — once categories are redesigned. It may be subsumed,
-  kept alongside, or dropped.
+- **Which gate `Resume craft` belongs to.** It merges `Recruiter scan`
+  (`Gate.RECRUITER`) with `Writing quality` (`Gate.MANAGER`) and must pick one.
+  `report.py` groups findings by gate and `score.py` derives the parser and human
+  sub-scores from it, so this moves visible output. A reporting question, not a rubric
+  one, which is why 04 left it.
+- **The weight arithmetic.** 04 fixed the principle (df sets the derived block, the
+  rest is authored) but not the numbers: how the 100 points split between the derived
+  and authored blocks, and whether df maps to weight proportionally or through tiers.
 - **Whether the slop pass folds into a quality category** or stays a separate pass with
   its own findings.
 - **How the spec migrates into code** without a flag day: the composite, the ledger and

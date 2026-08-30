@@ -72,11 +72,11 @@
         "finetuning",
         "fine-tune"
       ],
-      "doc_frequency": 1,
-      "required_doc_frequency": 1,
+      "doc_frequency": 2,
+      "required_doc_frequency": 2,
       "nice_doc_frequency": 0,
-      "total_mentions": 1,
-      "weight": 0.167,
+      "total_mentions": 2,
+      "weight": 0.333,
       "provenance": "jd-derived"
     },
     "core_ml/lora": {
@@ -193,7 +193,7 @@
       "doc_frequency": 1,
       "required_doc_frequency": 0,
       "nice_doc_frequency": 1,
-      "total_mentions": 1,
+      "total_mentions": 2,
       "weight": 0.067,
       "provenance": "jd-derived"
     },
@@ -270,11 +270,11 @@
         "prompting",
         "prompt"
       ],
-      "doc_frequency": 2,
-      "required_doc_frequency": 1,
+      "doc_frequency": 4,
+      "required_doc_frequency": 3,
       "nice_doc_frequency": 1,
-      "total_mentions": 3,
-      "weight": 0.233,
+      "total_mentions": 6,
+      "weight": 0.567,
       "provenance": "jd-derived"
     },
     "llm_systems/function-calling": {
@@ -301,11 +301,11 @@
         "agents",
         "planning loop"
       ],
-      "doc_frequency": 3,
-      "required_doc_frequency": 1,
+      "doc_frequency": 4,
+      "required_doc_frequency": 2,
       "nice_doc_frequency": 2,
-      "total_mentions": 3,
-      "weight": 0.3,
+      "total_mentions": 5,
+      "weight": 0.467,
       "provenance": "jd-derived"
     },
     "llm_systems/llm-apis": {
@@ -407,12 +407,12 @@
         "kubernetes",
         "k8s"
       ],
-      "doc_frequency": 0,
+      "doc_frequency": 1,
       "required_doc_frequency": 0,
-      "nice_doc_frequency": 0,
-      "total_mentions": 0,
-      "weight": 0.0,
-      "provenance": "heuristic"
+      "nice_doc_frequency": 1,
+      "total_mentions": 1,
+      "weight": 0.067,
+      "provenance": "jd-derived"
     },
     "serving/gpu": {
       "group": "serving",
@@ -506,11 +506,11 @@
         "eval harness",
         "evaluation harness"
       ],
-      "doc_frequency": 1,
-      "required_doc_frequency": 1,
-      "nice_doc_frequency": 0,
-      "total_mentions": 1,
-      "weight": 0.167,
+      "doc_frequency": 4,
+      "required_doc_frequency": 3,
+      "nice_doc_frequency": 1,
+      "total_mentions": 4,
+      "weight": 0.567,
       "provenance": "jd-derived"
     },
     "evaluation/golden-dataset": {
@@ -839,11 +839,11 @@
       "aliases": [
         "python"
       ],
-      "doc_frequency": 1,
-      "required_doc_frequency": 1,
-      "nice_doc_frequency": 0,
-      "total_mentions": 1,
-      "weight": 0.167,
+      "doc_frequency": 4,
+      "required_doc_frequency": 3,
+      "nice_doc_frequency": 1,
+      "total_mentions": 4,
+      "weight": 0.567,
       "provenance": "jd-derived"
     },
     "foundation/cloud": {
@@ -855,11 +855,11 @@
         "azure",
         "cloud"
       ],
-      "doc_frequency": 1,
+      "doc_frequency": 2,
       "required_doc_frequency": 1,
-      "nice_doc_frequency": 0,
-      "total_mentions": 1,
-      "weight": 0.167,
+      "nice_doc_frequency": 1,
+      "total_mentions": 4,
+      "weight": 0.233,
       "provenance": "jd-derived"
     },
     "foundation/terraform": {
@@ -899,11 +899,11 @@
         "javascript",
         "react"
       ],
-      "doc_frequency": 1,
-      "required_doc_frequency": 1,
-      "nice_doc_frequency": 0,
-      "total_mentions": 1,
-      "weight": 0.167,
+      "doc_frequency": 4,
+      "required_doc_frequency": 3,
+      "nice_doc_frequency": 1,
+      "total_mentions": 5,
+      "weight": 0.567,
       "provenance": "jd-derived"
     },
     "foundation/testing": {

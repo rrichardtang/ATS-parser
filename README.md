@@ -285,14 +285,25 @@ branding, producer metadata blanked.
 ## Development
 
 ```bash
-.venv/bin/python -m pytest              # 92 tests, no network
+.venv/bin/python -m pytest              # 168 tests, no network
 .venv/bin/python tests/make_fixtures.py # regenerate fixture PDFs
 .venv/bin/python scripts/build_taxonomy.py
 .venv/bin/python scripts/hacking_sweep.py
+.venv/bin/python scripts/agreement_harness.py --dry-run
 ```
 
 Fixture PDFs are generated from `tests/make_fixtures.py` rather than checked in,
 so the inputs stay readable in review.
+
+### Do two judges agree?
+
+`scripts/agreement_harness.py` runs every fixture past both providers twice and
+prints what a rubric change has to be judged on: how far apart the two providers
+land per category, how far apart one provider lands from *itself* on a rerun, and
+Krippendorff's alpha beside both — because two judges agreeing on the value nearly
+every resume gets is a coincidence, not a rubric. It is the only thing here that
+spends API calls without producing a report, so it takes `--dry-run` and saves
+every run to `runs/` for replay.
 
 ## Privacy
 
