@@ -1,6 +1,6 @@
 type: grilling (HITL)
 status: open
-claimed:
+claimed: claude
 blocked-by: 04
 
 # Which category does each keyword rule file into?
