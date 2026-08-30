@@ -38,9 +38,15 @@ DIMENSIONS: dict[str, list[str]] = {
         r"incident response",
         r"\bslas?\b",
         r"\bslos?\b",
-        r"production[- ]grade",
-        r"ship(?:ped|ping)? to (?:users|production|customers)",
-        r"reliability",
+        r"\bproduction[- ](?:grade|system|service|environment|llm)",
+        # Ship verb and destination, allowing words between them --
+        # "shipped something meaningful to production" doesn't sit adjacent.
+        r"\bship(?:ped|ping)?\b.{0,25}\bto (?:users|production|customers)\b",
+        # "iteration in production", "into production", "reached production" --
+        # broader than requiring a ship verb, since plenty of postings describe
+        # production ownership without literally saying "ship."
+        r"\b(?:in|into|reach(?:ed|ing)?)\s+production\b",
+        r"\breliability\b",
     ],
     "evaluation": [
         r"rigorous evals?\b",

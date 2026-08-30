@@ -22,3 +22,16 @@ def test_production_and_evaluation_and_seniority_and_leadership():
 
 def test_plain_bullet_hits_nothing():
     assert scan("Built a REST API in Flask.") == set()
+
+
+def test_production_catches_natural_phrasing_without_on_call_or_sla():
+    """Real postings from the personal corpus: neither literally says on-call,
+    SLA, or "production-grade" -- the original pattern list missed both."""
+    assert "production" in scan(
+        "Own models end to end, from problem framing and data through "
+        "deployment, evaluation, and iteration in production."
+    )
+    assert "production" in scan(
+        "You've shipped something meaningful to production and can explain "
+        "how it evolved."
+    )
