@@ -27,3 +27,13 @@ what ships here is a defensible starting point, not a substitute.
     # retrieved: <YYYY-MM-DD>
     # title: <posting title>
     # level: <junior|mid|senior>
+
+## A different, better path: your own personal corpus
+
+Rather than editing this directory, prefer `corpus/jds/user/` (see its README) --
+postings *you* pasted for roles *you're* targeting, added with
+`scripts/add_jd.py` and built with `scripts/build_user_corpus.py`. That corpus
+replaces this one's taxonomy for your runs entirely once it has any postings in
+it, and additionally grounds `ats/jd_digest.json` (target titles, section-aware
+requirement weighting, dimension signals) -- this directory and
+`scripts/build_taxonomy.py` only ever produce the generic taxonomy.

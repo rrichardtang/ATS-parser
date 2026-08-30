@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import functools
+import json
 import tomllib
 from pathlib import Path
 from typing import Any
@@ -9,8 +10,52 @@ from typing import Any
 from .models import Category, Provenance, Severity
 
 CONFIG_PATH = Path(__file__).with_name("weights.toml")
+JD_DIGEST_PATH = Path(__file__).with_name("jd_digest.json")
 
 SEVERITY_ORDER = {Severity.MINOR: 0, Severity.MAJOR: 1, Severity.CRITICAL: 2}
+
+# Which existing rule a JD-derived dimension amplifies. Never a new rubric axis --
+# only ever scales how much an already-judged rule costs, for this user's runs.
+# See ats/jd_dimensions.py for what each dimension detects and why "leadership"
+# and cross-functional collaboration aren't wired in here yet.
+RULE_DIMENSION = {
+    "content/ownership": "ownership",
+    "cred/no-production": "production",
+    "cred/notebook-only": "production",
+    "cred/no-evaluation": "evaluation",
+    "title/seniority-mismatch": "seniority",
+}
+# A dimension mentioned in every posting scales its rule's cost up to 1.5x; one
+# your postings never mention leaves it at the default 1.0x. Only ever amplifies
+# -- a dimension your target roles don't care about doesn't make the underlying
+# rule less true in general, so it never scales below baseline.
+DIMENSION_MAX_MULTIPLIER = 1.5
+
+
+@functools.lru_cache(maxsize=1)
+def jd_digest() -> dict[str, Any]:
+    """The personal-corpus digest from scripts/build_user_corpus.py, if it has
+    ever been run. Absent (no postings added yet) -> {}, and every function below
+    degrades to exactly today's behaviour."""
+    if not JD_DIGEST_PATH.exists():
+        return {}
+    return json.loads(JD_DIGEST_PATH.read_text(encoding="utf-8"))
+
+
+def dimension_multiplier(rule_id: str) -> float:
+    dimension = RULE_DIMENSION.get(rule_id)
+    digest = jd_digest()
+    if not dimension or not digest:
+        return 1.0
+    entry = digest.get("dimensions", {}).get(dimension)
+    if not entry or not entry.get("total"):
+        return 1.0
+    share = entry["count"] / entry["total"]
+    return 1.0 + (DIMENSION_MAX_MULTIPLIER - 1.0) * share
+
+
+def target_titles() -> list[str]:
+    return jd_digest().get("target_titles", [])
 
 
 @functools.lru_cache(maxsize=1)

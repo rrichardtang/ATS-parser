@@ -34,10 +34,11 @@ def content_pass(
     deterministic: list[Finding],
     samples: int,
     temperature: float,
+    digest: dict | None = None,
 ) -> ensemble.PassResult:
     """Substance, ownership, seniority fit, missing information, category scores."""
     summary = [f"{f.rule_id}: {f.message}" for f in deterministic]
-    user = prompts.content_user(resume, full_text, jd_text, summary)
+    user = prompts.content_user(resume, full_text, jd_text, summary, digest)
 
     jobs = []
     for provider in providers:
@@ -167,6 +168,7 @@ def rewrite_pass(
     use_judge: bool,
     margin: float,
     temperature: float,
+    digest: dict | None = None,
 ) -> ensemble.PassResult:
     """Generate -> fact-check filter -> judge-rank -> polish -> final gate.
 
@@ -261,7 +263,7 @@ def rewrite_pass(
         )
         judge_raw, judge_errors = ensemble.gather([
             lambda p=judge_provider: call(
-                p, prompts.JUDGE_SYSTEM, prompts.judge_user(judge_payload), 0.0
+                p, prompts.JUDGE_SYSTEM, prompts.judge_user(judge_payload, digest), 0.0
             )
         ])
         rankings: dict[str, list[dict]] = {}

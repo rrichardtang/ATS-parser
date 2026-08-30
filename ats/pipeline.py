@@ -24,7 +24,11 @@ __all__ = [
 class RunInput:
     pdf_path: str
     jd_text: str = ""
-    target_title: str = "AI Engineer"
+    # Empty means "not explicitly set" -- analyze() resolves it from the personal
+    # JD corpus's digest (config.target_titles()) when one exists, falling back to
+    # "AI Engineer" only when neither is available. Never both a real default and
+    # a way to tell "the caller chose this" apart, so the sentinel has to be empty.
+    target_title: str = ""
     keys: dict[str, str] = field(default_factory=dict)
     models: dict[str, str] = field(default_factory=dict)
     ensemble_mode: str = "default"
@@ -51,10 +55,18 @@ def deterministic(
     return findings
 
 
+def _resolve_target_title(explicit: str) -> str:
+    if explicit:
+        return explicit
+    titles = config.target_titles()
+    return titles[0] if titles else "AI Engineer"
+
+
 def analyze(run: RunInput) -> Report:
     doc = extract(run.pdf_path)
     resume = parse(doc.text)
-    findings = deterministic(doc, resume, run.jd_text, run.target_title)
+    target_title = _resolve_target_title(run.target_title)
+    findings = deterministic(doc, resume, run.jd_text, target_title)
 
     providers = providers_from(run.keys, run.models)
     settings = config.ensemble_settings(run.ensemble_mode)
@@ -75,10 +87,13 @@ def analyze(run: RunInput) -> Report:
 
     caught = [f.evidence for f in findings if f.rule_id.startswith("slop/")]
 
+    digest = config.jd_digest()
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         content_future = pool.submit(
             passes.content_pass, providers, resume, doc.text, run.jd_text,
             findings, int(settings["content_samples"]), float(settings["temperature"]),
+            digest,
         )
         slop_future = pool.submit(
             passes.slop_pass, providers, resume, caught,
@@ -103,7 +118,7 @@ def analyze(run: RunInput) -> Report:
                 providers, resume, findings,
                 int(settings["rewrite_objectives"]), int(settings["rewrite_samples"]),
                 bool(settings["rewrite_judge"]), float(settings["rewrite_margin"]),
-                float(settings["temperature"]),
+                float(settings["temperature"]), digest,
             ),
         )
         rewrites = rewrite_result.data
@@ -159,7 +174,7 @@ def generate_rewrites(
             providers, resume, report.findings,
             int(settings["rewrite_objectives"]), int(settings["rewrite_samples"]),
             bool(settings["rewrite_judge"]), float(settings["rewrite_margin"]),
-            float(settings["temperature"]),
+            float(settings["temperature"]), config.jd_digest(),
         ),
     )
     report.rewrites = rewrite_result.data

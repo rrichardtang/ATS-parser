@@ -198,6 +198,50 @@ wrong and correctable.
 > they are a defensible starting point, not a substitute for real data. Drop real
 > postings into `corpus/jds/` and re-run the script. See `corpus/README.md`.
 
+### Your personal JD corpus
+
+The generic corpus above is a reasonable prior for "a mid-level AI Engineer role"
+in the abstract. It's not a substitute for the roles you're actually targeting. If
+you paste in real postings you're interested in, they *replace* the generic
+taxonomy for your runs — not another keyword diff bolted on top.
+
+```
+python scripts/add_jd.py             # paste one posting; prompts for title/company/url
+python scripts/build_user_corpus.py  # regenerate ats/taxonomy.json + ats/jd_digest.json
+```
+
+Free and deterministic — no API key, no LLM call, just regex over text you already
+pasted (`ats/jd_sections.py`, `ats/jd_dimensions.py`). Re-run the build script after
+every posting; it fully regenerates both files from whatever's currently in
+`corpus/jds/user/`, so nothing is ever hand-edited or goes stale. With zero
+postings added, it's a no-op — everything behaves exactly as it did before this
+existed.
+
+Two different things get extracted, and they feed the report differently:
+
+- **Skill mentions** ("PyTorch" in 5 of 5 postings) → the same keyword-coverage
+  weighting the generic corpus produces, just grounded in your real targets.
+  Section-aware: a skill named in a posting's *requirements* counts more than one
+  that only shows up as *nice-to-have*, and neither counts a mention from the
+  benefits/perks boilerplate.
+- **Dimension signals** ("own production systems end-to-end" → ownership; "rigorous
+  evals" → evaluation rigor) — phrases that describe scope or seniority rather
+  than naming a skill, so they can't be taxonomy terms. These never create a new
+  rubric axis. They only scale how much an *existing* rule already costs
+  (`config.dimension_multiplier`, applied in `score.py` before the anti-hard-gate
+  ceiling, so it can amplify a finding's cost but never let it exceed its
+  category's weight). A target role that hammers "own it end-to-end" makes the
+  existing ownership-dilution check bite harder on your runs; it doesn't invent a
+  new "ownership" category.
+
+Five dimensions are wired in — ownership, production evidence, evaluation rigor,
+seniority/autonomy, leadership — each mapped to a rule this project already judges
+(see the table in `ats/jd_dimensions.py`). Cross-functional collaboration is
+deliberately left out: its natural phrasing ("partnered with product and design")
+is close enough to the ownership-dilution pattern ("the team shipped X") that
+wiring it in without resolving that collision would reward and penalise the same
+sentence shape at once.
+
 ### Rule provenance
 
 Every rule declares where its authority comes from:

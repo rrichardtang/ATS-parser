@@ -183,7 +183,37 @@ CATEGORY_NAMES = [
 ]
 
 
-def content_user(resume: Resume, full_text: str, jd_text: str, findings_summary: list[str]) -> str:
+def digest_text(digest: dict) -> str:
+    """A compact summary of the user's curated JD corpus (scripts/build_user_corpus.py),
+    for LLM prompts -- always fits, unlike a truncated raw posting, and reflects every
+    postings the user has added, not just whichever one fit first.
+    """
+    if not digest:
+        return ""
+    n = digest.get("document_count", 0)
+    lines = [f"Grounded in {n} posting(s) you're targeting:"]
+    required = digest.get("required") or []
+    if required:
+        lines.append("Required in most: " + ", ".join(
+            f"{e['term'].split('/', 1)[-1]} ({e['doc_frequency']}/{n})" for e in required[:10]
+        ))
+    nice = digest.get("nice_to_have") or []
+    if nice:
+        lines.append("Nice-to-have: " + ", ".join(
+            e["term"].split("/", 1)[-1] for e in nice[:6]
+        ))
+    dims = {k: v for k, v in (digest.get("dimensions") or {}).items() if v.get("count")}
+    if dims:
+        lines.append("Emphasized qualities: " + ", ".join(
+            f"{name} ({d['count']}/{d['total']})" for name, d in dims.items()
+        ))
+    return "\n".join(lines)
+
+
+def content_user(
+    resume: Resume, full_text: str, jd_text: str, findings_summary: list[str],
+    digest: dict | None = None,
+) -> str:
     parts = [
         "RESUME:",
         full_text[:12000],
@@ -196,8 +226,11 @@ def content_user(resume: Resume, full_text: str, jd_text: str, findings_summary:
         "",
         f"SCORE THESE CATEGORIES: {', '.join(CATEGORY_NAMES)}",
     ]
+    digest_summary = digest_text(digest or {})
+    if digest_summary:
+        parts += ["", "TARGET ROLE SIGNAL:", digest_summary]
     if jd_text.strip():
-        parts += ["", "TARGET JOB DESCRIPTION:", jd_text[:6000]]
+        parts += ["", "ALSO CONSIDER THIS SPECIFIC POSTING:", jd_text[:6000]]
     return "\n".join(parts)
 
 
@@ -222,14 +255,19 @@ def rewrite_user(targets: list[dict]) -> str:
     )
 
 
-def judge_user(targets: list[dict]) -> str:
+def judge_user(targets: list[dict], digest: dict | None = None) -> str:
     """targets: [{"locator", "original", "candidates": [{"candidate_id", "text"}]}].
 
     Provider and objective are deliberately withheld -- a judge that knew which
     model or lens produced a candidate could favor it on that basis rather than
     the writing itself.
     """
-    return "Rank each bullet's candidates.\n\n" + json.dumps(targets, indent=2)
+    parts = ["Rank each bullet's candidates.\n"]
+    digest_summary = digest_text(digest or {})
+    if digest_summary:
+        parts += ["Grade ATS relevance against this, not generic terminology:", digest_summary, ""]
+    parts.append(json.dumps(targets, indent=2))
+    return "\n".join(parts)
 
 
 def polish_user(targets: list[dict]) -> str:

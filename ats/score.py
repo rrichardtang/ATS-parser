@@ -57,9 +57,13 @@ def _cost(finding: Finding, weights: dict[Category, float], points: dict[Severit
 
     The clamp is the anti-hard-gate invariant: a finding's cost is capped at its
     category's weight, so a missing phone number costs a few points rather than
-    most of the score.
+    most of the score. That cap is applied AFTER any JD-derived dimension
+    multiplier (config.dimension_multiplier), so a rule a user's target postings
+    emphasize heavily still can't move the composite by more than its category's
+    weight -- amplifying by target-role signal never reopens the hard-gate risk
+    this clamp exists to close.
     """
-    raw = points[finding.severity]
+    raw = points[finding.severity] * config.dimension_multiplier(finding.rule_id)
     if finding.rule_id in FRAUD_RULES:
         return raw
     ceiling = weights[finding.category] * config.scoring()["max_single_finding_share"]
