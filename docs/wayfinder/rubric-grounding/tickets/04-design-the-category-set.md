@@ -1,6 +1,6 @@
 type: grilling (HITL)
 status: open
-claimed:
+claimed: claude
 blocked-by: 02, 03
 
 # Design the category set
