@@ -17,6 +17,10 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 ## Notes
 
 - **Domain**: resume scoring against AI-engineering job postings. Glossary in `/CONTEXT.md`.
+- **Corpus inventory**: `inventory.md` — what the six postings require, in their own
+  language. **Scoring mechanics**: `scoring-mechanics.md` — what the model authors today
+  (40.5 of the composite's 100 points, across five of eight categories) and the three
+  code facts 04/05/06 will hit.
 - **Skills every session should consult**: `grilling` and `domain-modeling` by default;
   `research` for AFK reading tickets; `prototype` for tickets that need something concrete
   to react to.

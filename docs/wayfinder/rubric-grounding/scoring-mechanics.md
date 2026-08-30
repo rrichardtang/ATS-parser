@@ -96,5 +96,5 @@ grounding for the band it names, so the mislabel outlives the decision.
 For anyone re-checking the 40.5 or the per-category shares: model contribution to the
 composite is `(1 - rule_share) * weight`, since `composite = Σ(category_score *
 weight) / 100` and the model's value enters each category at `(1 - rule_share)`.
-Weights from `ats/weights.toml`, `rule_share` from `ats/score.py:123-125`, the
+Weights from `ats/weights.toml`, `rule_share` from `ats/score.py:122-124`, the
 model-scored set from `ats/prompts.py:180`.
