@@ -1,6 +1,6 @@
 type: grilling (HITL)
 status: open
-claimed:
+claimed: claude
 blocked-by: —
 
 # What makes two findings the same finding?
