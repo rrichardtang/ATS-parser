@@ -362,18 +362,48 @@ class CompositeRow:
         return _spread(self.no_deduct.values())
 
 
+FINDING_KEYS = ("kind+locator", "locator", "evidence")
+
+
+def _norm(text: str) -> str:
+    return " ".join((text or "").split()).lower()
+
+
+def _finding_key(finding: Finding, key: str):
+    """One finding reduced to whatever "the same finding" is taken to mean."""
+    if key == "kind+locator":
+        return (_norm(finding.rule_id), _norm(finding.locator))
+    if key == "locator":
+        return _norm(finding.locator)
+    return _norm(finding.evidence)[:80] or None
+
+
 @dataclass
 class FindingsRow:
-    """Findings agreement keyed on (defect kind, locator), never on wording.
+    """Findings agreement under one notion of "the same finding".
 
-    Two judges naming the same defect in the same place have agreed even if they
-    phrased it differently, and `rule_id` is already the kind -- it is what the
-    report groups by.
+    Ticket 10: the choice of key moved this number 17x on the baseline run, so
+    the harness reports every candidate rather than picking one silently.
+    `kind+locator` is the key of record -- two judges naming the same defect in
+    the same place have agreed even if they phrased it differently, and
+    `rule_id` is the kind, which is what the report groups by. It is only
+    meaningful once `rule_id` comes from a closed list; while the model invents
+    the name, this row reads near zero for that reason and not because the
+    judges disagree.
+
+    `chance` is what two judges would score by flagging at random, at the sizes
+    they actually flagged, from the pool of keys actually in play. `kappa` is
+    the overlap corrected for it. Raw overlap alone cannot tell agreement from a
+    short list both judges mark most of: on the baseline run, locator overlap of
+    0.51 sat *below* its 0.59 chance line.
     """
 
     resume: str
+    key: str
     keys: int
     between: float | None
+    chance: float | None
+    kappa: float | None
     within: dict[str, float]
 
 
@@ -392,6 +422,24 @@ class AgreementReport:
 def _jaccard(left: set, right: set) -> float | None:
     union = left | right
     return len(left & right) / len(union) if union else None
+
+
+def _chance_jaccard(sizes: list[int], universe: int) -> float | None:
+    """Expected overlap if each judge flagged at random, at the size it flagged.
+
+    Ratio of expectations over a universe of `universe` distinct keys: two sets
+    of size a and b meet in a*b/N on average and cover a + b - a*b/N. A judge
+    that flags most of a short list overlaps another one heavily for no reason
+    at all, and this is the line that says so.
+    """
+    if len(sizes) != 2 or universe <= 0:
+        return None
+    a, b = (min(s, universe) for s in sizes)
+    if not a and not b:
+        return None
+    meet = a * b / universe
+    cover = a + b - meet
+    return meet / cover if cover else None
 
 
 def _mean_jaccard(groups: list[set]) -> float | None:
@@ -601,22 +649,32 @@ def _composite_rows(
 def _findings_rows(live: list[ResumeRun]) -> list[FindingsRow]:
     rows = []
     for run in live:
-        by_provider: dict[str, list[set]] = defaultdict(list)
-        for judgment in run.judgments:
-            by_provider[judgment.provider].append(
-                {(f.rule_id, f.locator) for f in judgment.findings}
-            )
-        pooled = {p: set().union(*samples) for p, samples in by_provider.items()}
-        between = _mean_jaccard(list(pooled.values()))
-        within = {}
-        for provider, samples in by_provider.items():
-            overlap = _mean_jaccard(samples)
-            if overlap is not None:
-                within[provider] = round(overlap, 2)
-        rows.append(FindingsRow(
-            resume=run.name,
-            keys=len(set().union(*pooled.values())) if pooled else 0,
-            between=None if between is None else round(between, 2),
-            within=within,
-        ))
+        for key in FINDING_KEYS:
+            by_provider: dict[str, list[set]] = defaultdict(list)
+            for judgment in run.judgments:
+                by_provider[judgment.provider].append(
+                    {k for k in (_finding_key(f, key) for f in judgment.findings)
+                     if k is not None}
+                )
+            pooled = {p: set().union(*samples) for p, samples in by_provider.items()}
+            between = _mean_jaccard(list(pooled.values()))
+            universe = len(set().union(*pooled.values())) if pooled else 0
+            chance = _chance_jaccard([len(v) for v in pooled.values()], universe)
+            kappa = None
+            if between is not None and chance is not None and chance < 1:
+                kappa = (between - chance) / (1 - chance)
+            within = {}
+            for provider, samples in by_provider.items():
+                overlap = _mean_jaccard(samples)
+                if overlap is not None:
+                    within[provider] = round(overlap, 2)
+            rows.append(FindingsRow(
+                resume=run.name,
+                key=key,
+                keys=universe,
+                between=None if between is None else round(between, 2),
+                chance=None if chance is None else round(chance, 2),
+                kappa=None if kappa is None else round(kappa, 2),
+                within=within,
+            ))
     return rows

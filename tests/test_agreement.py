@@ -130,7 +130,34 @@ def test_findings_agreement_keys_on_defect_kind_and_place_not_wording(monkeypatc
     providers = _judges(monkeypatch, {"anthropic": [a], "openai": [b]})
     run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 1, 0.0)
     report = agreement.analyse(run)
-    assert report.findings[0].between == 1.0
+    keyed = {row.key: row for row in report.findings if row.resume == "strong"}
+    assert keyed["kind+locator"].between == 1.0
+    # Same place, same kind, different wording: only the evidence key sees a
+    # disagreement, and it is the wording one -- which is why it is not the key
+    # of record (ticket 10).
+    assert keyed["locator"].between == 1.0
+    assert keyed["evidence"].between == 1.0
+
+
+def test_findings_agreement_reports_a_chance_line_under_every_key(monkeypatch, fixtures):
+    """Ticket 10: raw overlap cannot tell agreement from a short shared list.
+
+    Both judges flag both of the same two places, so raw overlap is a perfect
+    1.00 -- and chance is 1.00 too, because there were only ever two keys in
+    play and each judge took both. Kappa is what says so.
+    """
+    places = [("missing scale", "no scale", "Cut p99 inference latency", "exp[0].bullet[0]"),
+              ("missing scale", "no scale", "Cut p99 inference latency", "exp[0].bullet[1]")]
+    providers = _judges(monkeypatch, {
+        "anthropic": [_reply(dict.fromkeys(CATEGORIES, 60), places)],
+        "openai": [_reply(dict.fromkeys(CATEGORIES, 60), places)],
+    })
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 1, 0.0)
+    report = agreement.analyse(run)
+    row = next(r for r in report.findings if r.key == "locator")
+    assert row.between == 1.0
+    assert row.chance == 1.0
+    assert row.kappa is None, "no headroom over chance means kappa is undefined, not 1.0"
 
 
 def test_bands_are_read_when_the_reply_carries_them():

@@ -22,6 +22,8 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   measured, and the verdict on the format (05).
 - [criteria/](criteria/) — the criteria as data, the band probes, and the recorded
   judge answers the measurement ran on.
+- [findings-identity.md](findings-identity.md) — what makes two findings the same
+  finding, and what `prompts.py` has to emit for it (10).
 - [baseline-agreement.md](baseline-agreement.md) — the first real two-provider run,
   against the rubric still in the code. The *before* picture every change is judged
   from, with [baseline/run-summary.json](baseline/run-summary.json) so its arithmetic
@@ -149,18 +151,29 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   Two smaller findings: `rule_share` 0.7 *masks* `Recruiter scan`'s disagreement rather
   than resolving it, and 03's no-deduct column widened the composite spread on 5 of 6
   resumes — a datum 03 did not have.
-- **Findings identity is unsettled, and it decided the answer** ([What makes two findings
-  the same finding](tickets/10-what-makes-two-findings-the-same-finding.md)): keyed on
-  `(rule_id, locator)` the judges agree 0.03; on locator alone, 0.51. The judges invented
-  **108 rule ids for 198 findings** and shared 5, because the prompt asks them to reuse a
-  name they have no list to reuse from. Criteria are already a closed vocabulary, which
-  is why the ticket's real question is whether the model needs a findings vocabulary at
-  all.
+- **A finding is the evidence for one criterion** ([What makes two findings the same
+  finding](tickets/10-what-makes-two-findings-the-same-finding.md), spec in
+  [findings-identity.md](findings-identity.md)): the content model gets no findings
+  vocabulary of its own — `rule_id` becomes the criterion id, ~25 fixed strings, and the
+  108 names the judges invented for 198 findings become a design-time input for wording
+  criteria rather than a runtime output. A criterion answered `no` yields an **unmet
+  criterion** (a pure absence: no quote, no locator, one per criterion per resume, what
+  the band reads and the report leads with) or a **placed finding** (present-but-weak
+  text: quote and locator required), split on whether there is anything to point at.
+  Locators are resolved against the parsed resume, not trusted — 10% of the baseline's
+  named nothing that exists.
+- **Raw finding overlap is not agreement** (same ticket): a resume has 5–9 bullets plus
+  the summary and each judge flags 4–11, so the tempting `locator` key's **0.51** sits
+  *below* its 0.58 chance line (kappa −0.16, negative on 6 of 7 resumes) and the
+  `(rule_id, locator)` key's 0.03 is kappa −0.48. `ats/agreement.py` and
+  `scripts/baseline_analysis.py` now print `chance` and `kappa` beside every `between`,
+  which is 08's chance-correction requirement reaching the findings table. The
+  baseline's "the judges agree on about half the places" is corrected there.
 - **The bar can be measured** (06): [Build the inter-judge agreement harness](tickets/06-build-the-agreement-harness.md)
   — `scripts/agreement_harness.py` runs the corpus past both providers twice with the
   samples kept apart, and prints between-judge spread, within-judge spread and
   Krippendorff's alpha per category, plus the composite against the 5 / >8 bar and
-  findings agreement keyed on (defect kind, locator). It reads a number, a band, or
+  findings agreement under each candidate key with its chance line (10). It reads a number, a band, or
   both, so it measures today's prompt and 05's experiment without a change. Its
   refusals carry the point: alpha is `n/a` rather than 1.00 where no resume varies,
   no between-judge figure is printed with one judge, and a composite pinned by a cap
@@ -174,6 +187,13 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   needs criteria for the other four categories, a prompt that emits them, and a harness
   that reads criterion answers rather than `score` and `band`. 05 measured a two-judge
   proxy and says so.
+- **Whether the criteria can carry the report as well as the score.** 10 made the
+  criteria the only vocabulary the content model has, so a defect no criterion asks
+  about is now unreportable. 04 chose categories on separability and document frequency;
+  exhaustiveness over defects is a demand neither 04 nor 05 was asked to meet, and it is
+  the likeliest reason 10 gets reopened. The baseline names what the judges keep
+  reaching for — evaluation methodology, deployment reach, scale/latency/cost — so the
+  remaining criteria have a target to hit.
 - **Criteria for the other four categories.** 05 wrote one, deliberately. The
   destination needs all five, and nothing tracks the remaining four —
   `Agentic systems` and `Evaluation rigour` should transfer nearly directly per 05,

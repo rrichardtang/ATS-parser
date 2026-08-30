@@ -100,13 +100,26 @@ def test_judges_rank_alike_even_where_they_score_apart(run):
 
 
 def test_the_key_decides_the_answer(run):
-    """Keying on a model-invented name reads as disagreement that locators deny."""
-    rows = {key: (within, between) for key, within, between in
-            key_table(run, ("rule+locator", "locator"))}
-    assert rows["rule+locator"][1] < 0.1
+    """Keying on a model-invented name reads as near-total disagreement."""
+    rows = {key: row for key, *row in key_table(run, ("rule+locator", "locator"))}
+    within, between, _, _ = rows["rule+locator"]
+    assert between < 0.1
     assert rows["locator"][1] > 0.4
     # Within-judge barely beats between-judge: the instability is sampling, not provider.
     assert abs(rows["locator"][0] - rows["locator"][1]) < 0.15
+
+
+def test_neither_key_beats_flagging_at_random(run):
+    """Ticket 10: the locator's 0.51 looks like half-agreement and is below chance.
+
+    A resume has 5-9 bullets plus the summary and each judge flags 4-11, so the
+    pool is small enough that random flagging scores 0.58. This is the assertion
+    that stops a raw overlap being read as agreement again.
+    """
+    for key, _, between, chance, kappa in key_table(run, ("rule+locator", "locator")):
+        assert chance is not None, key
+        assert between < chance, f"{key}: {between} vs chance {chance}"
+        assert kappa < 0, f"{key}: kappa {kappa}"
 
 
 def test_the_judges_invent_a_name_per_finding(run):

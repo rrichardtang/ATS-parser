@@ -136,12 +136,32 @@ def _jaccard(left: set, right: set) -> float | None:
     return len(left & right) / len(left | right)
 
 
+def _chance_jaccard(sizes: list[int], universe: int) -> float | None:
+    """What two judges score by flagging at random, at the sizes they flagged.
+
+    A resume has 5-9 bullets plus the summary and each judge flags 4-11 of them,
+    so raw overlap cannot tell agreement from two judges both marking most of a
+    short list. Ratio of expectations: sets of size a and b meet in a*b/N and
+    cover a + b - a*b/N.
+    """
+    if len(sizes) != 2 or universe <= 0:
+        return None
+    a, b = (min(size, universe) for size in sizes)
+    if not a and not b:
+        return None
+    meet = a * b / universe
+    cover = a + b - meet
+    return meet / cover if cover else None
+
+
 def key_table(run: dict, keys: tuple[str, ...]) -> list[tuple]:
     """The same findings compared under different notions of "the same finding"."""
     rows = []
     for key in keys:
         within: list[float] = []
         between: list[float] = []
+        chances: list[float] = []
+        kappas: list[float] = []
         for resume in scored(run):
             per: dict[str, dict[int, list[dict]]] = defaultdict(dict)
             for judgment in resume["judgments"]:
@@ -158,8 +178,16 @@ def key_table(run: dict, keys: tuple[str, ...]) -> list[tuple]:
                 score = _jaccard(*pooled.values())
                 if score is not None:
                     between.append(score)
+                    universe = len(set().union(*pooled.values()))
+                    baseline = _chance_jaccard([len(v) for v in pooled.values()], universe)
+                    if baseline is not None:
+                        chances.append(baseline)
+                        if baseline < 1:
+                            kappas.append((score - baseline) / (1 - baseline))
         rows.append((key, statistics.mean(within) if within else None,
-                     statistics.mean(between) if between else None))
+                     statistics.mean(between) if between else None,
+                     statistics.mean(chances) if chances else None,
+                     statistics.mean(kappas) if kappas else None))
     return rows
 
 
@@ -250,10 +278,15 @@ def report(run: dict) -> str:
     keys = ("rule+locator", "locator") if meta.get("redacted") else (
         "rule+locator", "locator", "evidence")
     lines += ["", "The same findings, under different notions of \"the same finding\"", "",
-              f"  {'key':<16}{'within judge':>14}{'between judges':>16}"]
-    for key, within, between in key_table(run, keys):
+              f"  {'key':<16}{'within judge':>14}{'between judges':>16}{'chance':>9}{'kappa':>8}"]
+    for key, within, between, chance, kappa in key_table(run, keys):
         fmt = lambda v: "  -  " if v is None else f"{v:.2f}"
-        lines.append(f"  {key:<16}{fmt(within):>14}{fmt(between):>16}")
+        signed = "  -  " if kappa is None else f"{kappa:+.2f}"
+        lines.append(f"  {key:<16}{fmt(within):>14}{fmt(between):>16}"
+                     f"{fmt(chance):>9}{signed:>8}")
+    lines.append("")
+    lines.append("  Read kappa, not between: a between below its chance line is not "
+                 "agreement (ticket 10).")
 
     overall, per_provider = vocabulary(run)
     lines += ["", "Rule-id vocabulary", ""]

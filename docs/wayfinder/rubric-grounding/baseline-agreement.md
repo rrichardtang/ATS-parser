@@ -88,15 +88,24 @@ a number.**
 06 keys findings on `(rule_id, locator)`, per 03. Both halves of that key are text the
 model invents. Re-keyed:
 
-| key | within judge | between judges |
-|---|---|---|
-| `(rule_id, locator)` — what the harness reports | 0.09 | **0.03** |
-| `locator` alone | 0.57 | **0.51** |
-| quoted evidence span | 0.45 | 0.36 |
+| key | within judge | between judges | chance | kappa |
+|---|---|---|---|---|
+| `(rule_id, locator)` — what the harness reports | 0.09 | **0.03** | 0.34 | −0.48 |
+| `locator` alone | 0.57 | **0.51** | 0.58 | −0.16 |
+| quoted evidence span | 0.45 | 0.36 | — | — |
 
-The judges agree on about **half the places** they flag and on **3%** of the (name,
-place) pairs. The near-zero in the harness output is a naming artifact, not a
-measurement of disagreement.
+(The chance columns were added by 10; the evidence span has none here because
+`run-summary.json` is redacted of quotes, so that row is from the unredacted run.)
+
+The judges agree on **3%** of the (name, place) pairs. The near-zero in the harness
+output is a naming artifact, not a measurement of disagreement.
+
+They do **not** agree on half the places, which is how this table first read.
+[10](tickets/10-what-makes-two-findings-the-same-finding.md) corrected it: a resume has
+5–9 bullets plus the summary and each judge flags 4–11 of them, so flagging at random
+scores 0.58. Against that line locator agreement of 0.51 is kappa **−0.16** — below
+chance on 6 of the 7 resumes — and the pair key's 0.03 is kappa −0.48. Both numbers are
+artifacts; only one of them looks like one.
 
 Why: **108 distinct `rule_id`s across 198 findings**, only **5** used by both
 providers. `missing-evaluation-methodology`, `-detail`, `-context`, `-method` and
@@ -107,7 +116,8 @@ key on `rule_id`, so today one defect renders as five cards.
 
 Note also that within-judge barely beats between-judge on locator (0.57 vs 0.51).
 Finding *localisation* is unstable inside a single judge, not between providers — so
-ensembling two providers buys nothing there.
+ensembling two providers buys nothing there. A tenth of the locators name nothing that
+exists in the parsed resume at all (10, again).
 
 ## What this changes for the rubric being designed
 
@@ -146,7 +156,10 @@ converge across providers", which remains unmeasured.
 ## What it hands each ticket
 
 - **10 (new)** — the findings key and the invented vocabulary are one question: what
-  makes two findings the same finding.
+  makes two findings the same finding. Answered in
+  [findings-identity.md](findings-identity.md): a finding is the evidence for one
+  criterion, so the criterion id is the rule id, and the locator is resolved rather than
+  trusted.
 - **07** — `rule_share` 0.7 masks rather than fixes `Recruiter scan`. A rule channel
   that hides model disagreement is not the same as one that resolves it, and the
   distinction should be explicit when `rule_share` is set per category.

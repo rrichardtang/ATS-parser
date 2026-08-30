@@ -151,13 +151,16 @@ def render(report: AgreementReport) -> str:
         out += [""]
 
     if report.findings:
-        out += ["Findings agreement, keyed on (defect kind, locator)", ""]
+        out += ["Findings agreement, under each notion of \"the same finding\"", ""]
         out += _table(
-            ["resume", "keys", "between", *[f"within {p}" for p in report.providers]],
+            ["resume", "key", "keys", "between", "chance", "kappa",
+             *[f"within {p}" for p in report.providers]],
             [
                 [
-                    row.resume, str(row.keys),
+                    row.resume, row.key, str(row.keys),
                     "-" if row.between is None else f"{row.between:.2f}",
+                    "-" if row.chance is None else f"{row.chance:.2f}",
+                    "-" if row.kappa is None else f"{row.kappa:+.2f}",
                     *[
                         f"{row.within[p]:.2f}" if p in row.within else "-"
                         for p in report.providers
@@ -166,7 +169,15 @@ def render(report: AgreementReport) -> str:
                 for row in report.findings
             ],
         )
-        out += ["", "  Jaccard overlap; 1.00 means the same defects in the same places.", ""]
+        out += [
+            "",
+            "  Jaccard overlap; 1.00 means the same defects in the same places.",
+            "  kind+locator is the key of record and reads near zero while the model",
+            "  invents rule ids. Read kappa, not between: chance is what two judges",
+            "  score by flagging at random from the same short list, and a between",
+            "  below its chance line is not agreement.",
+            "",
+        ]
 
     if report.skipped:
         out += ["Skipped", ""]
