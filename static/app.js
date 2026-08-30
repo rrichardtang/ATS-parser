@@ -84,7 +84,12 @@
       })
       .then(function (html) {
         out.innerHTML = html;
-        out.scrollIntoView({ behavior: "smooth", block: "start" });
+        // Scroll to the rewrites themselves, not the top of #out -- that button
+        // sits near the bottom of a long report, and scrolling the container's
+        // top into view yanks the page back up past everything the click just
+        // produced, which reads as "nothing happened."
+        var target = out.querySelector(".rewrites") || out;
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
       })
       .catch(function (error) {
         out.innerHTML =

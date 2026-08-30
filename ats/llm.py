@@ -81,18 +81,38 @@ def call(provider: Provider, system: str, user: str, temperature: float = 0.0) -
         return _extract_json(raw)
 
 
+def _create(fn, kwargs: dict, label: str):
+    """Call fn(**kwargs); if the installed SDK's signature has dropped a param we
+    pass (observed: newer anthropic clients rejecting `temperature`), drop it and
+    retry once rather than degrading the whole pass. Logged so it's visible in the
+    terminal instead of silently changing sampling behavior."""
+    try:
+        return fn(**kwargs)
+    except TypeError as exc:
+        message = str(exc)
+        for key in list(kwargs):
+            if key in message and "unexpected keyword argument" in message:
+                log.warning(
+                    "%s: SDK rejected '%s' (%s) -- retrying without it",
+                    label, key, message,
+                )
+                kwargs = {k: v for k, v in kwargs.items() if k != key}
+                return _create(fn, kwargs, label)
+        raise
+
+
 def _dispatch(provider: Provider, system: str, user: str, temperature: float) -> str:
     if provider.name == "anthropic":
         import anthropic
 
         client = anthropic.Anthropic(api_key=provider.api_key)
-        response = client.messages.create(
+        response = _create(client.messages.create, dict(
             model=provider.model,
             max_tokens=MAX_TOKENS,
             temperature=temperature,
             system=system,
             messages=[{"role": "user", "content": user}],
-        )
+        ), provider.label)
         return "".join(
             block.text for block in response.content if getattr(block, "type", "") == "text"
         )
@@ -101,7 +121,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
         import openai
 
         client = openai.OpenAI(api_key=provider.api_key)
-        response = client.chat.completions.create(
+        response = _create(client.chat.completions.create, dict(
             model=provider.model,
             max_tokens=MAX_TOKENS,
             temperature=temperature,
@@ -110,7 +130,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
-        )
+        ), provider.label)
         return response.choices[0].message.content or ""
 
     raise LLMError(f"unknown provider {provider.name}")

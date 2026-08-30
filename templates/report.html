@@ -133,7 +133,7 @@
     {{ gate_section("Hiring manager read", "The second human, asking whether the work described actually happened.", manager) }}
 
     {% if report.rewrites %}
-    <section>
+    <section class="rewrites">
       <h2>Suggested rewrites <span class="count">{{ report.rewrites|length }}</span></h2>
       <p class="gate-note">
         Proposals, not changes. Nothing is applied. Where a metric was missing the
