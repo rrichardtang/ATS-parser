@@ -146,7 +146,9 @@ continuous per-category scale, which no longer exists. Per category it becomes *
 band agreement between judges**, with one adjacent-band disagreement per resume as the
 5–8 analogue — a pass that wants another look — and any non-adjacent disagreement, or
 more than one adjacent, a failure. The map's 5 / 8 point statement survives as the
-**composite-level** bar, which stays continuous.
+**composite-level** bar, which stays continuous. Per 08, a chance-corrected statistic is
+reported beside the exact-match rate, since agreement on a band nearly every resume
+lands in is not evidence of anything.
 
 ## What this hands downstream
 
@@ -157,22 +159,66 @@ more than one adjacent, a failure. The map's 5 / 8 point statement survives as t
   free: same prompt, one field difference, band-only vs. band-plus-a-point-inside-it.
 - **06** — unblocked. It measures band agreement per category, and finding agreement
   keyed on (defect kind, locator) rather than on wording. Both, not either: findings are
-  still the report's substance even though they no longer move the number.
+  still the report's substance even though they no longer move the number. 08 adds the
+  shape of the report: between-judge spread, within-judge spread across reruns, and a
+  chance-corrected statistic — three numbers, not one.
 - **07** — its question is unchanged, but gains a constraint: whichever layer owns
   coverage, only one of them may move the number.
 
+## What ticket 08 adds
+
+08 closed while this was being argued, and it answers the half of the question the
+arithmetic above could not. Its headline: **discrete levels are the precondition, and
+0–100 is the worst case** — 0–5 gives the strongest human-LLM alignment of the scales
+tested, judges latently quantize a fine scale into roughly 20 buckets whatever range
+they are given, and human psychometrics puts peak reliability at 7–10 categories and
+falling past that. Nobody recommends 100. Its own recommendation to this ticket was "a
+coarse level, with the 0–100 number derived", which is this decision in different
+vocabulary; `/CONTEXT.md`'s word for a coarse level is **band**, and that is the word
+this map should keep.
+
+Its caveat is carried here rather than dropped: every source was named from search
+results and none could be opened, and two quantitative claims are marked **[verify]**.
+That is survivable for this ticket, because the decision rests on the repo arithmetic
+above and 08 corroborates it rather than carrying it.
+
+Four things from 08 change what this ticket hands on:
+
+- **The resolution objection has a second answer.** Coarse scales buy agreement with
+  ties — one judge showed a 66.5% tie rate on similar candidates. Ties are fatal when
+  ranking candidates against each other and harmless when gating one against a standard,
+  and this tool gates. So the loss of resolution is not merely absorbed by the
+  deterministic channel; it is not a cost in this application at all.
+- **Forced evidence citation is not an agreement technique.** Its benefit diminishes
+  once explicit criteria are present. That is a point *for* this decision from an
+  unexpected direction: findings earn their place by making the band checkable, which is
+  what `/CONTEXT.md` already demands of them — not by moving a number. Had they stayed a
+  scoring channel, they would have been paying for agreement they do not buy.
+- **The band count is now bounded.** Start at five and do not exceed seven. 04 may go
+  further and decompose a category into binary criteria — 08 notes `Coverage` is
+  naturally binary per skill — which is the same decision taken to its limit, not a
+  departure from it.
+- **Exact agreement can still be luck.** 08 shows the ±5 bar is passable by coincidence
+  when every real resume lands between 60 and 80. The same argument applies to bands: if
+  nearly every resume lands in the middle band, two judges agree by coincidence and the
+  rubric has taught them nothing. So the restated band-agreement test above inherits the
+  chance-corrected statistic 08 asks 06 to report; exact-match rate alone cannot
+  distinguish a good rubric from a degenerate one.
+
 ## What would overturn this
 
-The mechanism relied on here — that a small set of behaviourally-anchored levels agrees
-where a free numeric scale does not — is stated from established rating-scale practice
-and is **not sourced in this ticket**. Ticket 08 is exactly that literature, and its
-stated question ("whether continuous 0–100 scales are ever made to converge, or whether
-discrete levels are the precondition") is this ticket's question. It was not made a
-blocker because the arithmetic above settles the *findings-only* branch without it, and
-04 could not start otherwise.
+Not 08 — it was the outstanding evidential risk when this was written, and it came back
+confirming. What is left is 05.
 
-So: if 08 finds that anchored continuous scales do converge in practice, the runner-up
-is one field away and 05's second experiment is already designed to catch it. If 05
-cannot get two judges into the same band with the bands in front of them, the problem is
-the band definitions, not this decision — findings-only remains ruled out by arithmetic
-either way.
+If 05 cannot get two judges into the same band with the bands in front of them, the
+problem is the band definitions, not this decision: findings-only stays ruled out by
+arithmetic either way, and 08 rules out retreating to an unanchored 0–100. The genuine
+open question is the runner-up, one field away — whether the model may pick a point
+*inside* its band — and 05's second experiment already tests exactly that.
+
+## Changed
+
+- `docs/wayfinder/rubric-grounding/tickets/03-should-the-model-author-scores.md` — this
+  ticket, answered and closed.
+- `docs/wayfinder/rubric-grounding/MAP.md` — the decision recorded, the acceptance test
+  restated in band terms, and the report's "banded" collision logged as unspecified.

@@ -26,7 +26,9 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   disagreement — or more than one adjacent — is a failure. The **5 points / above 8 fails**
   bar survives as the composite-level statement. Measured on all seven fixtures in
   `tests/fixtures/` plus the user's real resume, sampling twice per resume per provider so
-  sampling noise is separable from genuine provider disagreement.
+  sampling noise is separable from genuine provider disagreement. Per 08, a
+  chance-corrected statistic is reported beside the raw agreement: judges agreeing on a
+  band nearly every resume lands in is a coincidence, not a rubric.
 - **Evidence rule**: every category must be scoreable from observable evidence in the
   resume. A category no judge can point at evidence for is what produces a 22-point spread.
 - Corpus is personal data (`corpus/jds/user/`), six verbatim postings.
@@ -42,6 +44,11 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   `AI/ML relevance & depth`, `Credibility & verifiability`, `Recruiter scan`,
   `Writing quality`) are not a starting point. The new set is derived from what the
   postings actually ask for.
+- **Discrete levels are the precondition** (08): 0–100 is the worst-performing scale
+  tested, judges quantize a fine scale into ~20 buckets whatever range they are given,
+  and reliability peaks at 7–10 categories. Sources are named but were unopened — see
+  `anchored-rubrics.md` — so the numbers are leads, not settled. This is the evidential
+  basis 03 rests on.
 - **The model authors no number** (03): it names one **band** per category and cites the
   evidence placing it there; the band's value is a rubric lookup. Findings-only was
   rejected on arithmetic — a finding count is unbounded and unanchored, so two judges
@@ -60,7 +67,6 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 - **A new word for the report's "banded"**. 03 leaves **band** meaning only what
   `/CONTEXT.md` defines it as, so the display of two judges disagreeing needs its own
   term — *contested* is the placeholder.
-
 - **When the rubric gets revised.** Deferred: the trigger is "future inputs consistently
   clash with the rubric", which isn't yet a testable condition.
 - **Nice-to-have bonus mechanics.** Nice-to-haves should add "a slight bonus" to coverage;
