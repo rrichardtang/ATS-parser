@@ -16,13 +16,17 @@ SEVERITY_ORDER = {Severity.MINOR: 0, Severity.MAJOR: 1, Severity.CRITICAL: 2}
 
 # Which existing rule a JD-derived dimension amplifies. Never a new rubric axis --
 # only ever scales how much an already-judged rule costs, for this user's runs.
-# See ats/jd_dimensions.py for what each dimension detects and why "leadership"
-# and cross-functional collaboration aren't wired in here yet.
+# See ats/jd_dimensions.py for what each dimension detects and why cross-functional
+# collaboration isn't wired in here.
+#
+# Ticket 04 removed four entries -- content/ownership, cred/no-production,
+# cred/notebook-only, cred/no-evaluation -- because their categories' weights are now
+# derived from the same document frequency this multiplier reads. Spending one count
+# twice, once on the weight and once on the rule's cost, is the double count 03 closed
+# arriving one layer down. title/seniority-mismatch survives because its category
+# (Title & seniority alignment) keeps an authored weight, so nothing else spends the
+# seniority count.
 RULE_DIMENSION = {
-    "content/ownership": "ownership",
-    "cred/no-production": "production",
-    "cred/notebook-only": "production",
-    "cred/no-evaluation": "evaluation",
     "title/seniority-mismatch": "seniority",
 }
 # A dimension mentioned in every posting scales its rule's cost up to 1.5x; one

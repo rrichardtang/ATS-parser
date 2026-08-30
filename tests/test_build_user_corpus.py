@@ -77,7 +77,13 @@ def test_required_term_frequency_and_dimension_counts(tmp_path):
     # Both postings ask for evaluation rigor -- 5/5-style dimension, not a keyword.
     assert digest["dimensions"]["ownership"]["count"] == 2
     assert digest["dimensions"]["evaluation"]["count"] == 2
-    assert digest["dimensions"]["leadership"]["count"] == 0
+    assert digest["dimensions"]["ai_assisted_coding"]["count"] == 0
+
+    # And the behaviour counts 04 derives category weight from, which are per
+    # category rather than per dimension.
+    behaviours = digest["category_document_frequency"]
+    assert behaviours["Evaluation rigour"] == {"count": 2, "total": 2}
+    assert behaviours["AI-assisted coding fluency"] == {"count": 0, "total": 2}
 
     required_terms = {e["term"] for e in digest["required"]}
     assert "core_ml/pytorch" in required_terms

@@ -26,6 +26,9 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   finding, and what `prompts.py` has to emit for it (10).
 - [rule-mapping.md](rule-mapping.md) — where every deterministic rule files under the
   new categories, which ones stop deducting, and the collisions found (07).
+- [dimension-scan.md](dimension-scan.md) — the behaviour scan that computes 04's
+  category weights, the phrase behind every count, and how it is kept from
+  overfitting to six postings (09).
 - [baseline-agreement.md](baseline-agreement.md) — the first real two-provider run,
   against the rubric still in the code. The *before* picture every change is judged
   from, with [baseline/run-summary.json](baseline/run-summary.json) so its arithmetic
@@ -65,7 +68,8 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   [Build the inter-judge agreement harness](tickets/06-build-the-agreement-harness.md),
   because 05 cannot be verified by argument, and
   [Teach the dimension scan the behaviours the categories name](tickets/09-derive-category-weights-from-the-corpus.md),
-  because 04 made category weight a corpus derivation the digest cannot yet compute.
+  because 04 made category weight a corpus derivation the digest could not compute.
+  Both are now closed.
   Everything else about implementation stays out of scope.
 
 ## Decisions so far
@@ -203,6 +207,29 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   constant 100 and never score below 40 — 04's latent mechanism, reached. It drops to
   **0**, making three of five judged categories model-owned where 04 had one. A
   dimension for it (09) is now worth building for the channel, not only for the weight.
+- **The weights are computed, not transcribed** ([Teach the dimension scan the
+  behaviours the categories name](tickets/09-derive-category-weights-from-the-corpus.md),
+  record in [dimension-scan.md](dimension-scan.md)): `jd_dimensions.py` reproduces 02's
+  four hand-read counts exactly — 6/6, 6/6, 5/6, 3/6 — from eight behaviour dimensions,
+  four of them new, and every hit fires on the sentence `inventory.md` quotes for that
+  posting. Categories are unions of dimensions, so the count weight derives from is
+  computed per category at build time (`category_document_frequency` in the digest) and
+  cannot be summed from the per-dimension totals. `derived_weights` takes the point
+  budget as a parameter, because 04 left that number authored. A seventh posting moves
+  the weights with no file edited, which is demonstrated rather than asserted.
+- **Patterns are families, not sentences** (same ticket): the guard against fitting six
+  postings is that each pattern is a verb set crossed with an object set, with the ship
+  and destination families shared across dimensions, and that the tests attack from both
+  ends — verbatim corpus text on one side, phrasings that appear nowhere in the corpus
+  on the other, plus a posting that must hit nothing. The residual risk is a false
+  negative on a behaviour phrased in words no family anticipated, which is the same
+  defect family as 01 and 02 and will not be the last of it.
+- **`dimension_multiplier()` survives with an effect no user can see** (same ticket):
+  the four double-counting entries are gone and a test now asserts they return exactly
+  1.0. The survivor, `title/seniority-mismatch`, sits in a category weighted 5 of 100,
+  so the mechanism's largest possible composite movement is **0.05 points** — under the
+  report's own rounding. Kept because 04 kept the entry deliberately; recorded as the
+  case for retiring the mechanism.
 
 ## Not yet specified
 
@@ -253,8 +280,10 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   one, which is why 04 left it — carried by
   [12](tickets/12-criteria-for-resume-craft.md), the ticket with the context to close it.
 - **The weight arithmetic.** 04 fixed the principle (df sets the derived block, the
-  rest is authored) but not the numbers: how the 100 points split between the derived
-  and authored blocks, and whether df maps to weight proportionally or through tiers.
+  rest is authored) and 09 supplies the input and a proportional derivation, but the
+  budget is still authored: how many of the 100 points the derived block gets, and
+  whether proportional or tiered is the right map from df to weight. 09 takes the budget
+  as a parameter rather than choosing for it.
 - **How the spec migrates into code** without a flag day: the composite, the ledger and
   the report all read today's five categories. 07 adds three mechanical
   asks: a `deducts` flag (or an equivalent ledger exclusion), advice-only findings

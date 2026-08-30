@@ -73,24 +73,54 @@
     }
   ],
   "dimensions": {
-    "ownership": {
-      "count": 1,
-      "total": 6
-    },
     "production": {
       "count": 6,
       "total": 6
     },
+    "ownership": {
+      "count": 6,
+      "total": 6
+    },
+    "reliability": {
+      "count": 6,
+      "total": 6
+    },
+    "agentic": {
+      "count": 6,
+      "total": 6
+    },
     "evaluation": {
+      "count": 5,
+      "total": 6
+    },
+    "ai_assisted_coding": {
       "count": 3,
       "total": 6
     },
     "seniority": {
-      "count": 0,
+      "count": 2,
       "total": 6
     },
-    "leadership": {
-      "count": 0,
+    "experience_gate": {
+      "count": 3,
+      "total": 6
+    }
+  },
+  "category_document_frequency": {
+    "Production ownership": {
+      "count": 6,
+      "total": 6
+    },
+    "Agentic systems": {
+      "count": 6,
+      "total": 6
+    },
+    "Evaluation rigour": {
+      "count": 5,
+      "total": 6
+    },
+    "AI-assisted coding fluency": {
+      "count": 3,
       "total": 6
     }
   },

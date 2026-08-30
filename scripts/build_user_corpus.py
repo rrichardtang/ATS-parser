@@ -53,6 +53,7 @@ def build(corpus_dir: Path = CORPUS) -> dict | None:
     nice_df: dict[str, int] = defaultdict(int)
     mentions: dict[str, int] = defaultdict(int)
     dimension_df: dict[str, int] = defaultdict(int)
+    per_posting_dimensions: list[set[str]] = []
     target_titles: list[str] = []
     sources = []
 
@@ -76,7 +77,9 @@ def build(corpus_dir: Path = CORPUS) -> dict | None:
         # so they live as naturally in "About the Role" as in "Requirements" --
         # unlike skill terms below, responsibilities text is included here, not
         # excluded. Only the noise/benefits bucket is left out.
-        for dim in jd_dimensions.scan(f"{required_text}\n{nice_text}\n{responsibilities_text}"):
+        hits = jd_dimensions.scan(f"{required_text}\n{nice_text}\n{responsibilities_text}")
+        per_posting_dimensions.append(hits)
+        for dim in hits:
             dimension_df[dim] += 1
 
         for group, terms in GROUPS.items():
@@ -132,6 +135,16 @@ def build(corpus_dir: Path = CORPUS) -> dict | None:
             name: {"count": dimension_df.get(name, 0), "total": total}
             for name in jd_dimensions.DIMENSIONS
         },
+        # What ticket 04 derives category weight from: how many postings state the
+        # behaviour a category measures. A category is a union of dimensions, so this
+        # cannot be summed from the per-dimension counts above -- one posting stating
+        # two of a category's behaviours still counts once.
+        "category_document_frequency": {
+            category: {"count": count, "total": total}
+            for category, count in jd_dimensions.category_document_frequency(
+                per_posting_dimensions
+            ).items()
+        },
         "sources": sources,
     }
 
@@ -163,4 +176,8 @@ if __name__ == "__main__":
 
     print("\ndimensions:")
     for name, d in result["digest"]["dimensions"].items():
+        print(f"  {d['count']}/{d['total']}  {name}")
+
+    print("\nbehaviour document frequency (what category weight derives from):")
+    for name, d in result["digest"]["category_document_frequency"].items():
         print(f"  {d['count']}/{d['total']}  {name}")
