@@ -1,7 +1,12 @@
 {
   "generated_from": "/home/user/ATS-parser/corpus/jds/user",
-  "document_count": 5,
+  "document_count": 6,
   "sources": [
+    {
+      "title": "AI Engineer III \u2013 Agentic AI",
+      "company": "American Express",
+      "date_added": "2026-08-30"
+    },
     {
       "title": "Applied AI Engineer",
       "company": "Anthropic",
@@ -71,7 +76,7 @@
       "required_doc_frequency": 1,
       "nice_doc_frequency": 0,
       "total_mentions": 1,
-      "weight": 0.2,
+      "weight": 0.167,
       "provenance": "jd-derived"
     },
     "core_ml/lora": {
@@ -185,12 +190,12 @@
         "retrieval-augmented",
         "retrieval augmented"
       ],
-      "doc_frequency": 0,
+      "doc_frequency": 1,
       "required_doc_frequency": 0,
-      "nice_doc_frequency": 0,
-      "total_mentions": 0,
-      "weight": 0.0,
-      "provenance": "heuristic"
+      "nice_doc_frequency": 1,
+      "total_mentions": 1,
+      "weight": 0.067,
+      "provenance": "jd-derived"
     },
     "llm_systems/vector-db": {
       "group": "llm_systems",
@@ -265,11 +270,11 @@
         "prompting",
         "prompt"
       ],
-      "doc_frequency": 1,
+      "doc_frequency": 2,
       "required_doc_frequency": 1,
-      "nice_doc_frequency": 0,
-      "total_mentions": 1,
-      "weight": 0.2,
+      "nice_doc_frequency": 1,
+      "total_mentions": 3,
+      "weight": 0.233,
       "provenance": "jd-derived"
     },
     "llm_systems/function-calling": {
@@ -296,11 +301,11 @@
         "agents",
         "planning loop"
       ],
-      "doc_frequency": 2,
+      "doc_frequency": 3,
       "required_doc_frequency": 1,
-      "nice_doc_frequency": 1,
-      "total_mentions": 2,
-      "weight": 0.28,
+      "nice_doc_frequency": 2,
+      "total_mentions": 3,
+      "weight": 0.3,
       "provenance": "jd-derived"
     },
     "llm_systems/llm-apis": {
@@ -505,7 +510,7 @@
       "required_doc_frequency": 1,
       "nice_doc_frequency": 0,
       "total_mentions": 1,
-      "weight": 0.2,
+      "weight": 0.167,
       "provenance": "jd-derived"
     },
     "evaluation/golden-dataset": {
@@ -834,12 +839,12 @@
       "aliases": [
         "python"
       ],
-      "doc_frequency": 0,
-      "required_doc_frequency": 0,
+      "doc_frequency": 1,
+      "required_doc_frequency": 1,
       "nice_doc_frequency": 0,
-      "total_mentions": 0,
-      "weight": 0.0,
-      "provenance": "heuristic"
+      "total_mentions": 1,
+      "weight": 0.167,
+      "provenance": "jd-derived"
     },
     "foundation/cloud": {
       "group": "foundation",
@@ -850,12 +855,12 @@
         "azure",
         "cloud"
       ],
-      "doc_frequency": 0,
-      "required_doc_frequency": 0,
+      "doc_frequency": 1,
+      "required_doc_frequency": 1,
       "nice_doc_frequency": 0,
-      "total_mentions": 0,
-      "weight": 0.0,
-      "provenance": "heuristic"
+      "total_mentions": 1,
+      "weight": 0.167,
+      "provenance": "jd-derived"
     },
     "foundation/terraform": {
       "group": "foundation",
@@ -894,12 +899,12 @@
         "javascript",
         "react"
       ],
-      "doc_frequency": 0,
-      "required_doc_frequency": 0,
+      "doc_frequency": 1,
+      "required_doc_frequency": 1,
       "nice_doc_frequency": 0,
-      "total_mentions": 0,
-      "weight": 0.0,
-      "provenance": "heuristic"
+      "total_mentions": 1,
+      "weight": 0.167,
+      "provenance": "jd-derived"
     },
     "foundation/testing": {
       "group": "foundation",

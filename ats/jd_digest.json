@@ -1,6 +1,7 @@
 {
-  "document_count": 5,
+  "document_count": 6,
   "target_titles": [
+    "AI Engineer III \u2013 Agentic AI",
     "Applied AI Engineer",
     "Forward Deployed AI Engineer",
     "Machine Learning Engineer",
@@ -8,6 +9,18 @@
     "Applied AI Engineer, Fullstack"
   ],
   "required": [
+    {
+      "term": "foundation/python",
+      "doc_frequency": 1
+    },
+    {
+      "term": "foundation/cloud",
+      "doc_frequency": 1
+    },
+    {
+      "term": "foundation/typescript",
+      "doc_frequency": 1
+    },
     {
       "term": "llm_systems/prompt-engineering",
       "doc_frequency": 1
@@ -28,32 +41,45 @@
   "nice_to_have": [
     {
       "term": "llm_systems/agents",
+      "doc_frequency": 2
+    },
+    {
+      "term": "llm_systems/rag",
+      "doc_frequency": 1
+    },
+    {
+      "term": "llm_systems/prompt-engineering",
       "doc_frequency": 1
     }
   ],
   "dimensions": {
     "ownership": {
       "count": 1,
-      "total": 5
+      "total": 6
     },
     "production": {
-      "count": 5,
-      "total": 5
+      "count": 6,
+      "total": 6
     },
     "evaluation": {
       "count": 3,
-      "total": 5
+      "total": 6
     },
     "seniority": {
       "count": 0,
-      "total": 5
+      "total": 6
     },
     "leadership": {
       "count": 0,
-      "total": 5
+      "total": 6
     }
   },
   "sources": [
+    {
+      "title": "AI Engineer III \u2013 Agentic AI",
+      "company": "American Express",
+      "date_added": "2026-08-30"
+    },
     {
       "title": "Applied AI Engineer",
       "company": "Anthropic",
