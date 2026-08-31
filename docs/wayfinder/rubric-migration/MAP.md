@@ -50,7 +50,7 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 | five judged categories, three carried over | `ats/criteria/*.json` (01) + `04`'s table | `models.Category`, eight members, the old five |
 | criteria → band → value | `ats/rubric.py:band_of` (01) | nothing; the model emits a number |
 | `rule_share` per category | `07`'s table in `rule-mapping.md` | `score.py:122` — a hardcoded set literal, 0.7 or 0.4 |
-| weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`, uncalled | `weights.toml`, eight authored numbers |
+| weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`, uncalled; budget 50 chosen (02) | `weights.toml`, eight authored numbers |
 | findings keyed on criterion ids | `findings-identity.md` | `passes.py:104` mints an id from model text |
 | advice-only findings that deduct nothing | `rule-mapping.md` §2 | no such concept; every finding deducts |
 
@@ -81,6 +81,19 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   `scripts/criteria_probe.py`**: it answers criteria from regexes in order to measure
   agreement, and in the package it would be a second, unwired rule channel beside
   `ats/rules.py`. The probe prints the same five verdicts it printed before the move.
+- **The derived block gets 50 points, split in proportion to document frequency** (02):
+  15 / 15 / 12.5 / 7.5, with `Resume craft` 25 and `Parseability` 15, `Structure` 5,
+  `Title` 5 unchanged — 04's illustration, adopted. 50 because it holds the authored
+  block at today's numbers, so the migration moves one variable; proportional because a
+  floor would put an authored constant inside the block whose stated property is
+  *derived, never authored*. The measurement is
+  [weight-budget.md](weight-budget.md); 03 is where the number lands in code.
+- **The seven fixtures cannot validate the behaviour block** (02): `Agentic systems`
+  and `AI-assisted coding fluency` are band E on every one of them — 60 recorded
+  criterion answers, all `no` — so 22.5 of the composite's points are a constant on
+  this test set. It is why every fixture drops ~18 points under the new rubric, and it
+  is a fact about the fixtures, not the rubric. 08 is the fix; 09 must not measure
+  tolerance here.
 
 ## Inherited, and not to be re-opened here
 
@@ -93,6 +106,17 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 
 ## Not yet specified
 
+- **`Agentic systems` can fail the composite tolerance on its own** (raised by 02). At
+  `rule_share` 0 (07 §5 — no deducting rule, so no channel to average a disagreement
+  down) and weight 15, one C1 split costs 12.8 composite points against a bar of 8. No
+  budget fixes it: getting under 8 by weight needs a budget near 31. Either the category
+  gets a deducting rule — `jd_dimensions.py` now has an `agentic` dimension it did not
+  have when 07 wrote §5, though a dimension is not a rule — or 09 measures the exposure
+  and rules on whether it is real. See [weight-budget.md](weight-budget.md) §3.
+- **`two_column` outranks `buried_evidence`** (observed by 02, inherited not caused): a
+  resume no parser can read scores above one that parses cleanly and buries its
+  evidence, under both rubrics. `parse/multi-column` costs 12 points for a
+  document-wide defect. Nobody has decided what it should cost.
 - **How much of the old report survives.** `report.py` groups by gate and prints a
   ledger of what each finding cost. Advice-only findings cost nothing and still need
   printing, and the old map's `07` says they need a gate and no category. Whether that
