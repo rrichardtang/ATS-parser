@@ -33,25 +33,56 @@ class Gate(str, Enum):
 
 
 class Category(str, Enum):
+    """The rubric's axes. Declaration order is report order.
+
+    Five of these were designed by the rubric-grounding map's 04 out of what the JD
+    corpus actually asks for, and each has a spec in `ats/criteria/` naming the
+    criteria a judge answers and the band those answers buy. The other three are the
+    mechanical ones, which that map left alone.
+
+    The five retired here -- `Impact & quantification`, `AI/ML relevance & depth`,
+    `Credibility & verifiability`, `Recruiter scan`, `Writing quality` -- were not
+    evolved into these. 04 replaced them: their evidence is redistributed by
+    `rule-mapping.md` §1, and none of them is a renaming of anything below.
+    """
+
     PARSEABILITY = "Parseability"
-    RECRUITER_SCAN = "Recruiter scan"
-    IMPACT = "Impact & quantification"
-    RELEVANCE = "AI/ML relevance & depth"
-    CREDIBILITY = "Credibility & verifiability"
-    WRITING = "Writing quality"
     STRUCTURE = "Structure & formatting"
     TITLE = "Title & seniority alignment"
+    PRODUCTION_OWNERSHIP = "Production ownership"
+    AGENTIC_SYSTEMS = "Agentic systems"
+    EVALUATION_RIGOUR = "Evaluation rigour"
+    AI_ASSISTED_CODING = "AI-assisted coding fluency"
+    RESUME_CRAFT = "Resume craft"
 
+
+# The four whose weight is document frequency over the JD corpus rather than a number
+# somebody chose (04, and the migration map's 02 for the budget they share). Everything
+# else in `Category` carries an authored weight, because no posting states it.
+DERIVED_CATEGORIES: tuple[Category, ...] = (
+    Category.PRODUCTION_OWNERSHIP,
+    Category.AGENTIC_SYSTEMS,
+    Category.EVALUATION_RIGOUR,
+    Category.AI_ASSISTED_CODING,
+)
+
+# The five a judge answers criteria for. `Category.PARSEABILITY`, `STRUCTURE` and
+# `TITLE` are decided by rules alone and are never put to a model.
+JUDGED_CATEGORIES: tuple[Category, ...] = DERIVED_CATEGORIES + (Category.RESUME_CRAFT,)
 
 CATEGORY_GATE: dict[Category, Gate] = {
     Category.PARSEABILITY: Gate.PARSER,
     Category.STRUCTURE: Gate.PARSER,
-    Category.RECRUITER_SCAN: Gate.RECRUITER,
     Category.TITLE: Gate.RECRUITER,
-    Category.IMPACT: Gate.MANAGER,
-    Category.RELEVANCE: Gate.MANAGER,
-    Category.CREDIBILITY: Gate.MANAGER,
-    Category.WRITING: Gate.MANAGER,
+    # 12 chose RECRUITER for craft and recorded the choice as provisional: once
+    # findings carry their own gate (migration 04) this entry is read by nothing, and
+    # a `scan/*` finding can print under the recruiter while a `slop/*` one prints
+    # under the manager. Until then it decides where craft's whole ledger appears.
+    Category.RESUME_CRAFT: Gate.RECRUITER,
+    Category.PRODUCTION_OWNERSHIP: Gate.MANAGER,
+    Category.AGENTIC_SYSTEMS: Gate.MANAGER,
+    Category.EVALUATION_RIGOUR: Gate.MANAGER,
+    Category.AI_ASSISTED_CODING: Gate.MANAGER,
 }
 
 
@@ -97,12 +128,23 @@ class Rewrite(BaseModel):
 
 
 class CategoryScore(BaseModel):
+    """One category's score, and whether anything actually assessed it.
+
+    `assessed` is false when no channel could speak to the category at all: no judge
+    answered it and no rule can deduct from it. `score.build` starts every category's
+    deductions at 0.0, so an unassessed category would otherwise sit at a permanent
+    100 and carry its full weight into the composite -- manufacturing a result from a
+    check that never ran, which is the same thing the unreadable-document path already
+    refuses to do. An unassessed category is printed and excluded from the arithmetic.
+    """
+
     category: Category
     score: float
     weight: float
     low: float | None = None
     high: float | None = None
     note: str = ""
+    assessed: bool = True
 
     @property
     def is_banded(self) -> bool:

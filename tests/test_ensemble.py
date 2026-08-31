@@ -152,9 +152,9 @@ def test_unquotable_findings_are_discarded():
 
 
 def test_score_band_appears_only_on_real_disagreement():
-    agree, meta = combine_scores({"a": {"Writing quality": 70}, "b": {"Writing quality": 74}})
+    agree, meta = combine_scores({"a": {"Resume craft": 70}, "b": {"Resume craft": 74}})
     assert meta["disagreements"] == []
-    _, meta2 = combine_scores({"a": {"Writing quality": 40}, "b": {"Writing quality": 85}})
+    _, meta2 = combine_scores({"a": {"Resume craft": 40}, "b": {"Resume craft": 85}})
     assert meta2["disagreements"]
 
 

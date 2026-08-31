@@ -7,7 +7,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from .models import Category, Provenance, Severity
+from .models import DERIVED_CATEGORIES, Category, Provenance, Severity
 
 CONFIG_PATH = Path(__file__).with_name("weights.toml")
 JD_DIGEST_PATH = Path(__file__).with_name("jd_digest.json")
@@ -69,9 +69,48 @@ def load(path: str | None = None) -> dict[str, Any]:
         return tomllib.load(fh)
 
 
+def derived_document_frequency() -> tuple[dict[str, int], int]:
+    """How many target postings state each derived category's behaviour, and how many
+    postings there were.
+
+    The live digest when one has been built, and `weights.toml`'s recorded fallback
+    when it has not -- the same six-posting scan the repo ships `jd_digest.json` for.
+    A fresh checkout with no personal corpus therefore scores by the corpus it shipped
+    with, rather than by a derived block silently collapsing to zero.
+    """
+    entries = jd_digest().get("category_document_frequency") or {}
+    names = [c.value for c in DERIVED_CATEGORIES]
+    if all(name in entries and entries[name].get("total") for name in names):
+        return ({name: int(entries[name]["count"]) for name in names},
+                int(max(entries[name]["total"] for name in names)))
+    recorded = load()["derived"]["fallback_document_frequency"]
+    return ({name: int(recorded[name]) for name in names}, int(recorded["postings"]))
+
+
 def category_weights() -> dict[Category, float]:
-    raw = load()["categories"]
-    return {Category(name): float(value) for name, value in raw.items()}
+    """Every category's weight, authored block and derived block together.
+
+    The authored four are read from `weights.toml`. The derived four are computed --
+    `weights.toml` deliberately holds no number for them, only the budget they share
+    (50, set by the migration map's 02) -- so a category's weight follows the corpus
+    and cannot be edited out of step with it.
+
+    Ordered by `Category`, not by either source, because this dict's order is the
+    order the report prints its categories in.
+    """
+    from .jd_dimensions import derived_weights
+
+    authored = {Category(name): float(value)
+                for name, value in load()["categories"].items()}
+    counts, postings = derived_document_frequency()
+    budget = float(load()["derived"]["budget"])
+    derived = {Category(name): value
+               for name, value in derived_weights(counts, postings, budget).items()}
+    combined = authored | derived
+    missing = [c for c in Category if c not in combined]
+    if missing:
+        raise SystemExit(f"weights.toml gives no weight for {[c.value for c in missing]}")
+    return {category: combined[category] for category in Category}
 
 
 def severity_points() -> dict[Severity, float]:

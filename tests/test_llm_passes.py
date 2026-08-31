@@ -15,16 +15,16 @@ from ats.pipeline import RunInput, analyze
 
 CONTENT_REPLY = json.dumps({
     "categories": {
-        "Impact & quantification": {"score": 45, "why": "no outcomes stated"},
-        "AI/ML relevance & depth": {"score": 50, "why": "generic"},
-        "Writing quality": {"score": 40, "why": "formulaic"},
+        "Production ownership": {"score": 45, "why": "no outcomes stated"},
+        "Evaluation rigour": {"score": 50, "why": "generic"},
+        "Resume craft": {"score": 40, "why": "formulaic"},
     },
     "findings": [{
         "message": "No bullet names a model or dataset",
         "fix": "Name the model and the eval set.",
         "evidence": "Leveraged cutting-edge AI technologies",
         "locator": "exp[0].bullet[0]",
-        "category": "Credibility & verifiability",
+        "category": "Production ownership",
     }],
 })
 
@@ -237,13 +237,13 @@ def test_unrewritable_locators_do_not_consume_the_target_budget(monkeypatch):
     resume = Resume(roles=[Role(heading="Eng", bullets=["Owned GLIDE-ME end to end"])])
     junk = [
         Finding(
-            rule_id="llm/content", category=Category.RELEVANCE, severity=Severity.MAJOR,
+            rule_id="llm/content", category=Category.RESUME_CRAFT, severity=Severity.MAJOR,
             message="m", fix="f", evidence="e", locator=locator, points=50.0,
         )
         for locator in ["exp[0].heading", *(f"exp[9].bullet[{i}]" for i in range(8))]
     ]
     real = Finding(
-        rule_id="llm/content", category=Category.RELEVANCE, severity=Severity.MAJOR,
+        rule_id="llm/content", category=Category.RESUME_CRAFT, severity=Severity.MAJOR,
         message="No outcome", fix="Name the metric.", evidence="Owned GLIDE-ME",
         locator="exp[0].bullet[0]", points=1.0,
     )
@@ -267,13 +267,13 @@ def test_content_findings_are_keyed_by_the_defect_the_model_named(monkeypatch):
     reply = json.dumps({"categories": {}, "findings": [
         {"pattern": "unverified outcome", "message": "No metric for routing",
          "fix": "Add one.", "evidence": "cutting inference passes",
-         "locator": "exp[0].bullet[1]", "category": "Credibility & verifiability"},
+         "locator": "exp[0].bullet[1]", "category": "Production ownership"},
         {"pattern": "unverified outcome", "message": "No metric for the mapping tool",
          "fix": "Add one.", "evidence": "Built a concurrent mapping tool",
-         "locator": "exp[0].bullet[4]", "category": "Credibility & verifiability"},
+         "locator": "exp[0].bullet[4]", "category": "Production ownership"},
         {"pattern": "activity not outcome", "message": "Lists duties, not results",
          "fix": "State the result.", "evidence": "Owned GLIDE-ME end to end",
-         "locator": "exp[0].bullet[0]", "category": "Impact & quantification"},
+         "locator": "exp[0].bullet[0]", "category": "Production ownership"},
     ]})
     monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: reply))
 
@@ -291,7 +291,7 @@ def test_content_findings_without_a_pattern_still_get_an_id(monkeypatch):
     """The model may omit the label; the pass must not produce an empty rule id."""
     reply = json.dumps({"categories": {}, "findings": [
         {"message": "No metric", "fix": "Add one.", "evidence": "cutting passes",
-         "locator": "exp[0].bullet[1]", "category": "Credibility & verifiability"},
+         "locator": "exp[0].bullet[1]", "category": "Production ownership"},
     ]})
     monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: reply))
 

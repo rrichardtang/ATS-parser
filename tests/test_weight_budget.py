@@ -1,136 +1,72 @@
-"""The weight-budget measurement: the properties its numbers rest on.
+"""The tolerance measurement, and that it reads the program rather than a copy of it.
 
-02 chose a budget from this script's tables, so what has to hold is that the tables
-are the thing they claim to be -- the rules that run today, refiled by 07 and 12, and
-the composite computed by the same arithmetic `score.py` uses. The composites
-themselves are not pinned: they move whenever a rule or a criterion is revised, and
-the decision they justified is recorded in `weight-budget.md`, not here.
+Before ticket 03, `scripts/weight_budget.py` carried its own mapping of rules to
+categories, its own weight sets and its own composite arithmetic, because none of them
+existed in `ats/` yet. They do now, so what has to hold is that the script reads them:
+a second copy would drift, and the number it prints would stop being about the rubric
+that runs.
 """
 import pytest
 
-from ats.models import Category, Finding, Severity
-from scripts.weight_budget import (
-    CANDIDATES,
-    CRAFT,
-    DERIVED,
-    FIXED_AUTHORED,
-    SLUG_OF,
-    _deducts,
-    _new_category,
-    floored,
-    proportional,
-    weights_for,
-)
-
-ALL_RULES = [
-    "parse/hidden-text", "parse/no-text-layer", "parse/multi-column", "parse/tables",
-    "parse/edge-band", "parse/exotic-bullets", "parse/page-count", "parse/font-sprawl",
-    "struct/missing-dates", "struct/thin-role", "struct/bloated-role",
-    "struct/not-reverse-chron", "struct/employment-gap",
-    "contact/no-email", "contact/no-phone", "contact/no-linkedin", "contact/no-github",
-    "title/off-domain", "title/seniority-mismatch",
-    "content/passive-voice", "content/first-person", "content/long-bullet",
-    "content/duplicate-bullet", "content/weak-opener", "content/ownership",
-    "content/bullet-invariants", "content/quantification",
-    "cred/no-production", "cred/notebook-only", "cred/no-evaluation",
-    "cred/no-named-models", "cred/unlinked-projects",
-    "scan/no-identity-above-fold", "scan/no-evidence-above-fold", "scan/no-summary",
-    "scan/experience-outranked", "scan/unexplained-pivot",
-    "kw/over-repetition", "kw/skills-dump", "kw/soft-skill-padding",
-    "kw/unsupported-skills", "kw/thin-core-ml",
-    "jd/missing-core", "jd/missing-secondary", "jd/missing-named-tools",
-    "slop/portable", "slop/robotic-rhythm", "slop/synonym-cycling", "slop/banned-word",
-]
-
-# The old category each rule carries today, for the ones the mapping resolves by
-# carry-over rather than by name.
-OLD = {
-    "parse/": Category.PARSEABILITY,
-    "struct/": Category.STRUCTURE,
-    "contact/": Category.STRUCTURE,
-    "title/": Category.TITLE,
-    "slop/": Category.WRITING,
-    "scan/": Category.RECRUITER_SCAN,
-    "content/": Category.WRITING,
-    "cred/": Category.CREDIBILITY,
-    "kw/": Category.RELEVANCE,
-    "jd/": Category.RELEVANCE,
-}
+from ats import config
+from ats.models import DERIVED_CATEGORIES, JUDGED_CATEGORIES, Category
+from ats.score import rule_shares
+from scripts import weight_budget
 
 
-def _finding(rule_id: str) -> Finding:
-    old = next(cat for prefix, cat in OLD.items() if rule_id.startswith(prefix))
-    return Finding(rule_id=rule_id, category=old, severity=Severity.MINOR,
-                   message="m", fix="f", evidence="e", locator="document")
+def test_the_script_reads_the_programs_weights_not_its_own():
+    weights = config.category_weights()
+    assert sum(weights.values()) == pytest.approx(100.0, abs=0.01)
+    assert not hasattr(weight_budget, "CANDIDATES"), (
+        "the candidate weight sets were 02's, before the program had any")
+    assert not hasattr(weight_budget, "REFILED"), (
+        "the rule mapping belongs to ats/rules.py and friends, not to a script")
 
 
-NEW_CATEGORIES = set(FIXED_AUTHORED) | {CRAFT} | set(DERIVED)
+def test_the_bar_is_the_inherited_acceptance_test():
+    assert (weight_budget.TOLERANCE, weight_budget.FAIL) == (5.0, 8.0)
 
 
-@pytest.mark.parametrize("rule_id", ALL_RULES)
-def test_every_rule_lands_somewhere_nameable(rule_id):
-    """No rule falls through the mapping. `_new_category` raises rather than guessing,
-    so the whole test is that it does not raise and returns a name that exists."""
-    where = _new_category(_finding(rule_id))
-    assert where in NEW_CATEGORIES | {"(advice-only)", "(retired)"}, where
+def test_both_tables_run_and_name_every_category(capsys):
+    weight_budget.weight_table()
+    printed = capsys.readouterr().out
+    for category in Category:
+        assert category.value in printed
+    # Where each weight comes from is the point of the table.
+    assert "authored" in printed and "df 6/6" in printed
+
+    weight_budget.tolerance_table()
+    printed = capsys.readouterr().out
+    for category in JUDGED_CATEGORIES:
+        assert category.value in printed
+    for category in Category:
+        if category not in JUDGED_CATEGORIES:
+            assert f"\n{category.value}" not in printed
 
 
-@pytest.mark.parametrize("rule_id", ALL_RULES)
-def test_a_rule_that_deducts_lands_in_a_real_category(rule_id):
-    """The other side of it: advice-only and retired rules have no category, and a
-    rule that still deducts has to have one, or its points go nowhere."""
-    where = _new_category(_finding(rule_id))
-    assert _deducts(rule_id) == (where in NEW_CATEGORIES)
+def test_a_category_with_no_rule_channel_is_the_exposed_one():
+    """The finding 02 raised, as a property rather than a number in a document.
+
+    At `rule_share` 0 nothing averages a disagreement down, so the whole band move
+    reaches the composite. That is why `Agentic systems` -- rule_share 0 on the joint
+    largest weight -- costs more per split than any category with a rule channel.
+    """
+    weights = config.category_weights()
+    shares = rule_shares()
+    exposure = {c: (1 - shares[c]) * weights[c] for c in JUDGED_CATEGORIES}
+    assert max(exposure, key=exposure.get) is Category.AGENTIC_SYSTEMS
+    for category in JUDGED_CATEGORIES:
+        if shares[category] > 0:
+            assert exposure[category] < exposure[Category.AGENTIC_SYSTEMS]
 
 
-def test_the_old_categories_that_04_retired_have_no_rules_left():
-    """`Impact`, `AI/ML relevance`, `Credibility`, `Recruiter scan` and `Writing
-    quality` are gone, so nothing may still file into them."""
-    retired = {c.value for c in (Category.IMPACT, Category.RELEVANCE,
-                                Category.CREDIBILITY, Category.RECRUITER_SCAN,
-                                Category.WRITING)}
-    for rule_id in ALL_RULES:
-        assert _new_category(_finding(rule_id)) not in retired
+def test_the_derived_weights_follow_the_corpus():
+    """Change the counts and the weights move, with nothing edited."""
+    counts, postings = config.derived_document_frequency()
+    assert postings == 6
+    assert counts["Production ownership"] == 6
+    assert counts["AI-assisted coding fluency"] == 3
 
-
-@pytest.mark.parametrize("label,budget,split", CANDIDATES)
-def test_every_candidate_spends_exactly_one_hundred_points(label, budget, split):
-    weights = weights_for(budget, split)
-    assert set(weights) == NEW_CATEGORIES
-    assert sum(weights.values()) == pytest.approx(100.0, abs=0.05)
-
-
-@pytest.mark.parametrize("label,budget,split", CANDIDATES)
-def test_the_derived_block_gets_the_budget_and_craft_gets_the_rest(label, budget, split):
-    weights = weights_for(budget, split)
-    assert sum(weights[c] for c in DERIVED) == pytest.approx(budget, abs=0.05)
-    assert weights[CRAFT] == pytest.approx(100 - budget - 25, abs=0.05)
-    for category, value in FIXED_AUTHORED.items():
-        assert weights[category] == value
-
-
-def test_the_chosen_weights_are_04s_illustration():
-    """02's answer: budget 50, split in proportion to document frequency."""
-    assert proportional(50.0) == {
-        "Production ownership": 15.0,
-        "Agentic systems": 15.0,
-        "Evaluation rigour": 12.5,
-        "AI-assisted coding fluency": 7.5,
-    }
-
-
-def test_proportional_tracks_the_corpus_and_floored_compresses_it():
-    """The two splits differ only in the bottom category, which is the whole argument."""
-    prop, floor = proportional(50.0), floored(50.0)
-    assert prop["Agentic systems"] > prop["AI-assisted coding fluency"] * 1.9
-    assert floor["Agentic systems"] < floor["AI-assisted coding fluency"] * 1.6
-    # Both still rank the four the way the corpus does.
-    for split in (prop, floor):
-        assert split["Production ownership"] >= split["Evaluation rigour"]
-        assert split["Evaluation rigour"] >= split["AI-assisted coding fluency"]
-
-
-def test_every_judged_category_has_a_spec_to_read_its_band_from():
-    from ats.rubric import SLUGS
-    assert set(SLUG_OF.values()) == set(SLUGS)
-    assert set(SLUG_OF) == set(DERIVED) | {CRAFT}
+    from ats.jd_dimensions import derived_weights
+    even = derived_weights({c.value: 1 for c in DERIVED_CATEGORIES}, 1, 50.0)
+    assert set(even.values()) == {12.5}, "equal document frequency, equal weight"

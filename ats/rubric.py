@@ -55,6 +55,17 @@ def load_specs() -> list[dict]:
     return [load_spec(slug) for slug in SLUGS]
 
 
+def slug_by_category() -> dict[str, str]:
+    """Category display name -> spec slug, taken from the specs themselves.
+
+    Each spec names its own category, and those names are exactly `models.Category`'s
+    values. Deriving the map rather than writing it here keeps this module free of any
+    import from the rest of the package -- the specs are the only thing it reads --
+    and means a sixth category is reachable by adding a file and a slug.
+    """
+    return {load_spec(slug)["category"]: slug for slug in SLUGS}
+
+
 def _clause(clause: dict, met: set[str]) -> bool:
     """One `when` clause: met/unmet/count/any, all of which must hold together."""
     if any(cid not in met for cid in clause.get("met", [])):

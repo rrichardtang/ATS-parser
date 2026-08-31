@@ -1,8 +1,17 @@
 # The weight budget, and the first look at all five categories on one document
 
 Ticket [02](tickets/02-choose-the-weight-budget.md). Measured by
-`scripts/weight_budget.py`, which scores the seven fixtures under the new rubric at
-every candidate budget and prints today's rubric beside it.
+`scripts/weight_budget.py`, which scored the seven fixtures under the new rubric at
+every candidate budget and printed today's rubric beside it.
+
+> **The tables below were printed before ticket 03.** They came from a *model* of the
+> new rubric, assembled in the script out of decisions that had not yet been
+> implemented, because there was no other way to see a composite before the swap. 03
+> implemented them, so the model is gone: the script now reads
+> `config.category_weights()` and `score.rule_shares()` and prints only §3, the part a
+> single run still cannot produce. §1 and §2 are the before picture and are kept as
+> printed — the old column in §1 cannot be regenerated at all now, which is the
+> ordering problem the map's *run both, replace last* section is about.
 
 ## The answer
 

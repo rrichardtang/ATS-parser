@@ -254,7 +254,11 @@ Every rule declares where its authority comes from:
 | `heuristic` | Author judgment |
 
 **Heuristic rules are capped at minor severity and can never sink a score**, and
-are tagged in the UI. Weights live in `ats/weights.toml` — edit them.
+are tagged in the UI. Weights live in `ats/weights.toml` — edit the authored ones.
+The four behaviour categories are not there to edit: they are weighted by how many of
+your target postings state the behaviour they measure, so adding a posting moves them
+and nobody edits a file. `weights.toml` holds only how many of the composite's 100
+points the four of them share.
 
 ### Why not the XYZ formula
 

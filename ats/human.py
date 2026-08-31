@@ -68,7 +68,7 @@ def recruiter_scan(doc: ExtractedDoc, resume: Resume) -> list[Finding]:
     if not has_identity:
         out.append(Finding(
             rule_id="scan/no-identity-above-fold",
-            category=Category.RECRUITER_SCAN,
+            category=Category.RESUME_CRAFT,
             severity=Severity.MAJOR,
             message="Nothing in the top third of page 1 says what you are",
             fix="Put a role line near the top: “AI Engineer, 3 yrs — LLM serving and evals.”",
@@ -80,7 +80,7 @@ def recruiter_scan(doc: ExtractedDoc, resume: Resume) -> list[Finding]:
     if not has_evidence:
         out.append(Finding(
             rule_id="scan/no-evidence-above-fold",
-            category=Category.RECRUITER_SCAN,
+            category=Category.RESUME_CRAFT,
             severity=Severity.MAJOR,
             message="No concrete evidence -- no tool, model or number -- above the fold",
             fix="Move your strongest technical result into the top third of page 1.",
@@ -94,7 +94,7 @@ def recruiter_scan(doc: ExtractedDoc, resume: Resume) -> list[Finding]:
     if not resume.summary and not has_identity:
         out.append(Finding(
             rule_id="scan/no-summary",
-            category=Category.RECRUITER_SCAN,
+            category=Category.RESUME_CRAFT,
             severity=Severity.MINOR,
             message="No summary line stating what you are",
             fix="One line. What you are, how long, what you work on.",
@@ -132,7 +132,7 @@ def _experience_outranked(doc: ExtractedDoc, resume: Resume) -> list[Finding]:
     where = f"page {page + 1}" if page else "below the fold"
     return [Finding(
         rule_id="scan/experience-outranked",
-        category=Category.RECRUITER_SCAN,
+        category=Category.RESUME_CRAFT,
         severity=Severity.MAJOR,
         message=(
             f"{' and '.join(s.title() for s in above)} appear before Experience, "
@@ -168,7 +168,7 @@ def _career_arc(resume: Resume) -> list[Finding]:
     if ai_flags and ai_flags[0] and not any(ai_flags[1:]):
         return [Finding(
             rule_id="scan/unexplained-pivot",
-            category=Category.RECRUITER_SCAN,
+            category=Category.RESUME_CRAFT,
             severity=Severity.MINOR,
             message="Your current role is AI/ML but no earlier role reads that way",
             fix="Add one line showing the bridge -- the first ML work you shipped and when.",
@@ -188,7 +188,7 @@ def credibility(resume: Resume) -> list[Finding]:
     if bullets and not EVAL_RE.search(blob):
         out.append(Finding(
             rule_id="cred/no-evaluation",
-            category=Category.CREDIBILITY,
+            category=Category.EVALUATION_RIGOUR,
             severity=Severity.MAJOR,
             message="No bullet says how model quality was measured",
             fix="Name one eval: the metric, the dataset, and the number before and after.",
@@ -200,7 +200,7 @@ def credibility(resume: Resume) -> list[Finding]:
     if bullets and not PRODUCTION_RE.search(blob):
         out.append(Finding(
             rule_id="cred/no-production",
-            category=Category.CREDIBILITY,
+            category=Category.PRODUCTION_OWNERSHIP,
             severity=Severity.MAJOR,
             message="Nothing shows the work reached production",
             fix="Add scale, latency, traffic or uptime for something you shipped.",
@@ -212,7 +212,7 @@ def credibility(resume: Resume) -> list[Finding]:
     if NOTEBOOK_RE.search(blob) and not PRODUCTION_RE.search(blob):
         out.append(Finding(
             rule_id="cred/notebook-only",
-            category=Category.CREDIBILITY,
+            category=Category.PRODUCTION_OWNERSHIP,
             severity=Severity.MINOR,
             message="Work reads as notebook or coursework rather than shipped systems",
             fix="Lead with something that ran in production, however small.",
@@ -225,7 +225,7 @@ def credibility(resume: Resume) -> list[Finding]:
     if projects and not any(re.search(r"(?i)(github|https?://|gitlab)", l) for l in projects):
         out.append(Finding(
             rule_id="cred/unlinked-projects",
-            category=Category.CREDIBILITY,
+            category=Category.RESUME_CRAFT,
             severity=Severity.MINOR,
             message="Projects are listed but not linked",
             fix="Link each one. An unlinked project is a claim; a linked one is evidence.",
@@ -234,20 +234,11 @@ def credibility(resume: Resume) -> list[Finding]:
             provenance=Provenance.JD_DERIVED,
         ))
 
-    named_models = re.findall(
-        r"(?i)\b(llama|mistral|gpt-?\d|claude|bert|t5|whisper|clip|resnet|xgboost|"
-        r"stable diffusion|qwen|gemma|phi-\d)\b", blob)
-    if bullets and not named_models:
-        out.append(Finding(
-            rule_id="cred/no-named-models",
-            category=Category.CREDIBILITY,
-            severity=Severity.MINOR,
-            message="No model or architecture is named anywhere",
-            fix="Name what you actually used. “Fine-tuned an LLM” is not checkable.",
-            evidence="no model names found",
-            locator="experience",
-            provenance=Provenance.JD_DERIVED,
-        ))
+    # `cred/no-named-models` was retired here (rule-mapping.md §4). It fired when a
+    # closed list of 15 model families matched nothing -- no Gemini, no DeepSeek, no
+    # Cohere, and a `gpt-?\d` that does not match `o3` -- against the fastest-moving
+    # vocabulary in the corpus, so "Fine-tuned Gemini 1.5" fired it. The property it
+    # gestured at has an owner now: C2, the named system, in `Production ownership`.
     return out
 
 

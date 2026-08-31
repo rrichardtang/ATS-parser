@@ -14,7 +14,7 @@ from ats.models import Category, Finding, Provenance, Severity
 from ats.score import build
 
 
-def _finding(rule_id, category=Category.IMPACT, severity=Severity.MAJOR):
+def _finding(rule_id, category=Category.PRODUCTION_OWNERSHIP, severity=Severity.MAJOR):
     return Finding(
         rule_id=rule_id, category=category, severity=severity,
         message="m", fix="f", evidence="e", locator="l",

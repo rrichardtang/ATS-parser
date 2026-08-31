@@ -14,8 +14,11 @@ Two commitments enforced here rather than merely intended:
 """
 from __future__ import annotations
 
-from . import config
+import functools
+
+from . import config, rubric
 from .models import (
+    JUDGED_CATEGORIES,
     Category,
     CategoryScore,
     Finding,
@@ -24,6 +27,27 @@ from .models import (
     Report,
     Severity,
 )
+
+@functools.lru_cache(maxsize=1)
+def rule_shares() -> dict[Category, float]:
+    """How much of a judged category's score the deterministic channel carries.
+
+    Per-category data, read from the category's own spec in `ats/criteria/`, not a set
+    literal here: 07 §5 gives `Production ownership` 0.4, `Evaluation rigour` 0.4,
+    `Resume craft` 0.7, and **0** to `Agentic systems` and `AI-assisted coding
+    fluency`.
+
+    Those two zeroes are load-bearing rather than tidy. `deductions` below starts every
+    category at 0.0, so a category no rule ever deducts from holds `rule_score = 100.0`
+    permanently -- not a 40% rule channel but a constant, and one that would floor the
+    category at 40 whatever a judge answered. Hence the invariant, which
+    `tests/test_scoring.py` checks against the rule modules themselves:
+
+        rule_share > 0 requires at least one deducting rule in the category.
+    """
+    return {Category(name): float(rubric.load_spec(slug)["rule_share"])
+            for name, slug in rubric.slug_by_category().items()}
+
 
 FRAUD_RULES = {"parse/hidden-text"}
 # When there is no text layer, nothing downstream ran -- so every other category
@@ -80,7 +104,15 @@ def build(
     """llm_categories maps a category to (mean, low, high) from the content judge."""
     weights = config.category_weights()
     points = config.severity_points()
-    llm_categories = llm_categories or {}
+    # Only the five judged categories may be blended. `Parseability`, `Structure` and
+    # `Title` are decided by rules alone and are never asked of a model, so a provider
+    # returning an entry for one of them is answering a question nobody put to it --
+    # and without this line it would be accepted and blended, silently converting a
+    # deterministic category into a judged one.
+    shares = rule_shares()
+    llm_categories = {category: value
+                      for category, value in (llm_categories or {}).items()
+                      if category in JUDGED_CATEGORIES}
 
     # Drop unevidenced findings: a claim with nothing quoted is not checkable.
     findings = [f for f in findings if f.evidence.strip() or f.locator == "document"]
@@ -93,16 +125,33 @@ def build(
         finding._raw_cost = cost
         deductions[finding.category] += cost
 
+    # Which categories anything actually assessed. A judged category with no judge
+    # answer, no rule channel (07 §5 gives `Agentic systems` and `AI-assisted coding
+    # fluency` rule_share 0) and nothing deducted is a question nobody asked: with
+    # `deductions` starting every category at 0.0 it would otherwise hold a permanent
+    # 100 and carry its full weight, manufacturing a result from a check that never
+    # ran. It is printed and left out of the arithmetic instead. The last clause keeps
+    # that self-correcting -- if a finding does deduct there, the category is assessed
+    # after all and its deduction counts.
+    assessed = {
+        category: (category not in JUDGED_CATEGORIES
+                   or category in llm_categories
+                   or shares[category] > 0
+                   or deductions[category] > 0)
+        for category in weights
+    }
+
     # Points are reported in COMPOSITE space -- what the finding actually cost the
     # headline number -- so a card and its ledger row never disagree. Category-space
     # cost would show "-96" beside a ledger row reading "-16" for the same defect.
-    total_weight = sum(weights.values())
+    # The denominator is the assessed weight, the same one the composite divides by.
+    total_weight = sum(w for c, w in weights.items() if assessed[c])
     for finding in findings:
         raw_total = deductions[finding.category]
         # A category floors at zero, so deductions past 100 cost nothing. Scaling
         # by that keeps the reported points equal to what was actually lost.
         floor_scale = (min(raw_total, 100.0) / raw_total) if raw_total > 0 else 0.0
-        share = weights[finding.category] / total_weight
+        share = (weights[finding.category] / total_weight) if total_weight else 0.0
         finding.points = round(finding._raw_cost * share * floor_scale, 2)
 
     unreadable = any(f.rule_id in UNREADABLE_RULES for f in findings)
@@ -119,21 +168,23 @@ def build(
         if category in llm_categories:
             mean, band_low, band_high = llm_categories[category]
             # Rules are authoritative on mechanics; the model is better on substance.
-            rule_share = 0.7 if category in {
-                Category.PARSEABILITY, Category.STRUCTURE, Category.RECRUITER_SCAN
-            } else 0.4
+            rule_share = shares[category]
             blended = rule_score * rule_share + mean * (1 - rule_share)
             if band_high - band_low >= 12:
                 low = round(rule_score * rule_share + band_low * (1 - rule_share), 1)
                 high = round(rule_score * rule_share + band_high * (1 - rule_share), 1)
                 note = "providers disagreed; shown as a range"
             rule_score = blended
+        if not assessed[category]:
+            rule_score, low, high = 0.0, None, None
+            note = "not assessed -- no judge answered it and no rule reaches it"
         categories.append(CategoryScore(
             category=category, score=round(rule_score, 1), weight=weight,
-            low=low, high=high, note=note,
+            low=low, high=high, note=note, assessed=assessed[category],
         ))
 
-    composite = sum(c.score * c.weight for c in categories) / sum(weights.values())
+    scored = [c for c in categories if c.assessed]
+    composite = (sum(c.score * c.weight for c in scored) / total_weight) if total_weight else 0.0
 
     # Caps are recorded rather than silently applied, so the ledger can show them
     # as their own line instead of burying them in a rounding row.
@@ -188,7 +239,7 @@ def build(
 def _subscore(categories: list[CategoryScore], gate, weights: dict[Category, float]) -> float:
     gates = gate if isinstance(gate, set) else {gate}
     from .models import CATEGORY_GATE
-    rows = [c for c in categories if CATEGORY_GATE[c.category] in gates]
+    rows = [c for c in categories if CATEGORY_GATE[c.category] in gates and c.assessed]
     total = sum(c.weight for c in rows)
     if not total:
         return 100.0

@@ -23,7 +23,7 @@ def _reply(scores, findings=()):
         "categories": {name: {"score": value, "why": "because"} for name, value in scores.items()},
         "findings": [
             {"pattern": p, "message": m, "fix": "do it", "evidence": e,
-             "locator": loc, "category": Category.IMPACT.value}
+             "locator": loc, "category": Category.PRODUCTION_OWNERSHIP.value}
             for p, m, e, loc in findings
         ],
     })
@@ -166,7 +166,7 @@ def test_bands_are_read_when_the_reply_carries_them():
         return passes.ContentJudgment(
             provider="anthropic" if band == "thin" else "openai",
             sample=0,
-            categories={Category.IMPACT.value: {"band": band}},
+            categories={Category.PRODUCTION_OWNERSHIP.value: {"band": band}},
             findings=[],
         )
 
@@ -182,10 +182,10 @@ def test_bands_are_read_when_the_reply_carries_them():
 
 def test_a_judge_that_names_two_bands_for_one_resume_is_unstable_not_averaged():
     wobbly = [
-        passes.ContentJudgment("anthropic", 0, {Category.IMPACT.value: {"band": "thin"}}, []),
-        passes.ContentJudgment("anthropic", 1, {Category.IMPACT.value: {"band": "strong"}}, []),
-        passes.ContentJudgment("openai", 0, {Category.IMPACT.value: {"band": "thin"}}, []),
-        passes.ContentJudgment("openai", 1, {Category.IMPACT.value: {"band": "thin"}}, []),
+        passes.ContentJudgment("anthropic", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
+        passes.ContentJudgment("anthropic", 1, {Category.PRODUCTION_OWNERSHIP.value: {"band": "strong"}}, []),
+        passes.ContentJudgment("openai", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
+        passes.ContentJudgment("openai", 1, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
     ]
     run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], wobbly)])
     report = agreement.analyse(run, band_order=["absent", "thin", "solid", "strong"])
@@ -211,7 +211,7 @@ def test_the_table_renders_every_section(monkeypatch, fixtures):
     )
     text = render(agreement.analyse(run))
     for expected in ("Per-category agreement", "Composite spread between judges",
-                     "Findings agreement", "Skipped", "Notes", Category.IMPACT.value):
+                     "Findings agreement", "Skipped", "Notes", Category.PRODUCTION_OWNERSHIP.value):
         assert expected in text, f"missing {expected!r}"
 
 
@@ -234,7 +234,7 @@ def test_a_capped_composite_is_marked_rather_than_counted_as_agreement(monkeypat
 
 def test_a_lone_judge_never_counts_as_band_agreement():
     """One judge's band matches itself by construction; that is not evidence."""
-    alone = [passes.ContentJudgment("anthropic", i, {Category.IMPACT.value: {"band": "thin"}}, [])
+    alone = [passes.ContentJudgment("anthropic", i, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, [])
              for i in range(2)]
     run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], alone)])
     report = agreement.analyse(run, band_order=["absent", "thin", "solid", "strong"])
@@ -245,10 +245,10 @@ def test_a_lone_judge_never_counts_as_band_agreement():
 def test_an_unstable_judge_costs_the_category_its_verdict():
     """A rubric no judge can apply twice running has not passed anything."""
     wobbly = [
-        passes.ContentJudgment("anthropic", 0, {Category.IMPACT.value: {"band": "thin"}}, []),
-        passes.ContentJudgment("anthropic", 1, {Category.IMPACT.value: {"band": "strong"}}, []),
-        passes.ContentJudgment("openai", 0, {Category.IMPACT.value: {"band": "thin"}}, []),
-        passes.ContentJudgment("openai", 1, {Category.IMPACT.value: {"band": "thin"}}, []),
+        passes.ContentJudgment("anthropic", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
+        passes.ContentJudgment("anthropic", 1, {Category.PRODUCTION_OWNERSHIP.value: {"band": "strong"}}, []),
+        passes.ContentJudgment("openai", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
+        passes.ContentJudgment("openai", 1, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
     ]
     run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], wobbly)])
     row = agreement.analyse(run, band_order=["absent", "thin", "solid", "strong"]).bands[0]
@@ -267,8 +267,8 @@ def test_a_category_only_one_judge_scored_reports_no_between_spread():
     run-level check passes and the row prints 0.0 beside an alpha of n/a, two
     numbers on one line contradicting each other.
     """
-    both = Category.IMPACT.value
-    lone = Category.RECRUITER_SCAN.value
+    both = Category.PRODUCTION_OWNERSHIP.value
+    lone = Category.RESUME_CRAFT.value
     run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], [
         _numeric("anthropic", 0, {both: 70, lone: 55}),
         _numeric("openai", 0, {both: 64}),
@@ -286,8 +286,8 @@ def test_a_category_only_one_judge_scored_reports_no_between_spread():
 def test_one_sample_reports_no_within_judge_noise_floor():
     """With nothing to rerun against, the floor is unmeasured, not zero."""
     run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], [
-        _numeric("anthropic", 0, {Category.IMPACT.value: 70}),
-        _numeric("openai", 0, {Category.IMPACT.value: 64}),
+        _numeric("anthropic", 0, {Category.PRODUCTION_OWNERSHIP.value: 70}),
+        _numeric("openai", 0, {Category.PRODUCTION_OWNERSHIP.value: 64}),
     ])])
     row = agreement.analyse(run).numeric[0]
     assert row.within_mean is None and row.within_max is None

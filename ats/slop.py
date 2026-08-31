@@ -77,7 +77,7 @@ def _scan(text: str, scope: Scope, locator: str) -> list[Finding]:
             findings.append(
                 Finding(
                     rule_id=pattern.id,
-                    category=Category.WRITING,
+                    category=Category.RESUME_CRAFT,
                     severity=pattern.severity,
                     message=f"{pattern.id.split('/', 1)[1].replace('-', ' ')}: “{hit.strip()}”",
                     fix=pattern.fix,
@@ -113,7 +113,7 @@ def analyze(resume: Resume, full_text: str) -> list[Finding]:
             findings.append(
                 Finding(
                     rule_id="slop/portable",
-                    category=Category.WRITING,
+                    category=Category.RESUME_CRAFT,
                     severity=Severity.MAJOR,
                     message=(
                         f"{score:.0%} of this bullet survives stripping every name, "
@@ -160,7 +160,7 @@ def _rhythm(resume: Resume) -> list[Finding]:
         return [
             Finding(
                 rule_id="slop/robotic-rhythm",
-                category=Category.WRITING,
+                category=Category.RESUME_CRAFT,
                 severity=Severity.MINOR,
                 message=f"Bullets are uniform in shape -- {reason}",
                 fix="Vary length and construction; let the content set the shape.",
@@ -191,7 +191,7 @@ def _synonym_cycling(resume: Resume) -> list[Finding]:
             findings.append(
                 Finding(
                     rule_id="slop/synonym-cycling",
-                    category=Category.WRITING,
+                    category=Category.RESUME_CRAFT,
                     severity=Severity.MINOR,
                     message=f"Rotating synonyms for one idea: {', '.join(sorted(used))}",
                     fix="Pick the clearest verb and reuse it.",

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 
+from .models import JUDGED_CATEGORIES
 from .sections import Resume
 
 TERSE = """
@@ -177,13 +178,15 @@ Return JSON only:
                 "what_changed": "<one clause, or 'none' if unchanged>"}}]}}
 """.strip()
 
-CATEGORY_NAMES = [
-    "Impact & quantification",
-    "AI/ML relevance & depth",
-    "Credibility & verifiability",
-    "Recruiter scan",
-    "Writing quality",
-]
+# The five categories a judge is asked about, named from the enum so the prompt and
+# `passes.CATEGORY_BY_NAME` can never drift apart. The three rule-only categories --
+# `Parseability`, `Structure & formatting`, `Title & seniority alignment` -- are
+# deliberately absent: nothing a model says about them is used.
+#
+# Ticket 05 changes what is asked *of* these five: the prompt stops requesting a score
+# per category and starts requesting an answer per criterion, with the quote behind it.
+# The names stay.
+CATEGORY_NAMES = [c.value for c in JUDGED_CATEGORIES]
 
 
 def digest_text(digest: dict) -> str:

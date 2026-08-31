@@ -47,10 +47,10 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 
 | the spec says | where it lives now | what the program uses |
 |---|---|---|
-| five judged categories, three carried over | `ats/criteria/*.json` (01) + `04`'s table | `models.Category`, eight members, the old five |
+| five judged categories, three carried over | `ats/criteria/*.json` (01) + `04`'s table | **`models.Category`, the new eight (03)** |
 | criteria → band → value | `ats/rubric.py:band_of` (01) | nothing; the model emits a number |
-| `rule_share` per category | `07`'s table in `rule-mapping.md` | `score.py:122` — a hardcoded set literal, 0.7 or 0.4 |
-| weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`, uncalled; budget 50 chosen (02) | `weights.toml`, eight authored numbers |
+| `rule_share` per category | `07`'s table in `rule-mapping.md` | **`score.rule_shares()`, read from each spec (03)** |
+| weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`; budget 50 (02) | **`config.category_weights()`: four authored, four derived (03)** |
 | findings keyed on criterion ids | `findings-identity.md` | `passes.py:104` mints an id from model text |
 | advice-only findings that deduct nothing | `rule-mapping.md` §2 | no such concept; every finding deducts |
 
@@ -94,6 +94,19 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   this test set. It is why every fixture drops ~18 points under the new rubric, and it
   is a fact about the fixtures, not the rubric. 08 is the fix; 09 must not measure
   tolerance here.
+- **The new category set is what the program runs** (03). `models.Category` is the new
+  eight; every rule carries the category `rule-mapping.md` §1 gives it;
+  `cred/no-named-models` is gone (§4); `rule_share` is per-category data read from each
+  spec, so 07 §5's zeroes are the specs' own numbers rather than a set literal. The
+  authored weights are in `weights.toml` and the derived four are **computed** —
+  `weights.toml` deliberately holds no number for them, only the budget, so a
+  hand-edit cannot desynchronise one from the corpus.
+- **A category no channel reaches is not scored** (03). Both of 04's latent bugs are
+  closed and under test: a provider's entry for a category nobody asked about is
+  dropped rather than blended, and a judged category with no judge answer and no rule
+  channel is excluded from the composite instead of riding in at a permanent 100.
+  `CategoryScore.assessed` carries it, and the report prints `n/a`. This is what the
+  fixtures' rules-only human-gate score was silently inheriting.
 
 ## Inherited, and not to be re-opened here
 

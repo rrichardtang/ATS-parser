@@ -103,9 +103,9 @@
       <div class="cat">
         <div class="cat-head">
           <span>{{ c.category.value }}</span>
-          <span>{% if c.is_banded %}<span class="band">{{ "%.0f"|format(c.low) }}&ndash;{{ "%.0f"|format(c.high) }}</span>{% else %}{{ "%.0f"|format(c.score) }}{% endif %}</span>
+          <span>{% if not c.assessed %}<span class="band" title="{{ c.note }}">n/a</span>{% elif c.is_banded %}<span class="band">{{ "%.0f"|format(c.low) }}&ndash;{{ "%.0f"|format(c.high) }}</span>{% else %}{{ "%.0f"|format(c.score) }}{% endif %}</span>
         </div>
-        <div class="bar"><i style="width: {{ c.score|round|int }}%"></i></div>
+        <div class="bar"><i style="width: {{ 0 if not c.assessed else c.score|round|int }}%"></i></div>
       </div>
       {% endfor %}
     </div>

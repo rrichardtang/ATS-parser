@@ -13,14 +13,26 @@ from dataclasses import dataclass
 
 from . import ensemble, prompts
 from .llm import LLMError, Provider, call
-from .models import Category, Finding, Provenance, Rewrite, Severity
+from .models import (
+    JUDGED_CATEGORIES,
+    Category,
+    Finding,
+    Provenance,
+    Rewrite,
+    Severity,
+)
 from .sections import Resume
 
 log = logging.getLogger("ats.passes")
 
 MAX_REWRITE_TARGETS = 6
 
-CATEGORY_BY_NAME = {c.value.lower(): c for c in Category}
+# Only the categories a judge is actually asked about. `Parseability`, `Structure` and
+# `Title` are decided by rules alone, so a model naming one of them is answering a
+# question nobody put to it -- built over the whole enum, this map would resolve that
+# name and hand it to `score.build` to be blended. (`score.build` drops it too; both
+# halves matter, because this one also decides where a *finding* files.)
+CATEGORY_BY_NAME = {c.value.lower(): c for c in JUDGED_CATEGORIES}
 
 
 def _rule_id(prefix: str, pattern: str | None, fallback: str) -> str:
@@ -102,7 +114,12 @@ def content_judgments(
                 continue  # unevidenced claims are not checkable
             findings.append(Finding(
                 rule_id=_rule_id("llm", item.get("pattern"), "content"),
-                category=_category(item.get("category", "")) or Category.RELEVANCE,
+                # A finding whose category the model did not name, or named as one of
+                # the three rule-only categories, is still a real finding -- it just
+                # has no category to file under. `Resume craft` is where an
+                # unattributed content defect belongs until findings carry their own
+                # gate (migration 04).
+                category=_category(item.get("category", "")) or Category.RESUME_CRAFT,
                 severity=Severity.MAJOR,
                 message=message[:200],
                 fix=(item.get("fix") or "").strip()[:200],
@@ -211,7 +228,7 @@ def slop_pass(
                 break
         findings.append(Finding(
             rule_id=_rule_id("slop", item.get("pattern"), "pattern"),
-            category=Category.WRITING,
+            category=Category.RESUME_CRAFT,
             severity=Severity.MINOR,
             message=f"{item.get('pattern', 'slop pattern')}: “{quote[:90]}”",
             fix=(item.get("fix") or "Rewrite plainly.")[:160],

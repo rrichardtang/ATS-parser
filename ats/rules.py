@@ -224,7 +224,7 @@ def contact(resume: Resume) -> list[Finding]:
             ))
     if not c.github:
         out.append(_finding(
-            "contact/no-github", Category.CREDIBILITY, Severity.MINOR,
+            "contact/no-github", Category.STRUCTURE, Severity.MINOR,
             "No GitHub link",
             "Add one. For AI engineering it is the cheapest evidence you can offer.",
             Provenance.JD_DERIVED, evidence="header", locator="header",
@@ -270,21 +270,21 @@ def content_mechanics(resume: Resume) -> list[Finding]:
             quantified += 1
         if len(result.failures) >= 2:
             out.append(_finding(
-                "content/bullet-invariants", Category.IMPACT, Severity.MAJOR,
+                "content/bullet-invariants", Category.RESUME_CRAFT, Severity.MAJOR,
                 f"Missing {' and '.join(result.failures)}",
                 _invariant_fix(result.failures),
                 Provenance.RECRUITER_EVIDENCE, evidence=bullet[:120], locator=locator,
             ))
         if WEAK_OPENERS.match(bullet):
             out.append(_finding(
-                "content/weak-opener", Category.IMPACT, Severity.MINOR,
+                "content/weak-opener", Category.RESUME_CRAFT, Severity.MINOR,
                 f"Opens with “{bullet.split(',')[0][:40]}”",
                 "Start with what you did and what changed.",
                 Provenance.RECRUITER_EVIDENCE, evidence=bullet[:80], locator=locator,
             ))
         if PASSIVE_RE.search(bullet):
             out.append(_finding(
-                "content/passive-voice", Category.WRITING, Severity.MINOR,
+                "content/passive-voice", Category.RESUME_CRAFT, Severity.MINOR,
                 "Passive construction hides who did the work",
                 "Use an active verb with you as the subject.",
                 Provenance.HEURISTIC, evidence=PASSIVE_RE.search(bullet).group(0),
@@ -292,21 +292,21 @@ def content_mechanics(resume: Resume) -> list[Finding]:
             ))
         if TEAM_SUBJECT_RE.match(bullet):
             out.append(_finding(
-                "content/ownership", Category.IMPACT, Severity.MAJOR,
+                "content/ownership", Category.PRODUCTION_OWNERSHIP, Severity.MAJOR,
                 "Bullet's subject is the team, not you",
                 "Say what you did. A hiring manager is deciding about you.",
                 Provenance.RECRUITER_EVIDENCE, evidence=bullet[:80], locator=locator,
             ))
         if FIRST_PERSON_RE.search(bullet):
             out.append(_finding(
-                "content/first-person", Category.WRITING, Severity.MINOR,
+                "content/first-person", Category.RESUME_CRAFT, Severity.MINOR,
                 "First-person pronoun in a bullet",
                 "Drop it -- resume bullets are implicitly first person.",
                 Provenance.HEURISTIC, evidence=bullet[:80], locator=locator,
             ))
         if len(bullet.split()) > MAX_BULLET_WORDS:
             out.append(_finding(
-                "content/long-bullet", Category.WRITING, Severity.MINOR,
+                "content/long-bullet", Category.RESUME_CRAFT, Severity.MINOR,
                 f"{len(bullet.split())}-word bullet",
                 f"Cut to under {MAX_BULLET_WORDS} words, or split it.",
                 Provenance.HEURISTIC, evidence=bullet[:100], locator=locator,
@@ -315,7 +315,7 @@ def content_mechanics(resume: Resume) -> list[Finding]:
     rate = quantified / len(bullets)
     if rate < QUANTIFICATION_TARGET:
         out.append(_finding(
-            "content/quantification", Category.IMPACT, Severity.MAJOR,
+            "content/quantification", Category.RESUME_CRAFT, Severity.MAJOR,
             f"{rate:.0%} of bullets carry a measurable result "
             f"({quantified} of {len(bullets)})",
             f"Get to {QUANTIFICATION_TARGET:.0%}. Latency, throughput, accuracy, "
@@ -349,7 +349,7 @@ def _duplicate_bullets(bullets: list[tuple[str, str]]) -> list[Finding]:
             overlap = len(tokens & other) / max(len(tokens), len(other))
             if overlap > 0.8:
                 out.append(_finding(
-                    "content/duplicate-bullet", Category.WRITING, Severity.MINOR,
+                    "content/duplicate-bullet", Category.RESUME_CRAFT, Severity.MINOR,
                     f"Near-duplicate of {other_locator}",
                     "Cut one, or differentiate the scope.",
                     Provenance.HEURISTIC, evidence=text[:90], locator=locator,

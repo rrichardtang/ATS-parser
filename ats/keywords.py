@@ -17,6 +17,19 @@ from .sections import Resume
 
 TAXONOMY_PATH = Path(__file__).with_name("taxonomy.json")
 
+# Every rule here files into `Resume craft`, and for two different reasons.
+# `kw/over-repetition`, `kw/skills-dump` and `kw/soft-skill-padding` belong there: they
+# are defects in how the document reads, which is what craft measures.
+#
+# The other five -- the `kw/thin-*` family, `kw/unsupported-skills` and the three
+# `jd/missing-*` -- are the whole of tool coverage, and rule-mapping.md §2 says they
+# stop deducting: no category measures nouns, the corpus is disjunctive so a missing
+# term is not a missed requirement, and the advice is the part that was worth having.
+# An advice-only finding is meant to carry a gate and no category at all. Nothing can
+# express that yet (migration ticket 04), and `Finding.category` is required, so they
+# sit here **provisionally** and still deduct. When 04 lands they lose the category and
+# keep `Gate.RECRUITER`, where keyword search actually happens.
+
 # A term repeated far above its natural rate reads as stuffing to a semantic matcher.
 STUFFING_REPEAT_LIMIT = 6
 # A skills line this long with no supporting evidence is a dump, not a profile.
@@ -82,7 +95,7 @@ def analyze(resume: Resume, full_text: str, jd_text: str = "") -> list[Finding]:
             names = ", ".join(k.split("/", 1)[1] for k in gaps)
             out.append(Finding(
                 rule_id=f"kw/thin-{group.replace('_', '-')}",
-                category=Category.RELEVANCE,
+                category=Category.RESUME_CRAFT,
                 severity=Severity.MAJOR if group in {"evaluation", "llm_systems"} else Severity.MINOR,
                 message=f"Thin coverage of {group.replace('_', ' ')} "
                         f"({matched} of {total} terms)",
@@ -108,7 +121,7 @@ def _stuffing(resume: Resume, full_text: str) -> list[Finding]:
         if count > STUFFING_REPEAT_LIMIT:
             out.append(Finding(
                 rule_id="kw/over-repetition",
-                category=Category.RELEVANCE,
+                category=Category.RESUME_CRAFT,
                 severity=Severity.MINOR,
                 message=f"“{entry['term']}” appears {count} times",
                 fix="Say it once where it is load-bearing. Semantic matchers mark "
@@ -124,7 +137,7 @@ def _stuffing(resume: Resume, full_text: str) -> list[Finding]:
         if len(terms) > SKILLS_DUMP_TERMS:
             out.append(Finding(
                 rule_id="kw/skills-dump",
-                category=Category.RELEVANCE,
+                category=Category.RESUME_CRAFT,
                 severity=Severity.MINOR,
                 message=f"Skills section lists {len(terms)} items with no grouping",
                 fix="Group by area and cut anything you would not want interviewed.",
@@ -135,7 +148,7 @@ def _stuffing(resume: Resume, full_text: str) -> list[Finding]:
         if soft := SOFT_SKILLS.findall(skills):
             out.append(Finding(
                 rule_id="kw/soft-skill-padding",
-                category=Category.RELEVANCE,
+                category=Category.RESUME_CRAFT,
                 severity=Severity.MINOR,
                 message=f"Soft skills in a technical skills list: {', '.join(sorted(set(soft))[:4])}",
                 fix="Cut them. They are unverifiable and they dilute the technical signal.",
@@ -168,7 +181,7 @@ def _unsupported_skills(resume: Resume) -> list[Finding]:
         return []
     return [Finding(
         rule_id="kw/unsupported-skills",
-        category=Category.CREDIBILITY,
+        category=Category.RESUME_CRAFT,
         severity=Severity.MINOR,
         message=f"{len(unsupported)} skills appear only in the Skills list, "
                 "with nothing in Experience or Projects behind them",
@@ -221,7 +234,7 @@ def _jd_gap(resume_text: str, jd_text: str) -> list[Finding]:
             names = ", ".join(k.split("/", 1)[1] for k in important[:6])
             out.append(Finding(
                 rule_id="jd/missing-core",
-                category=Category.RELEVANCE,
+                category=Category.RESUME_CRAFT,
                 severity=Severity.MAJOR,
                 message=f"The job asks for {len(important)} core things your resume never mentions",
                 fix=f"Address these if you have them: {names}.",
@@ -233,7 +246,7 @@ def _jd_gap(resume_text: str, jd_text: str) -> list[Finding]:
             names = ", ".join(k.split("/", 1)[1] for k in rest[:6])
             out.append(Finding(
                 rule_id="jd/missing-secondary",
-                category=Category.RELEVANCE,
+                category=Category.RESUME_CRAFT,
                 severity=Severity.MINOR,
                 message=f"Secondary requirements not mentioned: {names}",
                 fix="Add where true; do not pad.",
@@ -244,7 +257,7 @@ def _jd_gap(resume_text: str, jd_text: str) -> list[Finding]:
     if proper_missing:
         out.append(Finding(
             rule_id="jd/missing-named-tools",
-            category=Category.RELEVANCE,
+            category=Category.RESUME_CRAFT,
             severity=Severity.MINOR,
             message="Tools named repeatedly in the job post and absent here: "
                     + ", ".join(proper_missing[:6]),
