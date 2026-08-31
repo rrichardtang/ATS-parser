@@ -4,7 +4,7 @@ Ticket: [11](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md
 Category defined by [04](tickets/04-design-the-category-set.md); format proved by
 [05](tickets/05-draft-bands-for-one-category.md). Measured in
 [three-categories-agreement.md](three-categories-agreement.md). Machine-readable in
-[criteria/evaluation-rigour.json](criteria/evaluation-rigour.json).
+[ats/criteria/evaluation-rigour.json](../../../ats/criteria/evaluation-rigour.json).
 
 > **Evaluation rigour** — whether the resume evidences measuring model quality with
 > something that could have returned a negative answer. 5/6 in the corpus,

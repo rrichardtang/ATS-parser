@@ -16,9 +16,10 @@ credentials:
   * recorded judges live in docs/wayfinder/rubric-grounding/criteria/judgments/<slug>/
     and are compared against it criterion by criterion.
 
-The band lookup is shared, so a criterion disagreement is only a band disagreement
-when it crosses a rule boundary -- which is the property 04 wanted and the thing
-worth measuring.
+The specs and the band lookup are the rubric itself and live in `ats.rubric`; what is
+here is the measurement scaffolding around them. The lookup being shared is what makes
+a criterion disagreement a band disagreement only when it crosses a rule boundary --
+the property 04 wanted and the thing worth measuring.
 
 Ticket 05 wrote `Production ownership`; ticket 11 added the other three behaviour
 categories. The band lookup is data (`when` clauses in the spec) rather than code, so
@@ -36,7 +37,7 @@ import json
 import re
 import sys
 from dataclasses import dataclass, field
-from itertools import combinations, product
+from itertools import combinations
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,23 +53,13 @@ from ats.invariants import (  # noqa: E402
     has_metric,
     portability,
 )
+from ats.rubric import SLUGS, band_of, leverage, load_spec  # noqa: E402,F401
 from ats.sections import Resume, parse  # noqa: E402
 from ats.slop import PORTABILITY_LIMIT  # noqa: E402
 
-CRITERIA_DIR = ROOT / "docs" / "wayfinder" / "rubric-grounding" / "criteria"
-JUDGMENTS_DIR = CRITERIA_DIR / "judgments"
-PROBES_DIR = CRITERIA_DIR / "probes"
-
-# Declaration order is the order the categories were written, which is also 05's and
-# 11's reading order: the worked example first, then the model-owned category whose
-# only agreement is criterion agreement, then the two that transfer from it.
-SLUGS = (
-    "production-ownership",
-    "ai-assisted-coding-fluency",
-    "evaluation-rigour",
-    "agentic-systems",
-    "resume-craft",
-)
+MEASUREMENT_DIR = ROOT / "docs" / "wayfinder" / "rubric-grounding" / "criteria"
+JUDGMENTS_DIR = MEASUREMENT_DIR / "judgments"
+PROBES_DIR = MEASUREMENT_DIR / "probes"
 
 NUMBER_RE = re.compile(r"\d")
 
@@ -116,22 +107,6 @@ class Doc:
     resume: Resume | None = None
     answerable: bool = True
     note: str = ""
-
-
-def spec_path(slug: str) -> Path:
-    return CRITERIA_DIR / f"{slug}.json"
-
-
-def load_spec(slug: str = "production-ownership") -> dict:
-    spec = json.loads(spec_path(slug).read_text(encoding="utf-8"))
-    if spec.get("slug", slug) != slug:
-        raise SystemExit(f"{slug}.json declares slug {spec['slug']!r}")
-    spec.setdefault("slug", slug)
-    return spec
-
-
-def load_specs() -> list[dict]:
-    return [load_spec(slug) for slug in SLUGS]
 
 
 def _alias_pattern(alias: str) -> re.Pattern[str]:
@@ -368,48 +343,6 @@ DOCUMENT_KINDS = {
 }
 
 
-def _clause(clause: dict, met: set[str]) -> bool:
-    """One `when` clause: met/unmet/count/any, all of which must hold together."""
-    if any(cid not in met for cid in clause.get("met", [])):
-        return False
-    if any(cid in met for cid in clause.get("unmet", [])):
-        return False
-    count = clause.get("count")
-    if count:
-        hits = len([cid for cid in count["of"] if cid in met])
-        if "eq" in count and hits != count["eq"]:
-            return False
-        if "min" in count and hits < count["min"]:
-            return False
-        if "max" in count and hits > count["max"]:
-            return False
-    alternatives = clause.get("any")
-    if alternatives and not any(_clause(alt, met) for alt in alternatives):
-        return False
-    return True
-
-
-def band_of(answers: dict[str, bool], spec: dict) -> dict:
-    """The band lookup: first `when` that matches, in declared order.
-
-    Shared by every judge, so only crossings cost agreement. The clauses are data in
-    the spec rather than conditionals here -- 05 wrote the rules as prose beside a
-    hand-written lookup, and a second, third and fourth category would have made that
-    four hand-written lookups whose totality nobody could check by reading.
-    """
-    ids = [c["id"] for c in spec["criteria"]]
-    missing = [cid for cid in ids if cid not in answers]
-    if missing:
-        raise SystemExit(
-            f"{spec['slug']}: no band for an incomplete answer set (missing {missing})")
-    met = {cid for cid, yes in answers.items() if yes}
-    for band in spec["bands"]:
-        if _clause(band["when"], met):
-            return band
-    raise SystemExit(
-        f"{spec['slug']}: no band matches {sorted(met)} -- the lookup is not total")
-
-
 def load_recorded(spec: dict) -> dict[str, dict[str, Verdict]]:
     known = {c["id"] for c in spec["criteria"]}
     out: dict[str, dict[str, Verdict]] = {}
@@ -430,35 +363,6 @@ def load_recorded(spec: dict) -> dict[str, dict[str, Verdict]]:
                 judge=judge, answers=answers,
                 evidence=body.get("evidence", {}), note=body.get("note", ""))
     return out
-
-
-def leverage(spec: dict) -> list[tuple[str, int, int]]:
-    """Per criterion: over how many of the 32 answer sets does flipping it move the band?
-
-    04's claim is that criteria are more diagnosable than a band label. This is the
-    other half of that claim -- a criterion that almost never moves the band is cheap
-    to disagree about, and one that almost always does is where agreement is spent.
-    """
-    ids = [c["id"] for c in spec["criteria"]]
-    order = [b["label"] for b in spec["bands"]]
-    rows = []
-    for target in ids:
-        moves = 0
-        combos = list(product([False, True], repeat=len(ids)))
-        for combo in combos:
-            answers = dict(zip(ids, combo))
-            flipped = dict(answers, **{target: not answers[target]})
-            if band_of(answers, spec)["label"] != band_of(flipped, spec)["label"]:
-                moves += 1
-        widest = max(
-            abs(order.index(band_of(dict(zip(ids, c)), spec)["label"])
-                - order.index(band_of(dict(dict(zip(ids, c)),
-                                           **{target: not dict(zip(ids, c))[target]}),
-                                      spec)["label"]))
-            for c in combos
-        )
-        rows.append((target, moves, widest))
-    return rows
 
 
 def _fixtures() -> dict[str, Path]:

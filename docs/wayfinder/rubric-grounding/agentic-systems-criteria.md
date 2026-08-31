@@ -4,7 +4,7 @@ Ticket: [11](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md
 Category defined by [04](tickets/04-design-the-category-set.md); format proved by
 [05](tickets/05-draft-bands-for-one-category.md). Measured in
 [three-categories-agreement.md](three-categories-agreement.md). Machine-readable in
-[criteria/agentic-systems.json](criteria/agentic-systems.json).
+[ats/criteria/agentic-systems.json](../../../ats/criteria/agentic-systems.json).
 
 > **Agentic systems** — whether the resume evidences *building* systems that reason
 > over context, call tools and take actions. 6/6 in the corpus, `rule_share` **0** per

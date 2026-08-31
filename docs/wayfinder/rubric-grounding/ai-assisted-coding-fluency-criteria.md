@@ -4,7 +4,7 @@ Ticket: [11](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md
 Category defined by [04](tickets/04-design-the-category-set.md); format proved by
 [05](tickets/05-draft-bands-for-one-category.md). Measured in
 [three-categories-agreement.md](three-categories-agreement.md). Machine-readable in
-[criteria/ai-assisted-coding-fluency.json](criteria/ai-assisted-coding-fluency.json).
+[ats/criteria/ai-assisted-coding-fluency.json](../../../ats/criteria/ai-assisted-coding-fluency.json).
 
 > **AI-assisted coding fluency** — whether the resume evidences working fluently with
 > AI coding tools as a *practice*. 3/6 in the corpus, `rule_share` **0**.

@@ -40,8 +40,10 @@ documents written to exercise the rubric. The real number is
   rules (12).
 - [resume-craft-agreement.md](resume-craft-agreement.md) — what it measured, and why a
   category with no gate is held to a harsher bar (12).
-- [criteria/](criteria/) — the criteria as data, the band probes, and the recorded
-  judge answers the measurement ran on.
+- [ats/criteria/](../../../ats/criteria/) — the criteria as data. The migration map's
+  01 moved the five specs into the package, where the program can load them;
+  [criteria/](criteria/) keeps the band probes and the recorded judge answers the
+  measurement ran on.
 - [findings-identity.md](findings-identity.md) — what makes two findings the same
   finding, and what `prompts.py` has to emit for it (10).
 - [rule-mapping.md](rule-mapping.md) — where every deterministic rule files under the

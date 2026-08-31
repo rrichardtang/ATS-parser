@@ -3,7 +3,7 @@
 Ticket: [05](tickets/05-draft-bands-for-one-category.md). Category defined by
 [04](tickets/04-design-the-category-set.md). Measured in
 [production-ownership-agreement.md](production-ownership-agreement.md). Machine-readable
-in [criteria/production-ownership.json](criteria/production-ownership.json).
+in [ats/criteria/production-ownership.json](../../../ats/criteria/production-ownership.json).
 
 > **Production ownership** — whether the resume evidences taking a system to production
 > and staying responsible for it after launch. 6/6 in the corpus, `rule_share` 0.4.

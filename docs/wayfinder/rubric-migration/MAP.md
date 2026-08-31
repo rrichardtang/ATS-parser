@@ -47,8 +47,8 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 
 | the spec says | where it lives now | what the program uses |
 |---|---|---|
-| five judged categories, three carried over | `criteria/*.json` + `04`'s table, in docs | `models.Category`, eight members, the old five |
-| criteria → band → value | `band_of` in `scripts/criteria_probe.py`, a one-off script | nothing; the model emits a number |
+| five judged categories, three carried over | `ats/criteria/*.json` (01) + `04`'s table | `models.Category`, eight members, the old five |
+| criteria → band → value | `ats/rubric.py:band_of` (01) | nothing; the model emits a number |
 | `rule_share` per category | `07`'s table in `rule-mapping.md` | `score.py:122` — a hardcoded set literal, 0.7 or 0.4 |
 | weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`, uncalled | `weights.toml`, eight authored numbers |
 | findings keyed on criterion ids | `findings-identity.md` | `passes.py:104` mints an id from model text |
@@ -74,7 +74,13 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 
 ## Decisions so far
 
-Nothing yet. Decisions land here as tickets close.
+- **The rubric is `ats/rubric.py`** (01): the five specs are package data in
+  `ats/criteria/`, loaded by `load_spec`, and `band_of` turns a set of criterion
+  answers into a band. `leverage` moved with it, because it is a property of the
+  lookup rather than of the measurement. The **deterministic judge stays in
+  `scripts/criteria_probe.py`**: it answers criteria from regexes in order to measure
+  agreement, and in the package it would be a second, unwired rule channel beside
+  `ats/rules.py`. The probe prints the same five verdicts it printed before the move.
 
 ## Inherited, and not to be re-opened here
 

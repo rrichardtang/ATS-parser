@@ -5,7 +5,7 @@ Ticket: [12](tickets/12-criteria-for-resume-craft.md). Category defined by
 [05](tickets/05-draft-bands-for-one-category.md) and generalised by
 [11](tickets/11-criteria-for-the-three-remaining-behaviour-categories.md). Rules filed
 here by [07](tickets/07-which-category-does-each-keyword-rule-file-into.md).
-Machine-readable in [criteria/resume-craft.json](criteria/resume-craft.json).
+Machine-readable in [ats/criteria/resume-craft.json](../../../ats/criteria/resume-craft.json).
 
 > **Resume craft** — whether the document survives a six-second recruiter scan and
 > reads as edited prose. No document frequency, authored weight, `rule_share` 0.7.
