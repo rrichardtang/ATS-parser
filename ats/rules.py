@@ -13,7 +13,7 @@ from datetime import date
 from . import config
 from .extract import ExtractedDoc, font_sprawl
 from .invariants import evaluate
-from .models import Category, Finding, Provenance, Severity
+from .models import Category, Finding, Gate, Provenance, Severity
 from .sections import BULLET_RE, Resume
 
 REQUIRED_SECTIONS = {"experience", "skills", "education"}
@@ -41,17 +41,21 @@ AI_TITLE_RE = re.compile(
 
 def _finding(
     rule_id: str,
-    category: Category,
+    category: Category | None,
     severity: Severity,
     message: str,
     fix: str,
     provenance: Provenance,
     evidence: str = "",
     locator: str = "",
+    gate: Gate | None = None,
+    advice_only: bool = False,
 ) -> Finding:
     return Finding(
         rule_id=rule_id,
         category=category,
+        gate=gate,
+        advice_only=advice_only,
         severity=config.apply_provenance_cap(severity, provenance),
         message=message,
         fix=fix,
@@ -268,12 +272,13 @@ def content_mechanics(resume: Resume) -> list[Finding]:
         result = evaluate(bullet)
         if result.measurability:
             quantified += 1
-        if len(result.failures) >= 2:
+        if not result.outcome:
             out.append(_finding(
-                "content/bullet-invariants", Category.RESUME_CRAFT, Severity.MAJOR,
-                f"Missing {' and '.join(result.failures)}",
+                "content/no-outcome", Category.RESUME_CRAFT, Severity.MAJOR,
+                "Says what you were assigned, not what changed",
                 _invariant_fix(result.failures),
                 Provenance.RECRUITER_EVIDENCE, evidence=bullet[:120], locator=locator,
+                gate=Gate.MANAGER,
             ))
         if WEAK_OPENERS.match(bullet):
             out.append(_finding(
@@ -281,6 +286,7 @@ def content_mechanics(resume: Resume) -> list[Finding]:
                 f"Opens with “{bullet.split(',')[0][:40]}”",
                 "Start with what you did and what changed.",
                 Provenance.RECRUITER_EVIDENCE, evidence=bullet[:80], locator=locator,
+                gate=Gate.MANAGER,
             ))
         if PASSIVE_RE.search(bullet):
             out.append(_finding(
@@ -289,6 +295,7 @@ def content_mechanics(resume: Resume) -> list[Finding]:
                 "Use an active verb with you as the subject.",
                 Provenance.HEURISTIC, evidence=PASSIVE_RE.search(bullet).group(0),
                 locator=locator,
+                gate=Gate.MANAGER,
             ))
         if TEAM_SUBJECT_RE.match(bullet):
             out.append(_finding(
@@ -303,6 +310,7 @@ def content_mechanics(resume: Resume) -> list[Finding]:
                 "First-person pronoun in a bullet",
                 "Drop it -- resume bullets are implicitly first person.",
                 Provenance.HEURISTIC, evidence=bullet[:80], locator=locator,
+                gate=Gate.MANAGER,
             ))
         if len(bullet.split()) > MAX_BULLET_WORDS:
             out.append(_finding(
@@ -310,18 +318,19 @@ def content_mechanics(resume: Resume) -> list[Finding]:
                 f"{len(bullet.split())}-word bullet",
                 f"Cut to under {MAX_BULLET_WORDS} words, or split it.",
                 Provenance.HEURISTIC, evidence=bullet[:100], locator=locator,
+                gate=Gate.MANAGER,
             ))
 
     rate = quantified / len(bullets)
     if rate < QUANTIFICATION_TARGET:
         out.append(_finding(
-            "content/quantification", Category.RESUME_CRAFT, Severity.MAJOR,
+            "content/quantification", None, Severity.MAJOR,
             f"{rate:.0%} of bullets carry a measurable result "
             f"({quantified} of {len(bullets)})",
             f"Get to {QUANTIFICATION_TARGET:.0%}. Latency, throughput, accuracy, "
             "dataset size, cost -- whatever you actually moved.",
             Provenance.JD_DERIVED, evidence=f"{quantified}/{len(bullets)} bullets",
-            locator="experience",
+            locator="experience", gate=Gate.MANAGER, advice_only=True,
         ))
 
     out.extend(_duplicate_bullets(bullets))
@@ -329,6 +338,12 @@ def content_mechanics(resume: Resume) -> list[Finding]:
 
 
 def _invariant_fix(failures: list[str]) -> str:
+    """The fix text for a bullet that states no outcome, naming its other gaps too.
+
+    `content/no-outcome` deducts for the outcome alone -- the other three predicates
+    are priced elsewhere or nowhere (07 §3, 12) -- but the advice is still worth
+    giving, and it is free. It is the surviving half of what the bundle used to say.
+    """
     parts = {
         "outcome": "state what changed, not what you were assigned",
         "measurability": "add the number that moved",
@@ -353,6 +368,7 @@ def _duplicate_bullets(bullets: list[tuple[str, str]]) -> list[Finding]:
                     f"Near-duplicate of {other_locator}",
                     "Cut one, or differentiate the scope.",
                     Provenance.HEURISTIC, evidence=text[:90], locator=locator,
+                    gate=Gate.MANAGER,
                 ))
                 break
         seen.append((locator, tokens))

@@ -4,7 +4,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class Severity(str, Enum):
@@ -74,10 +74,14 @@ CATEGORY_GATE: dict[Category, Gate] = {
     Category.PARSEABILITY: Gate.PARSER,
     Category.STRUCTURE: Gate.PARSER,
     Category.TITLE: Gate.RECRUITER,
-    # 12 chose RECRUITER for craft and recorded the choice as provisional: once
-    # findings carry their own gate (migration 04) this entry is read by nothing, and
-    # a `scan/*` finding can print under the recruiter while a `slop/*` one prints
-    # under the manager. Until then it decides where craft's whole ledger appears.
+    # 12 chose RECRUITER for craft and called the choice provisional, expecting this
+    # entry to be read by nothing once findings carried their own gate. Nearly: no
+    # *finding* reads it -- `Finding` refuses to default a craft finding's gate, since
+    # a `scan/*` defect is the six-second read and a `slop/*` defect is not -- but
+    # `score._subscore` still reads it to place the category's own score. That is where
+    # 12's other finding bites: `_subscore` is called with the SET
+    # {RECRUITER, MANAGER}, so craft's value falls in the same bucket either way and
+    # only PARSER versus the rest is load-bearing. The entry is required and inert.
     Category.RESUME_CRAFT: Gate.RECRUITER,
     Category.PRODUCTION_OWNERSHIP: Gate.MANAGER,
     Category.AGENTIC_SYSTEMS: Gate.MANAGER,
@@ -91,10 +95,31 @@ class Finding(BaseModel):
 
     `evidence` is the quoted span from the resume. A finding without evidence is
     dropped before it reaches the report -- an unevidenced claim is not checkable.
+
+    A finding carries **its own gate** and may carry **no category**. The two go
+    together, and both come from `rule-mapping.md` §2:
+
+    * `advice_only` findings deduct nothing. They fire, they print their message and
+      fix, and they are evidence for no band -- so they must not appear in any
+      category's ledger, and giving them a category would put a number beside
+      something that cost nothing. `category` is None for them.
+    * A finding with no category still has to print somewhere, and `gate` used to be
+      derived from the category, so it now stands on its own. That also frees the
+      cases where the category's gate was the wrong answer: `Resume craft` holds both
+      `scan/*` findings, which a recruiter meets in the first six seconds, and
+      `slop/*` findings, which only a manager reading the bullets will care about.
+
+    `gate` defaults from `CATEGORY_GATE` where a category makes it unambiguous.
+    `Resume craft` is the one category where it does not, so a finding filed there
+    must name its gate.
     """
 
     rule_id: str
-    category: Category
+    category: Category | None = None
+    gate: Gate | None = None
+    # Fires, prints its fix, deducts nothing (rule-mapping.md §2, and 12's two
+    # rulings). Never has a category, and never reaches the ledger.
+    advice_only: bool = False
     severity: Severity
     message: str
     fix: str
@@ -110,9 +135,26 @@ class Finding(BaseModel):
     # composite-space `points` above.
     _raw_cost: float = 0.0
 
-    @property
-    def gate(self) -> Gate:
-        return CATEGORY_GATE[self.category]
+    @model_validator(mode="after")
+    def _resolve_gate(self) -> "Finding":
+        """Fill `gate` from the category, and refuse the two shapes that make no sense.
+
+        An advice-only finding with a category would be a cost with nowhere to go; a
+        finding with neither a category nor a gate could not be printed at all.
+        """
+        if self.advice_only and self.category is not None:
+            raise ValueError(
+                f"{self.rule_id}: an advice-only finding deducts nothing, so it has "
+                f"no category -- it needs a gate instead")
+        if self.gate is None:
+            if self.category is None:
+                raise ValueError(f"{self.rule_id}: needs a gate or a category")
+            if self.category is Category.RESUME_CRAFT:
+                raise ValueError(
+                    f"{self.rule_id}: `Resume craft` holds both recruiter-scan and "
+                    f"manager-read defects, so a finding there must name its gate")
+            self.gate = CATEGORY_GATE[self.category]
+        return self
 
 
 class Rewrite(BaseModel):

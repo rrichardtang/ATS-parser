@@ -6,6 +6,7 @@ left as intentions in a design doc.
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from ats import config
 from ats.models import (
@@ -13,6 +14,7 @@ from ats.models import (
     JUDGED_CATEGORIES,
     Category,
     Finding,
+    Gate,
     Provenance,
     Severity,
 )
@@ -20,10 +22,14 @@ from ats.score import build, rule_shares
 
 
 def _finding(rule_id="x/y", category=Category.STRUCTURE, severity=Severity.MINOR,
-             provenance=Provenance.RECRUITER_EVIDENCE):
+             provenance=Provenance.RECRUITER_EVIDENCE, **extra):
+    # `Resume craft` findings must name a gate, so supply one wherever a test reaches
+    # for an arbitrary category and lands on that one.
+    if category is Category.RESUME_CRAFT:
+        extra.setdefault("gate", Gate.MANAGER)
     return Finding(
         rule_id=rule_id, category=category, severity=severity,
-        message="m", fix="f", evidence="e", locator="l", provenance=provenance,
+        message="m", fix="f", evidence="e", locator="l", provenance=provenance, **extra,
     )
 
 
@@ -280,3 +286,158 @@ def test_the_prompt_and_the_response_parser_name_the_same_categories():
 
     assert set(prompts.CATEGORY_NAMES) == {c.value for c in JUDGED_CATEGORIES}
     assert set(passes.CATEGORY_BY_NAME) == {c.value.lower() for c in JUDGED_CATEGORIES}
+
+
+# --- Advice-only findings, and findings that carry their own gate (migration 04) -----
+
+# The whole of tool coverage -- one `kw/thin-*` per taxonomy group, plus
+# `kw/unsupported-skills` and the three `jd/missing-*` (07 §2) -- with 07 §3.1's
+# collision loser and 12's two rulings. Fourteen rules; the ticket's "eleven" counts
+# tool coverage alone.
+import json as _json
+from ats.keywords import TAXONOMY_PATH
+
+_GROUPS = sorted({key.split("/")[0] for key in
+                  _json.loads(TAXONOMY_PATH.read_text(encoding="utf-8"))["terms"]})
+ADVICE_RULES = (
+    {f"kw/thin-{group.replace('_', '-')}" for group in _GROUPS}
+    | {"kw/unsupported-skills", "jd/missing-core", "jd/missing-secondary",
+       "jd/missing-named-tools", "cred/notebook-only", "content/quantification",
+       "cred/unlinked-projects"}
+)
+
+
+def _advice(rule_id="kw/thin-core-ml", gate=Gate.RECRUITER, severity=Severity.MAJOR):
+    return Finding(
+        rule_id=rule_id, category=None, gate=gate, advice_only=True,
+        severity=severity, message="m", fix="f", evidence="e", locator="l",
+    )
+
+
+def test_an_advice_only_finding_costs_nothing_however_severe():
+    """07 §2's whole point: it fires, it prints its fix, it moves no number."""
+    for severity in Severity:
+        report = build([_advice(severity=severity)])
+        assert report.composite == 100.0
+        assert report.findings[0].points == 0.0
+
+
+def test_an_advice_only_finding_has_no_ledger_row():
+    """The ledger is a ledger of costs. A row reading -0.0 is not a cost."""
+    report = build([_advice(), _finding(category=Category.STRUCTURE)])
+    assert [row.rule_id for row in report.ledger if row.rule_id.startswith("kw/")] == []
+    assert any(row.rule_id == "x/y" for row in report.ledger)
+
+
+def test_advice_never_dilutes_what_a_real_finding_cost():
+    """Adding advice to a report must not move the composite by any amount."""
+    real = [_finding(category=Category.STRUCTURE, severity=Severity.CRITICAL)]
+    alone = build(list(real)).composite
+    with_advice = build(real + [_advice() for _ in range(20)]).composite
+    assert alone == with_advice
+
+
+def test_an_advice_only_finding_still_prints_under_a_gate():
+    report = build([_advice(gate=Gate.RECRUITER)])
+    assert [f.rule_id for f in report.by_gate(Gate.RECRUITER)] == ["kw/thin-core-ml"]
+    assert report.by_gate(Gate.MANAGER) == []
+
+
+def test_the_eleven_rules_07_and_12_named_deduct_nothing(fixtures):
+    """The dispositions, on documents rather than in a table.
+
+    Seven `kw/thin-*`, three `jd/missing-*` and `kw/unsupported-skills` are the whole
+    of tool coverage (07 §2); `cred/notebook-only` is 07 §3.1's collision loser; and
+    `content/quantification` and `cred/unlinked-projects` are 12's two rulings.
+    """
+    from ats.extract import extract
+    from ats.pipeline import deterministic
+    from ats.sections import parse
+
+    seen = set()
+    for path in fixtures.values():
+        doc = extract(str(path))
+        for finding in deterministic(doc, parse(doc.text), "", "AI Engineer"):
+            if finding.rule_id in ADVICE_RULES:
+                seen.add(finding.rule_id)
+                assert finding.advice_only, finding.rule_id
+                assert finding.category is None, finding.rule_id
+                assert finding.fix, f"{finding.rule_id} advises nothing"
+            else:
+                assert not finding.advice_only, finding.rule_id
+    assert seen, "no advice-only rule fired on any fixture"
+    assert len(ADVICE_RULES) == len(_GROUPS) + 7
+
+
+def test_a_finding_carries_its_own_gate_rather_than_borrowing_the_categorys():
+    """`Resume craft` holds both kinds, which is why the category cannot supply it.
+
+    12 chose `Gate.RECRUITER` for the category and called the choice provisional for
+    exactly this reason. A `scan/*` finding is what the first reader meets in six
+    seconds; a `slop/*` finding is in prose only the second reader reaches.
+    """
+    scan = Finding(rule_id="scan/no-summary", category=Category.RESUME_CRAFT,
+                   gate=Gate.RECRUITER, severity=Severity.MINOR,
+                   message="m", fix="f", evidence="e")
+    slop = Finding(rule_id="slop/portable", category=Category.RESUME_CRAFT,
+                   gate=Gate.MANAGER, severity=Severity.MINOR,
+                   message="m", fix="f", evidence="e")
+    assert scan.gate is Gate.RECRUITER and slop.gate is Gate.MANAGER
+    assert scan.category is slop.category
+    report = build([scan, slop])
+    assert [f.rule_id for f in report.by_gate(Gate.RECRUITER)] == ["scan/no-summary"]
+    assert [f.rule_id for f in report.by_gate(Gate.MANAGER)] == ["slop/portable"]
+
+
+def test_a_finding_in_resume_craft_must_name_its_gate():
+    """The one category where defaulting from `CATEGORY_GATE` would guess wrong."""
+    with pytest.raises(ValidationError):
+        Finding(rule_id="x/y", category=Category.RESUME_CRAFT, severity=Severity.MINOR,
+                message="m", fix="f", evidence="e")
+    # Everywhere else the category still settles it.
+    assert Finding(rule_id="x/y", category=Category.PARSEABILITY,
+                   severity=Severity.MINOR, message="m", fix="f",
+                   evidence="e").gate is Gate.PARSER
+
+
+def test_an_advice_only_finding_may_not_carry_a_category():
+    """A category is where a cost goes, and this one has no cost."""
+    with pytest.raises(ValidationError):
+        Finding(rule_id="x/y", category=Category.RESUME_CRAFT, gate=Gate.MANAGER,
+                advice_only=True, severity=Severity.MINOR, message="m", fix="f",
+                evidence="e")
+
+
+def test_a_finding_with_neither_a_category_nor_a_gate_cannot_be_printed():
+    with pytest.raises(ValidationError):
+        Finding(rule_id="x/y", severity=Severity.MINOR, message="m", fix="f",
+                evidence="e")
+
+
+def test_the_craft_categorys_own_gate_moves_nothing(monkeypatch):
+    """12's finding, still true after findings took their gates with them.
+
+    12 expected `CATEGORY_GATE[Resume craft]` to be read by nothing once findings
+    carried a gate. `score._subscore` still reads it -- but with the set
+    {RECRUITER, MANAGER}, so craft lands in the same bucket either way. The entry is
+    required and inert, and if that ever stops being true this fails rather than
+    silently moving somebody's score.
+    """
+    from ats import models
+
+    findings = [
+        Finding(rule_id="scan/no-summary", category=Category.RESUME_CRAFT,
+                gate=Gate.RECRUITER, severity=Severity.MAJOR,
+                message="m", fix="f", evidence="e"),
+        Finding(rule_id="slop/portable", category=Category.RESUME_CRAFT,
+                gate=Gate.MANAGER, severity=Severity.MAJOR,
+                message="m", fix="f", evidence="e"),
+    ]
+    before = build(list(findings))
+    monkeypatch.setitem(models.CATEGORY_GATE, Category.RESUME_CRAFT, Gate.MANAGER)
+    after = build(list(findings))
+    assert (before.composite, before.parser_subscore, before.human_subscore) == (
+        after.composite, after.parser_subscore, after.human_subscore)
+    # And the findings stayed where they put themselves, not where the category is.
+    assert len(after.by_gate(Gate.RECRUITER)) == 1
+    assert len(after.by_gate(Gate.MANAGER)) == 1

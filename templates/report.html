@@ -6,7 +6,7 @@
     <span class="rule">{{ f.rule_id }}</span>
     {% if f.confidence == "medium" %}<span class="tag">1 of 2 models</span>{% endif %}
     {% if f.provenance.value == "heuristic" %}<span class="tag">heuristic</span>{% endif %}
-    <span class="pts">&minus;{{ "%.1f"|format(f.points) }}</span>
+    <span class="pts">{% if f.advice_only %}advice{% else %}&minus;{{ "%.1f"|format(f.points) }}{% endif %}</span>
   </div>
   <p class="msg">{{ f.message }}</p>
   {% if f.evidence and f.evidence not in ("document", "header") %}
@@ -24,7 +24,7 @@
     <span class="rule">{{ g.lead.rule_id }}</span>
     {% if g.lead.confidence == "medium" %}<span class="tag">1 of 2 models</span>{% endif %}
     {% if g.lead.provenance.value == "heuristic" %}<span class="tag">heuristic</span>{% endif %}
-    <span class="pts">&minus;{{ "%.1f"|format(g.total_points) }}</span>
+    <span class="pts">{% if g.lead.advice_only %}advice{% else %}&minus;{{ "%.1f"|format(g.total_points) }}{% endif %}</span>
   </div>
   <p class="msg">{{ g.lead.message }}</p>
   {% if g.lead.evidence and g.lead.evidence not in ("document", "header") %}
@@ -38,7 +38,7 @@
     <div class="instance">
       <div class="instance-head">
         <span class="loc">{{ f.locator }}</span>
-        <span class="pts">&minus;{{ "%.1f"|format(f.points) }}</span>
+        <span class="pts">{% if f.advice_only %}advice{% else %}&minus;{{ "%.1f"|format(f.points) }}{% endif %}</span>
       </div>
       {# Each instance carries its own message and fix. Showing only the quote
          left the reader with a deduction and no stated reason for it. #}

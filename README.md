@@ -85,10 +85,15 @@ above.
 - **Structure**: sections, dates, reverse-chronological order, gaps, bullet counts.
 - **Bullet invariants**: every bullet checked for Outcome, Measurability,
   Mechanism, Ownership — independently, so strong bullets pass in any construction.
+  Each is priced once and in one place: Outcome deducts here, Ownership under
+  Production ownership, and the other two are advice.
 - **Slop patterns** ported from [`no-ai-slop`](https://github.com/petergyang/no-ai-slop),
   scoped to resume form, including the portability test.
 - **Recruiter scan** using page-1 word boxes: what is actually above the fold.
 - **Keywords**: coverage, stuffing penalties, unsupported claims, JD gap diff.
+  Tool coverage is **advice**: it prints the terms recruiters search on and deducts
+  nothing, because the corpus states requirements disjunctively ("Python, Go, *or*
+  TypeScript") and a missing term is not a missed requirement.
 
 ### Three LLM passes
 

@@ -9,7 +9,7 @@ import pytest
 
 from ats import llm, passes
 from ats.llm import Provider
-from ats.models import Category, Finding, Severity
+from ats.models import Category, Finding, Gate, Severity
 from ats.sections import Resume
 from ats.pipeline import RunInput, analyze
 
@@ -237,13 +237,15 @@ def test_unrewritable_locators_do_not_consume_the_target_budget(monkeypatch):
     resume = Resume(roles=[Role(heading="Eng", bullets=["Owned GLIDE-ME end to end"])])
     junk = [
         Finding(
-            rule_id="llm/content", category=Category.RESUME_CRAFT, severity=Severity.MAJOR,
+            rule_id="llm/content", category=Category.RESUME_CRAFT, gate=Gate.MANAGER,
+            severity=Severity.MAJOR,
             message="m", fix="f", evidence="e", locator=locator, points=50.0,
         )
         for locator in ["exp[0].heading", *(f"exp[9].bullet[{i}]" for i in range(8))]
     ]
     real = Finding(
-        rule_id="llm/content", category=Category.RESUME_CRAFT, severity=Severity.MAJOR,
+        rule_id="llm/content", category=Category.RESUME_CRAFT, gate=Gate.MANAGER,
+        severity=Severity.MAJOR,
         message="No outcome", fix="Name the metric.", evidence="Owned GLIDE-ME",
         locator="exp[0].bullet[0]", points=1.0,
     )

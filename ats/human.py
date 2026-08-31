@@ -14,7 +14,7 @@ import re
 
 from .extract import ExtractedDoc
 from .invariants import SPECIFIC_TOKEN_RE
-from .models import Category, Finding, Provenance, Severity
+from .models import Category, Finding, Gate, Provenance, Severity
 from .sections import Resume
 
 FOLD_FRACTION = 0.33
@@ -69,6 +69,7 @@ def recruiter_scan(doc: ExtractedDoc, resume: Resume) -> list[Finding]:
         out.append(Finding(
             rule_id="scan/no-identity-above-fold",
             category=Category.RESUME_CRAFT,
+            gate=Gate.RECRUITER,
             severity=Severity.MAJOR,
             message="Nothing in the top third of page 1 says what you are",
             fix="Put a role line near the top: “AI Engineer, 3 yrs — LLM serving and evals.”",
@@ -81,6 +82,7 @@ def recruiter_scan(doc: ExtractedDoc, resume: Resume) -> list[Finding]:
         out.append(Finding(
             rule_id="scan/no-evidence-above-fold",
             category=Category.RESUME_CRAFT,
+            gate=Gate.RECRUITER,
             severity=Severity.MAJOR,
             message="No concrete evidence -- no tool, model or number -- above the fold",
             fix="Move your strongest technical result into the top third of page 1.",
@@ -95,6 +97,7 @@ def recruiter_scan(doc: ExtractedDoc, resume: Resume) -> list[Finding]:
         out.append(Finding(
             rule_id="scan/no-summary",
             category=Category.RESUME_CRAFT,
+            gate=Gate.RECRUITER,
             severity=Severity.MINOR,
             message="No summary line stating what you are",
             fix="One line. What you are, how long, what you work on.",
@@ -133,6 +136,7 @@ def _experience_outranked(doc: ExtractedDoc, resume: Resume) -> list[Finding]:
     return [Finding(
         rule_id="scan/experience-outranked",
         category=Category.RESUME_CRAFT,
+        gate=Gate.RECRUITER,
         severity=Severity.MAJOR,
         message=(
             f"{' and '.join(s.title() for s in above)} appear before Experience, "
@@ -169,6 +173,7 @@ def _career_arc(resume: Resume) -> list[Finding]:
         return [Finding(
             rule_id="scan/unexplained-pivot",
             category=Category.RESUME_CRAFT,
+            gate=Gate.RECRUITER,
             severity=Severity.MINOR,
             message="Your current role is AI/ML but no earlier role reads that way",
             fix="Add one line showing the bridge -- the first ML work you shipped and when.",
@@ -212,7 +217,9 @@ def credibility(resume: Resume) -> list[Finding]:
     if NOTEBOOK_RE.search(blob) and not PRODUCTION_RE.search(blob):
         out.append(Finding(
             rule_id="cred/notebook-only",
-            category=Category.PRODUCTION_OWNERSHIP,
+            category=None,
+            gate=Gate.MANAGER,
+            advice_only=True,
             severity=Severity.MINOR,
             message="Work reads as notebook or coursework rather than shipped systems",
             fix="Lead with something that ran in production, however small.",
@@ -225,7 +232,9 @@ def credibility(resume: Resume) -> list[Finding]:
     if projects and not any(re.search(r"(?i)(github|https?://|gitlab)", l) for l in projects):
         out.append(Finding(
             rule_id="cred/unlinked-projects",
-            category=Category.RESUME_CRAFT,
+            category=None,
+            gate=Gate.MANAGER,
+            advice_only=True,
             severity=Severity.MINOR,
             message="Projects are listed but not linked",
             fix="Link each one. An unlinked project is a claim; a linked one is evidence.",

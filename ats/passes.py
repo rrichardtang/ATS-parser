@@ -17,6 +17,7 @@ from .models import (
     JUDGED_CATEGORIES,
     Category,
     Finding,
+    Gate,
     Provenance,
     Rewrite,
     Severity,
@@ -120,6 +121,9 @@ def content_judgments(
                 # unattributed content defect belongs until findings carry their own
                 # gate (migration 04).
                 category=_category(item.get("category", "")) or Category.RESUME_CRAFT,
+                # The model reads bullets, not the six-second scan, so a content
+                # finding is a manager-read defect wherever it files.
+                gate=Gate.MANAGER,
                 severity=Severity.MAJOR,
                 message=message[:200],
                 fix=(item.get("fix") or "").strip()[:200],
@@ -229,6 +233,7 @@ def slop_pass(
         findings.append(Finding(
             rule_id=_rule_id("slop", item.get("pattern"), "pattern"),
             category=Category.RESUME_CRAFT,
+            gate=Gate.MANAGER,
             severity=Severity.MINOR,
             message=f"{item.get('pattern', 'slop pattern')}: “{quote[:90]}”",
             fix=(item.get("fix") or "Rewrite plainly.")[:160],

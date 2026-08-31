@@ -86,9 +86,10 @@ def to_markdown(report: Report) -> str:
             lines += ["Nothing found.", ""]
             continue
         for f in items:
+            cost = "advice" if f.advice_only else f"−{f.points:.1f}"
             lines.append(
                 f"- `{f.locator or 'document'}` **{f.rule_id}** "
-                f"[{f.severity.value}, −{f.points:.1f}] {f.message}"
+                f"[{f.severity.value}, {cost}] {f.message}"
             )
             if f.evidence and f.evidence not in ("document", "header"):
                 lines.append(f"  > {f.evidence}")
@@ -193,9 +194,10 @@ def to_pdf(report: Report) -> bytes:
             story.append(Paragraph("Nothing found.", soft))
             continue
         for f in items:
+            cost = "advice" if f.advice_only else f"&minus;{f.points:.1f}"
             block = [Paragraph(
                 f"{_escape(f.locator or 'document')} &nbsp; {_escape(f.rule_id)} &nbsp; "
-                f"[{f.severity.value}, &minus;{f.points:.1f}]", diag),
+                f"[{f.severity.value}, {cost}]", diag),
                 Paragraph(_escape(f.message), body)]
             if f.evidence and f.evidence not in ("document", "header"):
                 block.append(Paragraph(_escape(f.evidence)[:400], quote))

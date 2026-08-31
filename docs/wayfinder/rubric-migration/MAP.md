@@ -51,8 +51,8 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 | criteria → band → value | `ats/rubric.py:band_of` (01) | nothing; the model emits a number |
 | `rule_share` per category | `07`'s table in `rule-mapping.md` | **`score.rule_shares()`, read from each spec (03)** |
 | weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`; budget 50 (02) | **`config.category_weights()`: four authored, four derived (03)** |
-| findings keyed on criterion ids | `findings-identity.md` | `passes.py:104` mints an id from model text |
-| advice-only findings that deduct nothing | `rule-mapping.md` §2 | no such concept; every finding deducts |
+| findings keyed on criterion ids | `findings-identity.md` | `passes.py` mints an id from model text |
+| advice-only findings that deduct nothing | `rule-mapping.md` §2 | **`Finding.advice_only`, fourteen rules (04)** |
 
 ## Notes
 
@@ -107,6 +107,19 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   channel is excluded from the composite instead of riding in at a permanent 100.
   `CategoryScore.assessed` carries it, and the report prints `n/a`. This is what the
   fixtures' rules-only human-gate score was silently inheriting.
+- **A finding carries its own gate, and advice carries no category** (04).
+  `Finding.advice_only` findings deduct nothing, never reach the ledger, and print
+  under a gate they name themselves — fourteen rules in all: the whole of tool
+  coverage (07 §2), `cred/notebook-only` (§3.1), and `content/quantification` and
+  `cred/unlinked-projects` (12). `Finding.gate` is a field rather than a lookup from
+  the category, which is what lets `Resume craft` hold `scan/*` findings under the
+  recruiter and `slop/*` findings under the manager. A craft finding must name its
+  gate; everywhere else the category still settles it.
+- **`content/bullet-invariants` is `content/no-outcome`** (04, implementing 12). It
+  deducts on one predicate. The other three are priced elsewhere or nowhere —
+  ownership in `Production ownership`, measurability nowhere now that
+  `content/quantification` is advice — and they survive in the fix text, which costs
+  nothing to give.
 
 ## Inherited, and not to be re-opened here
 

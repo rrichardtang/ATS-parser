@@ -117,10 +117,16 @@ def build(
     # Drop unevidenced findings: a claim with nothing quoted is not checkable.
     findings = [f for f in findings if f.evidence.strip() or f.locator == "document"]
 
+    # Advice-only findings print their fix and cost nothing (rule-mapping.md §2). They
+    # have no category by construction, so they cannot reach `deductions` at all --
+    # this is the one place that has to know they exist, and everything downstream
+    # follows from their points staying at zero.
+    charged = [f for f in findings if not f.advice_only]
+
     deductions: dict[Category, float] = {c: 0.0 for c in weights}
     ledger: list[LedgerRow] = []
 
-    for finding in findings:
+    for finding in charged:
         cost = _cost(finding, weights, points)
         finding._raw_cost = cost
         deductions[finding.category] += cost
@@ -146,7 +152,7 @@ def build(
     # cost would show "-96" beside a ledger row reading "-16" for the same defect.
     # The denominator is the assessed weight, the same one the composite divides by.
     total_weight = sum(w for c, w in weights.items() if assessed[c])
-    for finding in findings:
+    for finding in charged:
         raw_total = deductions[finding.category]
         # A category floors at zero, so deductions past 100 cost nothing. Scaling
         # by that keeps the reported points equal to what was actually lost.
@@ -154,7 +160,7 @@ def build(
         share = (weights[finding.category] / total_weight) if total_weight else 0.0
         finding.points = round(finding._raw_cost * share * floor_scale, 2)
 
-    unreadable = any(f.rule_id in UNREADABLE_RULES for f in findings)
+    unreadable = any(f.rule_id in UNREADABLE_RULES for f in charged)
 
     categories: list[CategoryScore] = []
     for category, weight in weights.items():
@@ -189,7 +195,7 @@ def build(
     # Caps are recorded rather than silently applied, so the ledger can show them
     # as their own line instead of burying them in a rounding row.
     caps: list[tuple[str, float]] = []
-    fraud = [f for f in findings if f.rule_id in FRAUD_RULES]
+    fraud = [f for f in charged if f.rule_id in FRAUD_RULES]
     if fraud:
         cap = float(config.scoring()["fraud_cap"])
         if composite > cap:
@@ -266,6 +272,8 @@ def _build_ledger(
     """
     grouped: dict[tuple[str, Category], list[Finding]] = {}
     for f in findings:
+        if f.advice_only:
+            continue  # it cost nothing, so it has no row in a ledger of costs
         grouped.setdefault((f.rule_id, f.category), []).append(f)
 
     rows: list[LedgerRow] = []

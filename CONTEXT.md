@@ -55,6 +55,14 @@ _Avoid_: issue, error, problem, flag
 Names the *kind* of defect a finding is an instance of. What the report groups by and
 the ledger totals by, so it must describe the kind, never one occurrence.
 
+**Advice-only finding**:
+A finding that fires, prints its message and fix, and deducts nothing. It is evidence
+for no band, so it carries **no category** — a category is where a cost goes and this
+has no cost — and it carries its own **gate** instead, which is how it still gets
+printed. Tool coverage is the whole of it plus three collision losers.
+_Avoid_: warning, soft finding, informational (they suggest a lesser defect; the defect
+is as real as any other, it is the *price* that is zero)
+
 **Deterministic rule**:
 A finding produced by regex or structural analysis, with no model involved.
 _Avoid_: static check, heuristic (heuristic is a provenance value, not a synonym)
