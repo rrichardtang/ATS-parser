@@ -1,6 +1,6 @@
 type: prototype (HITL)
 status: open
-claimed:
+claimed: claude
 blocked-by: 03
 
 # The content prompt asks the criteria
