@@ -6,8 +6,10 @@ edit rather than trading one for the other.
 """
 from __future__ import annotations
 
+import functools
 import json
 
+from . import rubric
 from .models import JUDGED_CATEGORIES
 from .sections import Resume
 
@@ -24,7 +26,39 @@ rather than supplying a plausible one. A fabricated figure is not a style proble
 it is something the candidate has to defend in an interview.
 """.strip()
 
-CONTENT_SYSTEM = f"""
+# Ticket 05: the content pass asks the **criteria**. The model answers, per category,
+# the five binary evidence questions in that category's spec, each with the quote that
+# settles it. It names no band and authors no number -- the band is a lookup from the
+# answers (`ats.rubric.band_of`) and the value is a lookup from the band.
+#
+# The criteria are read from the specs rather than restated here, so the questions the
+# model answers and the questions the band lookup reads can never drift apart.
+
+
+def criteria_block() -> str:
+    """The five specs, rendered as the questions a judge answers.
+
+    `yes_requires` and `no_looks_like` travel with each question on purpose: they are
+    what makes two judges answer the same way, and they are the whole of the anchoring
+    the old "score each category 0-100" prompt never had.
+    """
+    lines: list[str] = []
+    for spec in rubric.load_specs():
+        lines.append(f"## {spec['category']}")
+        lines.append(spec["measures"])
+        for criterion in spec["criteria"]:
+            lines.append(f"{criterion['id']} ({criterion['name']}): {criterion['question']}")
+            lines.append(f"    yes requires: {criterion['yes_requires']}")
+            lines.append(f"    no looks like: {criterion['no_looks_like']}")
+        lines.append("")
+    return "\n".join(lines).strip()
+
+
+@functools.lru_cache(maxsize=1)
+def content_system() -> str:
+    """Built once from the specs. A function rather than a constant so importing the
+    package does not read five JSON files before anything asks for a prompt."""
+    return f"""
 You review resumes for mid-level AI Engineer roles (about 3 years of experience).
 
 {TERSE}
@@ -35,34 +69,42 @@ Judge only what static analysis cannot. Deterministic rules have already checked
 formatting, section structure, quantification rate, keyword coverage and writing
 patterns; their findings are given to you. Do not repeat them.
 
-Your job is the substance:
-- Does each bullet describe a real outcome the candidate owned, or activity?
-- Does the AI/ML work read as hands-on production ownership, or as tutorial and
-  coursework dressed up?
-- Does the seniority signal match a mid-level hire -- more than a junior, not
-  claiming staff scope?
-- What critical information is MISSING? For this role that usually means: no
-  evaluation methodology, no scale, no latency or cost figures, no named model or
-  dataset, no indication anything reached users.
+Your job is to ANSWER THE CRITERIA below -- every one of them, for every category.
+Each is a yes/no question about evidence that is either in the resume or is not.
 
-Score each category 0-100 with a one-line justification.
+{criteria_block()}
+
+Rules for answering, none of them optional:
+- Answer every criterion in every category. Do not skip one, and do not invent one.
+- Do not name a band. Do not give a category a score. Neither is yours to choose:
+  both are computed from these answers.
+- "yes" requires an EXACT QUOTE from the resume in "evidence", and the "locator" of
+  the place it came from, copied verbatim from the PLACES list you are given.
+- "no" comes in two shapes, and the difference matters:
+  * nothing in the resume speaks to the question at all -- leave "evidence" and
+    "locator" empty and say in "why" what is absent. There is nothing to quote.
+  * the resume does speak to it and what it says is the problem -- quote it and
+    locate it, exactly as a "yes" would, and give the fix.
+- NEVER write a locator that is not in the PLACES list. A quote you cannot place is
+  worth less than no quote: say what is absent instead.
 
 Return JSON only:
 {{
-  "categories": {{"<category name>": {{"score": <0-100>, "why": "<one line>"}}}},
-  "findings": [
-    {{"pattern": "<2-4 word name for the KIND of defect, reused verbatim across
-                  every finding of that kind, e.g. unverified outcome,
-                  activity not outcome, missing scale>",
-      "message": "<the defect in this specific place, one sentence>",
-      "fix": "<what to do>",
-      "evidence": "<exact quote from the resume>",
-      "locator": "<e.g. exp[0].bullet[2] or summary>",
-      "category": "<category name>"}}
-  ]
+  "categories": {{
+    "<category name>": {{
+      "criteria": [
+        {{"id": "<C1..C5>",
+          "answer": "yes" | "no",
+          "evidence": "<exact quote from the resume, or empty>",
+          "locator": "<a locator from PLACES, or empty>",
+          "why": "<one line: what the quote settles, or what is absent>",
+          "fix": "<what to do about it -- only when the answer is no>"}}
+      ]
+    }}
+  }}
 }}
-Every finding MUST quote real text from the resume in "evidence".
 """.strip()
+
 
 SLOP_SYSTEM = f"""
 You detect AI-generated writing patterns in resumes.
@@ -183,9 +225,9 @@ Return JSON only:
 # `Parseability`, `Structure & formatting`, `Title & seniority alignment` -- are
 # deliberately absent: nothing a model says about them is used.
 #
-# Ticket 05 changes what is asked *of* these five: the prompt stops requesting a score
-# per category and starts requesting an answer per criterion, with the quote behind it.
-# The names stay.
+# Ticket 05 changed what is asked *of* these five: the prompt no longer requests a score
+# per category, it requests an answer per criterion with the quote behind it. The names
+# stay, and they are still what a reply is keyed on.
 CATEGORY_NAMES = [c.value for c in JUDGED_CATEGORIES]
 
 
@@ -216,6 +258,21 @@ def digest_text(digest: dict) -> str:
     return "\n".join(lines)
 
 
+def places(resume: Resume) -> list[str]:
+    """Every locator a criterion answer is allowed to name, with the text at it.
+
+    The baseline run had 10% of locators naming nothing in the parsed resume --
+    `exp[0]`, `skills`, and one compound locator addressing two bullets at once. A
+    model that is shown the addresses it may use has no reason to invent one, and
+    `passes` drops the ones it invents anyway.
+    """
+    out = []
+    if resume.summary:
+        out.append(f"summary: {resume.summary}")
+    out += [f"{locator}: {text}" for locator, text in resume.bullets]
+    return out
+
+
 def content_user(
     resume: Resume, full_text: str, jd_text: str, findings_summary: list[str],
     digest: dict | None = None,
@@ -227,10 +284,13 @@ def content_user(
         f"PARSED: {resume.years_experience} years across {len(resume.roles)} roles; "
         f"sections: {', '.join(resume.section_order) or 'none detected'}.",
         "",
+        "PLACES (the only locators you may use):",
+        "\n".join(places(resume)) or "(none)",
+        "",
         "ALREADY FOUND BY STATIC RULES (do not repeat these):",
         "\n".join(f"- {f}" for f in findings_summary[:40]) or "- none",
         "",
-        f"SCORE THESE CATEGORIES: {', '.join(CATEGORY_NAMES)}",
+        f"ANSWER EVERY CRITERION IN EACH CATEGORY: {', '.join(CATEGORY_NAMES)}",
     ]
     digest_summary = digest_text(digest or {})
     if digest_summary:

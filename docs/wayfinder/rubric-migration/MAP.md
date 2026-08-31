@@ -48,10 +48,10 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 | the spec says | where it lives now | what the program uses |
 |---|---|---|
 | five judged categories, three carried over | `ats/criteria/*.json` (01) + `04`'s table | **`models.Category`, the new eight (03)** |
-| criteria → band → value | `ats/rubric.py:band_of` (01) | nothing; the model emits a number |
+| criteria → band → value | `ats/rubric.py:band_of` (01) | **the model answers criteria (05)**; the band is not yet read (06) |
 | `rule_share` per category | `07`'s table in `rule-mapping.md` | **`score.rule_shares()`, read from each spec (03)** |
 | weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`; budget 50 (02) | **`config.category_weights()`: four authored, four derived (03)** |
-| findings keyed on criterion ids | `findings-identity.md` | `passes.py` mints an id from model text |
+| findings keyed on criterion ids | `findings-identity.md` | **`<slug>/<criterion id>`, from the specs (05)** |
 | advice-only findings that deduct nothing | `rule-mapping.md` §2 | **`Finding.advice_only`, fourteen rules (04)** |
 
 ## Notes
@@ -115,6 +115,22 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   the category, which is what lets `Resume craft` hold `scan/*` findings under the
   recruiter and `slop/*` findings under the manager. A craft finding must name its
   gate; everywhere else the category still settles it.
+- **The content pass asks the criteria, and a `no` produces one of two objects** (05).
+  The prompt is built from the five specs, so the questions a judge answers are the
+  same objects `band_of` reads; the model names no band and authors no number. A `no`
+  with a quote whose locator resolves against the parsed resume is a **placed
+  finding** keyed on `<slug>/<criterion id>`; every other `no` is an **unmet
+  criterion**; a `yes` produces neither, because its quote is evidence and not a fix.
+  `content_user` lists the locators an answer may name, which is the other half of
+  the defence against the baseline's 10% unresolvable ones. The report channel is
+  unioned on 10's key of record; the answers themselves are deliberately **not**
+  folded, because what a criterion split buys is 06's.
+- **A document whose roles did not parse is withheld before any call** (05).
+  `passes.withholding_reason` is checked by `content_pass` and by
+  `agreement.judge_resume`, so neither the report nor the agreement table carries a
+  judged number for `two_column`, `hidden_text` or `scanned` — all three of which
+  parse to zero roles. What a withheld category does to the *composite* is untouched
+  here and is 06's third item.
 - **`content/bullet-invariants` is `content/no-outcome`** (04, implementing 12). It
   deducts on one predicate. The other three are priced elsewhere or nowhere —
   ownership in `Production ownership`, measurability nowhere now that
@@ -143,6 +159,11 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   resume no parser can read scores above one that parses cleanly and buries its
   evidence, under both rubrics. `parse/multi-column` costs 12 points for a
   document-wide defect. Nobody has decided what it should cost.
+- **What the report does with an unmet criterion.** 05 produces them — one per
+  criterion per resume, carrying the absence the candidate most needs to hear — and
+  stops there, because nothing in the report renders a non-finding today. They ride
+  in `content_pass`'s meta, unread. This is the same undecided question as the row
+  below, arriving from the other side.
 - **How much of the old report survives.** `report.py` groups by gate and prints a
   ledger of what each finding cost. Advice-only findings cost nothing and still need
   printing, and the old map's `07` says they need a gate and no category. Whether that

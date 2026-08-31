@@ -99,7 +99,7 @@ above.
 
 | # | Pass | Job |
 |---|---|---|
-| 1 | Content | Substance, ownership, seniority fit, missing information |
+| 1 | Content | Answers the rubric's criteria — five binary evidence questions per judged category, each with the quote that settles it |
 | 2 | Slop | Named patterns beyond regex reach — never an AI-likelihood score |
 | 3 | Rewrite | Generates, fact-checks, ranks, and polishes fixes for both content and slop in one edit, after seeing both |
 

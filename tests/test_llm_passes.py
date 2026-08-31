@@ -7,25 +7,35 @@ import json
 
 import pytest
 
-from ats import llm, passes
+from ats import llm, passes, prompts, rubric
 from ats.llm import Provider
-from ats.models import Category, Finding, Gate, Severity
+from ats.models import JUDGED_CATEGORIES, Category, Finding, Gate, Severity
 from ats.sections import Resume
 from ats.pipeline import RunInput, analyze
 
+# One judge's answers: a placed `no` (the resume says something and what it says is
+# the problem), an unplaced `no` (nothing to point at), and a `yes`.
 CONTENT_REPLY = json.dumps({
     "categories": {
-        "Production ownership": {"score": 45, "why": "no outcomes stated"},
-        "Evaluation rigour": {"score": 50, "why": "generic"},
-        "Resume craft": {"score": 40, "why": "formulaic"},
+        "Production ownership": {"criteria": [
+            {"id": "C1", "answer": "no", "why": "No bullet names a destination",
+             "fix": "Say where it shipped.",
+             "evidence": "Leveraged cutting-edge AI technologies",
+             "locator": "exp[0].bullet[0]"},
+            {"id": "C3", "answer": "no", "why": "Nothing states an operational fact",
+             "fix": "Give a load, an incident, or an SLO.",
+             "evidence": "", "locator": ""},
+            {"id": "C5", "answer": "yes", "why": "the candidate is the subject",
+             "evidence": "Leveraged cutting-edge AI technologies",
+             "locator": "exp[0].bullet[0]"},
+        ]},
+        "Resume craft": {"criteria": [
+            {"id": "C5", "answer": "no", "why": "This bullet could be anyone's",
+             "fix": "Name the system.",
+             "evidence": "Leveraged cutting-edge AI technologies",
+             "locator": "exp[0].bullet[0]"},
+        ]},
     },
-    "findings": [{
-        "message": "No bullet names a model or dataset",
-        "fix": "Name the model and the eval set.",
-        "evidence": "Leveraged cutting-edge AI technologies",
-        "locator": "exp[0].bullet[0]",
-        "category": "Production ownership",
-    }],
 })
 
 SLOP_REPLY = json.dumps({"findings": [{
@@ -259,46 +269,178 @@ def test_unrewritable_locators_do_not_consume_the_target_budget(monkeypatch):
     assert result.meta.get("reason") != "no bullets needed rewriting"
 
 
-def test_content_findings_are_keyed_by_the_defect_the_model_named(monkeypatch):
-    """Distinct content defects must not collapse into one card and one ledger row.
+def _answers(*items):
+    """items: (category, criterion id, answer, why, evidence, locator)."""
+    categories: dict = {}
+    for category, cid, answer, why, evidence, locator in items:
+        categories.setdefault(category, {"criteria": []})["criteria"].append(
+            {"id": cid, "answer": answer, "why": why, "fix": "do it",
+             "evidence": evidence, "locator": locator}
+        )
+    return json.dumps({"categories": categories})
 
-    Every content finding used to carry rule_id "llm/content", so Report.grouped
-    and the ledger both treated unrelated defects as instances of one rule and
-    titled the lot after whichever scored highest.
-    """
-    reply = json.dumps({"categories": {}, "findings": [
-        {"pattern": "unverified outcome", "message": "No metric for routing",
-         "fix": "Add one.", "evidence": "cutting inference passes",
-         "locator": "exp[0].bullet[1]", "category": "Production ownership"},
-        {"pattern": "unverified outcome", "message": "No metric for the mapping tool",
-         "fix": "Add one.", "evidence": "Built a concurrent mapping tool",
-         "locator": "exp[0].bullet[4]", "category": "Production ownership"},
-        {"pattern": "activity not outcome", "message": "Lists duties, not results",
-         "fix": "State the result.", "evidence": "Owned GLIDE-ME end to end",
-         "locator": "exp[0].bullet[0]", "category": "Production ownership"},
-    ]})
+
+def _one_content_pass(monkeypatch, reply, resume):
     monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: reply))
-
-    result = passes.content_pass(
-        [Provider("anthropic", "k", "m")], Resume(), "text", "", [], samples=1,
+    return passes.content_pass(
+        [Provider("anthropic", "k", "m")], resume, "text", "", [], samples=1,
         temperature=0.0,
     )
 
+
+def _resume():
+    from ats.sections import Role
+
+    return Resume(roles=[Role(heading="Eng", bullets=[
+        "Owned GLIDE-ME end to end", "Built a concurrent mapping tool",
+    ])])
+
+
+def test_content_findings_are_keyed_by_the_criterion_they_answer(monkeypatch):
+    """The model no longer names the kind of defect; the criterion it answers is the kind.
+
+    That single line -- an id minted from model text -- produced 108 distinct names
+    for 198 findings in the baseline. The vocabulary is closed now, and it is the
+    specs' own: `<slug>/<criterion id>`.
+    """
+    reply = _answers(
+        ("Production ownership", "C1", "no", "No destination named",
+         "Owned GLIDE-ME end to end", "exp[0].bullet[0]"),
+        ("Production ownership", "C3", "no", "No operational fact",
+         "Built a concurrent mapping tool", "exp[0].bullet[1]"),
+    )
+    result = _one_content_pass(monkeypatch, reply, _resume())
+
     assert {f.rule_id for f in result.data} == {
-        "llm/unverified-outcome", "llm/activity-not-outcome",
+        "production-ownership/C1", "production-ownership/C3",
     }
 
 
-def test_content_findings_without_a_pattern_still_get_an_id(monkeypatch):
-    """The model may omit the label; the pass must not produce an empty rule id."""
-    reply = json.dumps({"categories": {}, "findings": [
-        {"message": "No metric", "fix": "Add one.", "evidence": "cutting passes",
-         "locator": "exp[0].bullet[1]", "category": "Production ownership"},
-    ]})
-    monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: reply))
-
-    result = passes.content_pass(
-        [Provider("anthropic", "k", "m")], Resume(), "text", "", [], samples=1,
-        temperature=0.0,
+def test_a_criterion_the_specs_do_not_have_is_dropped(monkeypatch):
+    """Exactly as an unevidenced finding is dropped. There is no C9."""
+    reply = _answers(
+        ("Production ownership", "C9", "no", "invented", "Owned GLIDE-ME end to end",
+         "exp[0].bullet[0]"),
+        ("Impact & quantification", "C1", "no", "retired category",
+         "Owned GLIDE-ME end to end", "exp[0].bullet[0]"),
+        ("Production ownership", "C1", "no", "No destination named",
+         "Owned GLIDE-ME end to end", "exp[0].bullet[0]"),
     )
-    assert [f.rule_id for f in result.data] == ["llm/content"]
+    result = _one_content_pass(monkeypatch, reply, _resume())
+
+    assert [f.rule_id for f in result.data] == ["production-ownership/C1"]
+    assert [c["criterion_id"] for c in result.meta["unmet"]] == []
+
+
+def test_a_no_with_nothing_to_point_at_is_an_unmet_criterion_not_a_finding(monkeypatch):
+    """The absence case. `/CONTEXT.md` requires a finding to carry a quote, and
+    nothing in the resume says any work reached production -- so there is nothing to
+    quote and nowhere to point. It is the other object a `no` produces."""
+    reply = _answers(
+        ("Production ownership", "C1", "no", "Nothing says the work reached anywhere",
+         "", ""),
+    )
+    result = _one_content_pass(monkeypatch, reply, _resume())
+
+    assert result.data == []
+    assert [c["criterion_id"] for c in result.meta["unmet"]] == ["production-ownership/C1"]
+    assert result.meta["unmet"][0]["message"] == "Nothing says the work reached anywhere"
+
+
+def test_a_locator_that_resolves_to_nothing_demotes_rather_than_discards(monkeypatch):
+    """10% of the baseline's locators named nothing in the parsed resume.
+
+    The reading survives as an unmet criterion; the fictional address does not.
+    """
+    reply = _answers(
+        ("Production ownership", "C1", "no", "No destination named",
+         "Owned GLIDE-ME end to end", "exp[9].bullet[4]"),
+        ("Production ownership", "C3", "no", "No operational fact",
+         "Owned GLIDE-ME end to end", "skills"),
+    )
+    result = _one_content_pass(monkeypatch, reply, _resume())
+
+    assert result.data == []
+    assert {c["criterion_id"] for c in result.meta["unmet"]} == {
+        "production-ownership/C1", "production-ownership/C3",
+    }
+
+
+def test_a_criterion_answered_yes_produces_neither_object(monkeypatch):
+    """Its quote is the evidence that settles the criterion, not a defect to fix."""
+    reply = _answers(
+        ("Production ownership", "C1", "yes", "Shipped it",
+         "Owned GLIDE-ME end to end", "exp[0].bullet[0]"),
+    )
+    result = _one_content_pass(monkeypatch, reply, _resume())
+
+    assert result.data == []
+    assert result.meta["unmet"] == []
+    assert result.meta["criteria_answered"] == 1
+
+
+def test_an_unreadable_answer_is_dropped_rather_than_read_as_a_no(monkeypatch):
+    """A judge that abstains and a judge that answered `no` are not the same thing --
+    `rubric.band_of` refuses an incomplete answer set rather than banding one."""
+    reply = _answers(
+        ("Production ownership", "C1", "maybe", "hedged", "", ""),
+    )
+    result = _one_content_pass(monkeypatch, reply, _resume())
+
+    assert result.meta["criteria_answered"] == 0
+    assert result.data == [] and result.meta["unmet"] == []
+
+
+def test_two_judges_reporting_one_defect_collide_on_kind_and_place(monkeypatch):
+    """10's key of record, now that both halves are closed."""
+    def dispatch(provider, system, user, temperature):
+        return _answers((
+            "Production ownership", "C1", "no",
+            "no destination" if provider.name == "anthropic" else "never says where",
+            "Owned GLIDE-ME end to end", "exp[0].bullet[0]",
+        ))
+
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    result = passes.content_pass(
+        [Provider("anthropic", "k", "m"), Provider("openai", "k", "m")],
+        _resume(), "text", "", [], samples=1, temperature=0.0,
+    )
+
+    assert len(result.data) == 1
+
+
+def test_the_content_prompt_asks_the_criteria_and_no_longer_asks_for_a_score():
+    system = prompts.content_system()
+
+    assert "MISSING?" not in system, "the open-ended search is what 10 removed"
+    assert "Score each category" not in system
+    assert '"pattern"' not in system, "the model has no findings vocabulary of its own"
+    for slug in rubric.SLUGS:
+        spec = rubric.load_spec(slug)
+        assert spec["category"] in system
+        for criterion in spec["criteria"]:
+            assert criterion["question"] in system, f"{slug}/{criterion['id']} not asked"
+
+
+def test_a_document_whose_roles_did_not_parse_is_withheld(monkeypatch, fixtures):
+    """05's rule: every criterion asks about a bullet inside a role, so a document
+    whose roles did not survive extraction has its judged categories withheld -- not
+    guessed, and not zeroed. The parser gate has already charged for that defect."""
+    calls = {"content": 0}
+
+    def dispatch(provider, system, user, temperature):
+        if "ANSWER THE CRITERIA" in system:
+            calls["content"] += 1
+        return _router(system)
+
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
+
+    report = analyze(RunInput(pdf_path=str(fixtures["two_column"]),
+                              ensemble_mode="economy", enable_rewrites=False))
+
+    assert calls["content"] == 0, "a withheld document must not cost a call"
+    assert report.run_meta["pass1"]["withheld"] == [c.value for c in JUDGED_CATEGORIES]
+    assert any("withheld" in note for note in report.notes)
+    assert not [f for f in report.findings if f.source.startswith("llm:")
+                and f.rule_id.startswith("production-ownership/")]

@@ -157,6 +157,49 @@ class Finding(BaseModel):
         return self
 
 
+class CriterionAnswer(BaseModel):
+    """One binary evidence question, answered by one judge, with what settles it.
+
+    The unit the content pass now returns instead of a number. `met` is what the band
+    lookup (`rubric.band_of`) reads; the quote and the place are what makes the answer
+    checkable by somebody who disagrees with it.
+
+    `criterion_id` is qualified -- `production-ownership/C1` -- because it is also the
+    `rule_id` of any finding this answer places, and a rule id has to name the kind of
+    defect across the whole report, not within one category.
+    """
+
+    criterion_id: str
+    category: Category
+    met: bool
+    evidence: str = ""
+    locator: str = ""
+    why: str = ""
+    # What to do about it, asked for only when the answer is `no`. It becomes the
+    # placed finding's fix, or is dropped with the answer that had nothing to place.
+    fix: str = ""
+
+
+class UnmetCriterion(BaseModel):
+    """A criterion answered `no` with nothing to point at (findings-identity.md §3).
+
+    The absence case: nothing in the resume says any work reached production, so there
+    is no quote and no place, and `/CONTEXT.md` requires a finding to carry a quote.
+    It is not a finding, then -- it is the other object a `no` produces, and it is the
+    most important thing the candidate could be told.
+
+    A `no` that *does* have text to point at is a placed `Finding` instead, keyed on
+    the same criterion id. A placed finding whose locator does not resolve against the
+    parsed resume is demoted to one of these: the reading survives, the fictional
+    address does not.
+    """
+
+    criterion_id: str
+    category: Category
+    name: str
+    message: str
+
+
 class Rewrite(BaseModel):
     """A proposed edit. Never applied automatically -- a human accepts it in a diff."""
 

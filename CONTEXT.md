@@ -55,6 +55,20 @@ _Avoid_: issue, error, problem, flag
 Names the *kind* of defect a finding is an instance of. What the report groups by and
 the ledger totals by, so it must describe the kind, never one occurrence.
 
+**Placed finding**:
+A finding that answers a criterion: the resume does say something about it and what
+it says is the problem. Its `rule_id` is the criterion id and its locator resolves
+against the parsed resume. A criterion answered *yes* can be placed too — its quote
+is evidence, never a fix.
+_Avoid_: content finding, model finding (both name the channel, not the object)
+
+**Unmet criterion**:
+The other object a criterion answered *no* produces: the absence case, where nothing
+in the resume speaks to the question, so there is no quote and nowhere to point. Not
+a finding — a finding carries a quote — and the most important thing the candidate
+could be told. A placed finding whose locator resolves to nothing demotes to one.
+_Avoid_: missing finding, gap (a gap is not addressed to anything)
+
 **Advice-only finding**:
 A finding that fires, prints its message and fix, and deducts nothing. It is evidence
 for no band, so it carries **no category** — a category is where a cost goes and this

@@ -31,7 +31,15 @@ the band's value → blended with the rule channel at that category's `rule_shar
    placeholder) lands exactly here.
 3. **Withheld categories.** A withheld category is not a zero and not a 100. What it
    does to the composite, and what the report says in its place, has never been
-   specified because nothing could withhold before.
+   specified because nothing could withhold before. 05 built the withholding itself:
+   `content_pass` returns `meta["withheld"]` naming the five judged categories and
+   the reason, and spends no call. `score.build` has not been told, so today the
+   three judged categories that have a rule channel ride at 100 on a document whose
+   roles never parsed — which is the shape of the bug, ready to be measured.
+
+Also arriving from 05: `ensemble.combine_scores` is no longer reached by the
+pipeline, and the unfolded answers are on each `ContentJudgment`, reachable as
+`passes.criterion_answers(j.categories)`.
 
 Done when: a category's judged value is a lookup from criterion answers rather than a
 number the model chose; the blend uses the per-category `rule_share`; two providers

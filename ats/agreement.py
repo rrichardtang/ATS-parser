@@ -4,8 +4,8 @@ MAP.md's acceptance test is a claim about two judges, not about a resume -- per
 category they must land in the same place, and the composite must not move more
 than 5 points between them, above 8 being a failure. Nothing in the pipeline can
 show that, because every disagreement is folded away before a score is reported:
-`content_pass` averages a provider's samples, `combine_scores` averages across
-providers, and the report shows the mean.
+`content_pass` unions what the judges reported and, until 05, averaged their numbers
+within a provider and then across providers, so the report showed the mean.
 
 So this module keeps the samples apart and reports three numbers per category,
 which is what ticket 08 asked for instead of one:
@@ -22,11 +22,12 @@ which is what ticket 08 asked for instead of one:
                         every resume lands on is a coincidence, not a rubric, and
                         raw agreement cannot tell the two apart.
 
-Ticket 03 settled that the model will name a *band* rather than author a number,
-but that is a decision, not yet code: `prompts.CONTENT_SYSTEM` still asks for
-0-100. So the channel is read from the reply rather than assumed -- a number, a
-band label, or (ticket 05's second experiment, band versus band-plus-a-point-
-inside-it) both at once, each with the agreement statistic its scale deserves.
+Since ticket 05 the model authors neither: it answers **criteria**, and the band is
+a lookup from the answers. So the channel is read from the reply rather than assumed
+-- criterion answers, a band label, or the 0-100 number a run recorded before 05
+carries -- each with the agreement statistic its scale deserves. Runs recorded under
+the old prompt still load and still measure, which is the point of keeping the raw
+reply on `ContentJudgment` rather than a parsed number.
 """
 from __future__ import annotations
 
@@ -38,7 +39,7 @@ from typing import Any, Callable, Iterable
 from . import config, passes, pipeline
 from .extract import extract
 from .llm import Provider
-from .models import Category, Finding
+from .models import Category, Finding, UnmetCriterion
 from .reliability import Alpha, alpha
 from .score import build
 from .sections import parse
@@ -85,6 +86,7 @@ class ResumeRun:
                     "sample": j.sample,
                     "categories": j.categories,
                     "findings": [f.model_dump(mode="json") for f in j.findings],
+                    "unmet": [u.model_dump(mode="json") for u in j.unmet],
                 }
                 for j in self.judgments
             ],
@@ -102,6 +104,7 @@ class ResumeRun:
                     sample=int(j["sample"]),
                     categories=j.get("categories", {}),
                     findings=[Finding.model_validate(f) for f in j.get("findings", [])],
+                    unmet=[UnmetCriterion.model_validate(u) for u in j.get("unmet", [])],
                 )
                 for j in data.get("judgments", [])
             ],
@@ -155,6 +158,15 @@ def judge_resume(
         return ResumeRun(
             name, str(pdf_path), findings,
             skipped="no text layer, so the content pass never runs on this document",
+        )
+    withheld = passes.withholding_reason(resume)
+    if withheld:
+        # 05 withholds the judged categories on a document whose roles did not
+        # survive extraction. Judging it here anyway would put agreement numbers in
+        # the table for the one kind of document the pipeline refuses to judge.
+        return ResumeRun(
+            name, str(pdf_path), findings,
+            skipped=f"judged categories withheld: {withheld}",
         )
     judgments, errors = passes.content_judgments(
         providers, resume, doc.text, "", findings, samples, temperature,
@@ -264,7 +276,13 @@ class Scored:
 
 
 def score_judgment(run: ResumeRun, judgment: passes.ContentJudgment) -> Scored | None:
-    """None when the judgement carried no number -- a band has no value until 05."""
+    """None when the judgement carried no number.
+
+    Which, since 05, is every live judgement: the model answers criteria and the
+    value is a lookup 06 has yet to wire. What still lands here is a run recorded
+    under the old prompt, which is the before picture every rubric change is judged
+    against.
+    """
     values: dict[Category, tuple[float, float, float]] = {}
     for name, entry in judgment.categories.items():
         value = numeric_of(entry)

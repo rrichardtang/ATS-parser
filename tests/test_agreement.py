@@ -10,7 +10,10 @@ import json
 import pytest
 
 from ats import agreement, llm, passes, prompts
+from ats import pipeline
 from ats.agreement_table import render
+from ats.extract import extract
+from ats.sections import parse
 from ats.llm import Provider
 from ats.models import Category
 
@@ -18,14 +21,30 @@ from ats.models import Category
 CATEGORIES = prompts.CATEGORY_NAMES
 
 
-def _reply(scores, findings=()):
+def _reply(scores, unmet_criteria=()):
+    """A content reply carrying both channels.
+
+    The `score` per category is what a run recorded before ticket 05 carries, and the
+    numeric agreement tables are still measured on runs like it. `criteria` is what a
+    judge answers now: each entry here is a criterion answered `no` with a quote and a
+    place, which is what `passes.place` turns into a placed finding.
+    """
     return json.dumps({
-        "categories": {name: {"score": value, "why": "because"} for name, value in scores.items()},
-        "findings": [
-            {"pattern": p, "message": m, "fix": "do it", "evidence": e,
-             "locator": loc, "category": Category.PRODUCTION_OWNERSHIP.value}
-            for p, m, e, loc in findings
-        ],
+        "categories": {
+            name: {
+                "score": value,
+                "why": "because",
+                "criteria": [
+                    {"id": cid, "answer": "no", "why": why, "fix": "do it",
+                     "evidence": evidence, "locator": locator}
+                    for cid, why, evidence, locator in (
+                        unmet_criteria if name == Category.PRODUCTION_OWNERSHIP.value
+                        else ()
+                    )
+                ],
+            }
+            for name, value in scores.items()
+        },
     })
 
 
@@ -108,7 +127,8 @@ def test_model_findings_deduct_today_and_not_under_ticket_03(monkeypatch, fixtur
     decision -- findings are evidence for the band, not a deduction -- it cannot.
     """
     wordy = _reply(dict.fromkeys(CATEGORIES, 60), [
-        (f"defect {i}", f"bullet {i} states no outcome", "Cut p99 inference latency", f"exp[0].bullet[{i}]")
+        (f"C{i + 1}", f"bullet {i} states no outcome", "Cut p99 inference latency",
+         f"exp[0].bullet[{i}]")
         for i in range(4)
     ])
     providers = _judges(monkeypatch, {"anthropic": [wordy], "openai": [AGREEING]})
@@ -124,9 +144,9 @@ def test_findings_agreement_keys_on_defect_kind_and_place_not_wording(monkeypatc
     """Two judges naming the same defect in the same place have agreed."""
     same_defect = "exp[0].bullet[0]"
     a = _reply(dict.fromkeys(CATEGORIES, 60),
-               [("missing scale", "no scale given here", "Cut p99 inference latency", same_defect)])
+               [("C3", "no scale given here", "Cut p99 inference latency", same_defect)])
     b = _reply(dict.fromkeys(CATEGORIES, 60),
-               [("missing scale", "this bullet never says how big", "Cut p99 inference latency", same_defect)])
+               [("C3", "this bullet never says how big", "Cut p99 inference latency", same_defect)])
     providers = _judges(monkeypatch, {"anthropic": [a], "openai": [b]})
     run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 1, 0.0)
     report = agreement.analyse(run)
@@ -146,8 +166,8 @@ def test_findings_agreement_reports_a_chance_line_under_every_key(monkeypatch, f
     1.00 -- and chance is 1.00 too, because there were only ever two keys in
     play and each judge took both. Kappa is what says so.
     """
-    places = [("missing scale", "no scale", "Cut p99 inference latency", "exp[0].bullet[0]"),
-              ("missing scale", "no scale", "Cut p99 inference latency", "exp[0].bullet[1]")]
+    places = [("C3", "no scale", "Cut p99 inference latency", "exp[0].bullet[0]"),
+              ("C3", "no scale", "Cut p99 inference latency", "exp[0].bullet[1]")]
     providers = _judges(monkeypatch, {
         "anthropic": [_reply(dict.fromkeys(CATEGORIES, 60), places)],
         "openai": [_reply(dict.fromkeys(CATEGORIES, 60), places)],
@@ -215,14 +235,28 @@ def test_the_table_renders_every_section(monkeypatch, fixtures):
         assert expected in text, f"missing {expected!r}"
 
 
-def test_a_capped_composite_is_marked_rather_than_counted_as_agreement(monkeypatch, fixtures):
-    """hidden_text pins the composite at the fraud cap for both judges.
+def test_a_capped_composite_is_marked_rather_than_counted_as_agreement(fixtures):
+    """A composite pinned by the fraud cap has a spread of 0 whatever the judges said.
 
-    Its spread is 0 whatever they said, so a bare pass on that row would be the
-    same coincidence the chance correction exists to catch one level up.
+    A bare pass on that row would be the same coincidence the chance correction
+    exists to catch one level up. The run is built here rather than collected: since
+    05 the `hidden_text` fixture parses to no roles at all, so the harness withholds
+    it before a judge is asked -- which is the test below this one.
     """
-    providers = _judges(monkeypatch, {"anthropic": [AGREEING], "openai": [DISAGREEING]})
-    run = agreement.collect(providers, [("hidden_text", str(fixtures["hidden_text"]))], 1, 0.0)
+    doc = extract(str(fixtures["hidden_text"]))
+    resume = parse(doc.text)
+    deterministic = pipeline.deterministic(
+        doc, resume, "", pipeline.resolve_target_title("")
+    )
+    assert any(f.rule_id == "parse/hidden-text" for f in deterministic)
+
+    run = agreement.HarnessRun(
+        meta={"providers": ["anthropic", "openai"]},
+        resumes=[agreement.ResumeRun("hidden_text", "x", deterministic, [
+            _numeric("anthropic", 0, dict.fromkeys(CATEGORIES, 60)),
+            _numeric("openai", 0, dict.fromkeys(CATEGORIES, 82)),
+        ])],
+    )
     report = agreement.analyse(run)
 
     assert report.composites[0].capped
@@ -230,6 +264,22 @@ def test_a_capped_composite_is_marked_rather_than_counted_as_agreement(monkeypat
     text = render(report)
     assert "hidden_text *" in text
     assert "pinned by a cap" in text
+
+
+def test_a_document_whose_roles_did_not_parse_is_withheld_not_judged(monkeypatch, fixtures):
+    """05's withholding rule, at the harness.
+
+    `two_column` has a text layer, so the no-text-layer skip does not catch it -- and
+    it parses to zero roles, so every criterion would be answered about bullets that
+    are not there. Judging it anyway would put agreement numbers in the table for the
+    one kind of document the pipeline refuses to judge.
+    """
+    providers = _judges(monkeypatch, {"anthropic": [AGREEING], "openai": [AGREEING]})
+    run = agreement.collect(providers, [("two_column", str(fixtures["two_column"]))], 2, 0.7)
+
+    assert "withheld" in run.resumes[0].skipped
+    assert not run.resumes[0].judgments
+    assert agreement.analyse(run).skipped == [("two_column", run.resumes[0].skipped)]
 
 
 def test_a_lone_judge_never_counts_as_band_agreement():

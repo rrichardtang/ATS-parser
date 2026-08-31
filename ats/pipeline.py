@@ -109,7 +109,10 @@ def analyze(run: RunInput) -> Report:
 
     findings += content.data
     findings += slop_result.data
-    meta["pass1"] = {k: v for k, v in content.meta.items() if k != "scores"}
+    # `unmet` is the criterion-by-criterion absence list, which is report-sized
+    # rather than meta-sized; it stays out of the run metadata until 06 decides
+    # where in the report it belongs.
+    meta["pass1"] = {k: v for k, v in content.meta.items() if k != "unmet"}
     meta["pass2"] = slop_result.meta
     notes += [f"Content pass degraded: {e}" for e in content.errors[:2]]
     notes += [f"Slop pass degraded: {e}" for e in slop_result.errors[:2]]
@@ -129,12 +132,26 @@ def analyze(run: RunInput) -> Report:
         meta["pass3"] = rewrite_result.meta
         notes += [f"Rewrite pass degraded: {e}" for e in rewrite_result.errors[:2]]
 
-    llm_scores = {}
-    for name, values in (content.meta.get("scores") or {}).items():
-        try:
-            llm_scores[Category(name)] = values
-        except ValueError:
-            continue
+    # Since 05 the content pass returns criterion answers rather than a number per
+    # category, and turning those into a judged value is ticket 06. Until it lands
+    # there is nothing to blend: the judged categories are scored by their rule
+    # channel alone, and the two with no rule channel (`Agentic systems`,
+    # `AI-assisted coding fluency`) come out unassessed rather than at a silent 100 --
+    # which is what `CategoryScore.assessed` was built to say.
+    llm_scores: dict[Category, tuple[float, float, float]] = {}
+    if content.meta.get("withheld"):
+        notes.append(
+            "Judged categories withheld: " + content.meta["withheld_reason"] + ". "
+            "The parser gate has already charged for that; scoring the content as "
+            "well would charge one fault twice."
+        )
+    elif content.data or content.meta.get("criteria_answered"):
+        notes.append(
+            "The judge answered the rubric's criteria, but turning criterion answers "
+            "into a category score is not wired yet -- the judged categories below "
+            "show their deterministic channel only, so they read higher than a "
+            "finished run would."
+        )
 
     partial = bool(content.errors or slop_result.errors) or len(providers) < 2
     if len(providers) == 1:

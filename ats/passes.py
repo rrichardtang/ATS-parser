@@ -8,19 +8,22 @@ Every pass degrades on its own: if one fails, the rest of the report still rende
 """
 from __future__ import annotations
 
+import functools
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from . import ensemble, prompts
+from . import ensemble, prompts, rubric
 from .llm import LLMError, Provider, call
 from .models import (
     JUDGED_CATEGORIES,
     Category,
+    CriterionAnswer,
     Finding,
     Gate,
     Provenance,
     Rewrite,
     Severity,
+    UnmetCriterion,
 )
 from .sections import Resume
 
@@ -51,26 +54,194 @@ def _category(name: str) -> Category | None:
     return CATEGORY_BY_NAME.get((name or "").strip().lower())
 
 
+@functools.lru_cache(maxsize=1)
+def criteria_index() -> dict[Category, tuple[str, dict[str, dict]]]:
+    """Category -> (spec slug, {criterion id: criterion}), from the specs themselves.
+
+    The closed vocabulary a content reply is checked against. It is the rubric's own
+    list rather than a copy of it, so a criterion the prompt asks about and a criterion
+    the band lookup reads are the same criterion by construction.
+    """
+    return {
+        Category(spec["category"]): (
+            spec["slug"], {c["id"]: c for c in spec["criteria"]}
+        )
+        for spec in rubric.load_specs()
+    }
+
+
+YES = {"yes", "true", "y", "met"}
+NO = {"no", "false", "n", "unmet"}
+
+
+def _met(value) -> bool | None:
+    """None when the reply did not actually answer.
+
+    An abstention and a `no` are not the same thing -- `rubric.band_of` refuses an
+    incomplete answer set rather than banding one -- so an unreadable answer is
+    dropped instead of being read as the absence of evidence.
+    """
+    if isinstance(value, bool):
+        return value
+    text = str(value or "").strip().lower()
+    if text in YES:
+        return True
+    if text in NO:
+        return False
+    return None
+
+
+def criterion_answers(categories: dict) -> list[CriterionAnswer]:
+    """The criterion answers in one reply, checked against the specs.
+
+    Everything the specs do not contain is dropped, exactly as an unevidenced finding
+    is dropped: a category nobody asked about (`_category`), a criterion id that does
+    not exist, and an answer that is neither yes nor no. A repeated id keeps the first
+    answer -- two answers to one question is not a second opinion, it is a malformed
+    reply.
+    """
+    index = criteria_index()
+    answers: list[CriterionAnswer] = []
+    seen: set[str] = set()
+    for name, entry in (categories or {}).items():
+        category = _category(name)
+        if category is None or not isinstance(entry, dict):
+            continue
+        slug, criteria = index[category]
+        for item in entry.get("criteria") or []:
+            if not isinstance(item, dict):
+                continue
+            cid = str(item.get("id") or "").strip().upper()
+            if cid not in criteria:
+                continue
+            met = _met(item.get("answer"))
+            if met is None:
+                continue
+            qualified = f"{slug}/{cid}"
+            if qualified in seen:
+                continue
+            seen.add(qualified)
+            answers.append(CriterionAnswer(
+                criterion_id=qualified,
+                category=category,
+                met=met,
+                evidence=(item.get("evidence") or "").strip()[:200],
+                locator=(item.get("locator") or "").strip()[:40],
+                why=(item.get("why") or "").strip()[:200],
+                fix=(item.get("fix") or "").strip()[:200],
+            ))
+    return answers
+
+
+def resolvable_locators(resume: Resume) -> set[str]:
+    """The places a criterion answer may name: real bullets, plus the summary.
+
+    The rewrite pass already resolved locators this way before spending a call on
+    one. Ticket 05 moves that resolution earlier and applies it to every answer.
+    """
+    places = {locator for locator, text in resume.bullets if text}
+    if resume.summary:
+        places.add("summary")
+    return places
+
+
+def place(
+    answers: list[CriterionAnswer], resume: Resume, provider_name: str,
+) -> tuple[list[Finding], list[UnmetCriterion]]:
+    """Split the `no` answers into the two objects findings-identity.md §3 defines.
+
+    A `no` with a quote in a place that resolves is a **placed finding**, keyed on the
+    criterion id. Anything else a `no` produced -- no quote, no locator, or a locator
+    that names nothing in the parsed resume -- is an **unmet criterion**, which is the
+    absence the band lookup reads and the report leads with.
+
+    A `yes` produces neither. Its quote is the evidence that settles the criterion and
+    it travels on the answer; rendering it as a defect with a fix would be the report
+    telling somebody to repair the thing they did right.
+    """
+    places = resolvable_locators(resume)
+    index = criteria_index()
+    findings: list[Finding] = []
+    unmet: list[UnmetCriterion] = []
+    for answer in answers:
+        if answer.met:
+            continue
+        _slug, criteria = index[answer.category]
+        criterion = criteria[answer.criterion_id.split("/", 1)[1]]
+        if answer.evidence and answer.locator in places:
+            findings.append(Finding(
+                rule_id=answer.criterion_id,
+                category=answer.category,
+                # The model reads bullets, not the six-second scan, so a content
+                # finding is a manager-read defect wherever it files. `Resume craft`
+                # is the category that cannot default its gate, and this is the
+                # answer for the findings it holds from here.
+                gate=Gate.MANAGER,
+                severity=Severity.MAJOR,
+                message=(answer.why or criterion["no_looks_like"])[:200],
+                fix=answer.fix,
+                evidence=answer.evidence,
+                locator=answer.locator,
+                provenance=Provenance.HEURISTIC,
+                source=f"llm:{provider_name}",
+            ))
+        else:
+            unmet.append(UnmetCriterion(
+                criterion_id=answer.criterion_id,
+                category=answer.category,
+                name=criterion["name"],
+                message=(answer.why or criterion["no_looks_like"])[:200],
+            ))
+    return findings, unmet
+
+
+def withholding_reason(resume: Resume) -> str:
+    """Why the judged categories cannot be judged on this document, or "".
+
+    05's rule, and it is not optional: every criterion asks about a bullet inside a
+    role, so a document whose roles did not survive extraction has its judged
+    categories **withheld** -- not guessed, and not zeroed. The parser gate has
+    already found and charged for that defect; scoring it again charges one fault
+    twice. `two_column`, `hidden_text` and `scanned` are the documents that exercise
+    it.
+    """
+    if not resume.roles:
+        return ("no roles survived extraction, so there are no bullets for a "
+                "criterion to be about")
+    if not resume.bullets:
+        return ("roles parsed but carry no bullets, so there is nothing for a "
+                "criterion to be about")
+    return ""
+
+
 @dataclass
 class ContentJudgment:
     """One provider's one sample of the content pass, before anything is folded.
 
-    `categories` holds the model's raw entry per category -- `{"score": 62, "why":
-    ...}` today -- rather than a parsed number, so a caller that cares about *what*
-    the model authored does not have to re-parse the reply. Ticket 05 may add a band
-    label alongside the score; this shape carries it without a change here.
+    `categories` holds the model's raw entry per category -- `{"criteria": [...]}`
+    since 05 -- rather than anything parsed, so a caller that cares about *what* the
+    model authored does not have to reconstruct it, and a run recorded before 05
+    (which carries `{"score": 62, "why": ...}`) still loads and still measures.
+
+    The validated projection of that raw entry is `criterion_answers(j.categories)`,
+    derived on demand rather than stored: it needs nothing but the specs. `unmet` is
+    stored, because splitting a `no` into an unmet criterion or a placed finding
+    needs the parsed resume, which a saved run does not carry.
 
     Kept per-sample because sampling noise and genuine provider disagreement are
-    only separable while the samples are still apart. content_pass folds them --
-    within a provider by averaging, then across providers in combine_scores -- and
-    by the time a score reaches the report every disagreement that produced it is
-    gone. ats/agreement.py is the reason the unfolded form exists.
+    only separable while the samples are still apart. content_pass folds the report
+    channel -- one card per (criterion, place), one unmet criterion per criterion --
+    and by the time it reaches the report every disagreement that produced it is
+    gone. ats/agreement.py is the reason the unfolded form exists, and since 05 so
+    is the scoring channel: 06 decides what two judges splitting on a criterion buys,
+    and it cannot decide it on answers this class has already merged.
     """
 
     provider: str
     sample: int
     categories: dict[str, dict]
     findings: list[Finding]
+    unmet: list[UnmetCriterion] = field(default_factory=list)
 
 
 def content_judgments(
@@ -93,7 +264,7 @@ def content_judgments(
             temp = 0.0 if samples == 1 else temperature
             jobs.append(
                 lambda p=provider, i=index, t=temp: (
-                    p.name, i, call(p, prompts.CONTENT_SYSTEM, user, t)
+                    p.name, i, call(p, prompts.content_system(), user, t)
                 )
             )
 
@@ -107,33 +278,14 @@ def content_judgments(
             if category and isinstance(entry, dict):
                 categories[category.value] = entry
 
-        findings: list[Finding] = []
-        for item in payload.get("findings") or []:
-            evidence = (item.get("evidence") or "").strip()
-            message = (item.get("message") or "").strip()
-            if not evidence or not message:
-                continue  # unevidenced claims are not checkable
-            findings.append(Finding(
-                rule_id=_rule_id("llm", item.get("pattern"), "content"),
-                # A finding whose category the model did not name, or named as one of
-                # the three rule-only categories, is still a real finding -- it just
-                # has no category to file under. `Resume craft` is where an
-                # unattributed content defect belongs until findings carry their own
-                # gate (migration 04).
-                category=_category(item.get("category", "")) or Category.RESUME_CRAFT,
-                # The model reads bullets, not the six-second scan, so a content
-                # finding is a manager-read defect wherever it files.
-                gate=Gate.MANAGER,
-                severity=Severity.MAJOR,
-                message=message[:200],
-                fix=(item.get("fix") or "").strip()[:200],
-                evidence=evidence[:200],
-                locator=(item.get("locator") or "").strip()[:40],
-                provenance=Provenance.HEURISTIC,
-                source=f"llm:{provider_name}",
-            ))
-
-        judgments.append(ContentJudgment(provider_name, index, categories, findings))
+        # The model has no findings vocabulary of its own any more: a finding is the
+        # evidence for one criterion and its id is the criterion's, so both objects a
+        # reply produces come out of the answers rather than out of a `findings` array
+        # the model would have had to name the defects in.
+        findings, unmet = place(
+            criterion_answers(categories), resume, provider_name
+        )
+        judgments.append(ContentJudgment(provider_name, index, categories, findings, unmet))
 
     return judgments, errors
 
@@ -148,43 +300,69 @@ def content_pass(
     temperature: float,
     digest: dict | None = None,
 ) -> ensemble.PassResult:
-    """Substance, ownership, seniority fit, missing information, category scores."""
+    """The criterion answers behind every judged category, and what they place.
+
+    Two channels come out of here and they fold differently:
+
+    * the **report** channel -- placed findings and unmet criteria -- is unioned
+      across judgements here, keyed on `(rule_id, locator)` and on the criterion id
+      respectively, exactly as findings were unioned before 05.
+    * the **scoring** channel -- the answers themselves -- is deliberately *not*
+      folded. Two judges answering the same five questions differently is a criterion
+      split, not a spread of numbers, and what to do about it is ticket 06's decision.
+      The unfolded answers stay on each `ContentJudgment`, which is where 06 and
+      `ats/agreement.py` read them.
+    """
+    withheld = withholding_reason(resume)
+    if withheld:
+        return ensemble.PassResult(
+            meta={
+                "withheld": [c.value for c in JUDGED_CATEGORIES],
+                "withheld_reason": withheld,
+                "samples_per_provider": samples,
+            },
+        )
+
     judgments, errors = content_judgments(
         providers, resume, full_text, jd_text, deterministic, samples,
         temperature, digest,
     )
 
-    per_provider: dict[str, dict[str, float]] = {}
     findings: list[Finding] = []
     seen: set[tuple[str, str]] = set()
+    unmet: list[UnmetCriterion] = []
+    seen_unmet: set[str] = set()
+    answered: set[str] = set()
 
     for judgment in judgments:
-        scores = {}
-        for name, entry in judgment.categories.items():
-            if "score" not in entry:
-                continue
-            try:
-                scores[name] = float(entry["score"])
-            except (TypeError, ValueError):
-                continue
-        if scores:
-            existing = per_provider.setdefault(judgment.provider, {})
-            for key, value in scores.items():
-                existing[key] = (existing.get(key, value) + value) / 2 if key in existing else value
-
+        answered.update(a.criterion_id for a in criterion_answers(judgment.categories))
         for finding in judgment.findings:
-            key = (finding.message.lower()[:60], finding.evidence.lower()[:60])
+            # 10's key of record: the kind of defect and the place it is in. Both
+            # halves are closed now -- the id comes from the specs and the locator
+            # resolved against the parsed resume -- so two judges reporting one defect
+            # collide here instead of arriving as two cards worded differently.
+            key = (finding.rule_id, finding.locator)
             if key in seen:
                 continue
             seen.add(key)
             findings.append(finding)
+        for criterion in judgment.unmet:
+            if criterion.criterion_id in seen_unmet:
+                continue
+            seen_unmet.add(criterion.criterion_id)
+            unmet.append(criterion)
 
-    scores, meta = ensemble.combine_scores(per_provider) if per_provider else ({}, {})
     return ensemble.PassResult(
         data=findings,
-        providers_used=sorted(per_provider),
+        providers_used=sorted({j.provider for j in judgments}),
         errors=errors,
-        meta={"scores": scores, **meta, "samples_per_provider": samples},
+        meta={
+            "providers": sorted({j.provider for j in judgments}),
+            "unmet": [c.model_dump(mode="json") for c in unmet],
+            "criteria_answered": len(answered),
+            "criteria_asked": sum(len(c) for _slug, c in criteria_index().values()),
+            "samples_per_provider": samples,
+        },
     )
 
 
