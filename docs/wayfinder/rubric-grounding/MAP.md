@@ -12,7 +12,15 @@ bands in concrete evidence terms — such that two different LLM judges scoring 
 same resume land within a stated tolerance of each other.
 
 This map produces the **spec and the decisions behind it**. Implementing it in
-`ats/prompts.py`, `ats/score.py` and the digest pipeline is a separate effort.
+`ats/prompts.py`, `ats/score.py` and the digest pipeline is a separate effort, and it
+is now a separate map: [rubric-migration](../rubric-migration/MAP.md).
+
+**One clause of that destination cannot be tested from inside this map.** *Two judges
+within a stated tolerance* needs a prompt that emits criterion answers and a harness
+that reads them, which is implementation. All five categories have verdicts and all
+five are the same proxy — a deterministic judge against one recorded model judge, on
+documents written to exercise the rubric. The real number is
+[rubric-migration 09](../rubric-migration/tickets/09-run-the-acceptance-test.md).
 
 ## Spec so far
 
@@ -341,7 +349,15 @@ This map produces the **spec and the decisions behind it**. Implementing it in
   budget is still authored: how many of the 100 points the derived block gets, and
   whether proportional or tiered is the right map from df to weight. 09 takes the budget
   as a parameter rather than choosing for it.
-- **How the spec migrates into code** without a flag day: the composite, the ledger and
+- ~~**How the spec migrates into code**~~ — now tracked on its own map,
+  [rubric-migration](../rubric-migration/MAP.md), which takes the approach of running
+  both rubrics side by side and retiring the old one last. It also opens the one
+  question neither map had a ticket for: **the rubric has been validated almost entirely
+  on documents written by the sessions validating it** — seven fixtures, twenty-nine
+  self-authored band probes, one real resume. That is
+  [rubric-migration 08](../rubric-migration/tickets/08-where-the-real-resumes-come-from.md),
+  and it is unblocked from the start because no amount of software finishes it.
+  The original note, for the record: the composite, the ledger and
   the report all read today's five categories. 07 adds three mechanical
   asks: a `deducts` flag (or an equivalent ledger exclusion), advice-only findings
   grouped by gate rather than category, and the `rule_share` invariant asserted where a
@@ -354,7 +370,8 @@ This map produces the **spec and the decisions behind it**. Implementing it in
 
 ## Out of scope
 
-- Implementing the rubric in code. The destination is the spec; implementation follows.
+- Implementing the rubric in code. The destination is the spec; implementation follows,
+  on [rubric-migration](../rubric-migration/MAP.md).
 - Pass 3 (rewrite generation) and its judge/polish machinery.
 - The report UI and score-derivation rendering.
 - The deterministic rule set (`ats/human.py`, `ats/keywords.py`) except where a new
