@@ -1,0 +1,651 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype — scoring from criterion answers (ticket 06)</title>
+<style>
+  :root {
+    --ink: #1c1a17; --muted: #6b6560; --line: #e2ddd6; --bg: #faf8f5;
+    --panel: #fff; --accent: #9a4a1e; --accent-soft: #fbeee6;
+    --ok: #2f6b46; --warn: #9a4a1e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 24px 96px; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  main { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 30px; margin: 40px 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 19px; margin: 40px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 15px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .lede { color: var(--muted); font-size: 16px; max-width: 74ch; }
+  .throwaway {
+    display: inline-block; margin: 14px 0 0; padding: 3px 9px; border-radius: 3px;
+    background: var(--accent-soft); color: var(--accent);
+    font: 600 11px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; }
+  .stack > * + * { margin-top: 16px; }
+  label { cursor: pointer; }
+  .choice { display: block; padding: 7px 0; border-bottom: 1px dotted var(--line); }
+  .choice:last-child { border-bottom: 0; }
+  .choice input { margin-right: 8px; }
+  .choice b { font-weight: 600; }
+  .choice span { color: var(--muted); font-size: 13.5px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
+
+  /* --- state panel --- */
+  .headline { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+  .composite { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .composite .grade { font-size: 20px; color: var(--muted); margin-left: 8px; }
+  .changed { color: var(--accent); font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.unassessed td { color: #a8a29b; }
+  .tag {
+    display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px;
+    font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .tag.contested { background: var(--accent-soft); color: var(--accent); }
+  .tag.far { background: #f6dcd2; color: #8a2d0d; }
+  .tag.withheld { background: #eee9e2; color: var(--muted); }
+  .note { color: var(--muted); font-size: 12.5px; }
+  .alarm {
+    margin-top: 14px; padding: 10px 12px; border-left: 3px solid var(--accent);
+    background: var(--accent-soft); font-size: 13.5px;
+  }
+
+  /* --- free play --- */
+  .cat { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 14px 16px; }
+  .cat + .cat { margin-top: 12px; }
+  .cat header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .cat header .w { color: var(--muted); font-size: 12.5px; }
+  .crit { display: grid; grid-template-columns: 1fr 62px 62px; gap: 4px 8px; align-items: center; font-size: 13.5px; }
+  .crit .hd { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); text-align: center; }
+  .crit .cid { font: 600 12px ui-monospace, Menlo, monospace; color: var(--muted); margin-right: 6px; }
+  .crit .box { text-align: center; }
+  .crit .row { padding: 3px 0; border-top: 1px dotted var(--line); }
+  .split { background: #fff6f0; }
+  .verdicts { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .verdicts b { color: var(--ink); font-weight: 600; }
+  .slider { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+  .slider input { flex: 1; }
+
+  /* --- walkthroughs --- */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tabs button {
+    font: inherit; font-size: 13px; padding: 6px 11px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+  }
+  .tabs button[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .steps { margin-top: 14px; }
+  .step { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-top: 1px dotted var(--line); }
+  .step button {
+    font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--panel); color: var(--accent); white-space: nowrap;
+  }
+  .step button[disabled] { opacity: 0.35; cursor: default; }
+  .step button.next { background: var(--accent); color: #fff; }
+  .step p { margin: 3px 0 0; font-size: 13.5px; }
+  .watch { margin-top: 12px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>What is a category worth, when two judges answered its criteria?</h1>
+<p class="lede">
+  Ticket 06 of the rubric-migration map. Until ticket 05 the content judge returned a
+  <em>number</em> per category, and two judges were combined by averaging their numbers.
+  Since 05 the judge answers five yes/no <strong>criteria</strong> per category and names
+  no number at all; the band, and the band's value, are looked up from the answers.
+  Nothing yet turns those answers into a score. This page is the three decisions that
+  replacement needs, made pressable: <strong>how two judges who split on a criterion are
+  combined</strong>, <strong>what the report says when they do</strong>, and <strong>what
+  a withheld category does to the composite</strong>.
+</p>
+<span class="throwaway">Throwaway prototype — the logic module inside is the part meant to survive</span>
+
+<h2>The three decisions</h2>
+<div class="cols">
+  <div class="panel">
+    <h3>1. Two judges, one category</h3>
+    <div id="rules"></div>
+  </div>
+  <div class="panel">
+    <h3>3. A category nothing could judge</h3>
+    <p class="note" style="margin-bottom:10px">
+      A document whose roles did not parse has its five judged categories withheld before
+      any call is spent. What should the composite do with them?
+    </p>
+    <label class="choice" style="border-bottom:1px solid var(--line);margin-bottom:6px">
+      <input type="checkbox" id="withheld-toggle">
+      <b>This document's roles did not parse</b><br>
+      <span>Ticket 05 withholds all five judged categories before a call is spent. Tick it to see what each policy below does.</span>
+    </label>
+    <div id="withheld-policy"></div>
+  </div>
+</div>
+<div class="panel" style="margin-top:16px">
+  <h3>2. What the report says when the judges split</h3>
+  <div id="contested-policy"></div>
+</div>
+
+<h2>The score right now</h2>
+<div class="panel" id="state"></div>
+
+<h2>Guided walkthroughs</h2>
+<p class="lede" style="font-size:15px">
+  Six situations that are hard to reason about on paper. Each one resets the page and
+  then walks you through it a click at a time.
+</p>
+<div class="panel">
+  <div class="tabs" id="tabs"></div>
+  <div id="scenario"></div>
+</div>
+
+<h2>Free play</h2>
+<p class="lede" style="font-size:15px">
+  Every criterion, both judges, all five judged categories. Tick what each judge found.
+  The <em>rule channel</em> slider is what the deterministic rules scored the category —
+  the other half of the blend, and irrelevant where a category's rule share is 0.
+</p>
+<div id="freeplay"></div>
+
+<div class="panel" style="margin-top:16px">
+  <h3>The three rules-only categories</h3>
+  <p class="note">No judge is ever asked about these. They are here because they are the
+    only thing left in the composite when the judged five are withheld.</p>
+  <div id="ruleonly"></div>
+</div>
+
+</main>
+
+<script>
+// ===========================================================================
+// THE DATA: the five specs, the weights and the rule shares, inlined from the
+// package at build time by prototype/build_06_prototype.py.
+// ===========================================================================
+const DATA = /*__DATA__*/null;
+
+// ===========================================================================
+// THE PURE MODULE — no DOM below this line until the marker says otherwise.
+// This is the part that lifts into ats/score.py once a rule is chosen.
+// ===========================================================================
+
+/** One `when` clause: met / unmet / count / any, all of which must hold together.
+ *  A direct port of ats/rubric.py `_clause`. */
+function clauseHolds(clause, met) {
+  for (const cid of clause.met || []) if (!met.has(cid)) return false;
+  for (const cid of clause.unmet || []) if (met.has(cid)) return false;
+  const count = clause.count;
+  if (count) {
+    const hits = count.of.filter((c) => met.has(c)).length;
+    if ("eq" in count && hits !== count.eq) return false;
+    if ("min" in count && hits < count.min) return false;
+    if ("max" in count && hits > count.max) return false;
+  }
+  const alts = clause.any;
+  if (alts && !alts.some((alt) => clauseHolds(alt, met))) return false;
+  return true;
+}
+
+/** The band lookup: first `when` that matches, in declared order (ats/rubric.py band_of). */
+function bandOf(answers, spec) {
+  const met = new Set(Object.keys(answers).filter((k) => answers[k]));
+  for (const band of spec.bands) if (clauseHolds(band.when, met)) return band;
+  throw new Error(spec.slug + ": the lookup is not total");
+}
+
+/** How two judges' answers to one category become one value.
+ *
+ *  `rule` is the decision this prototype exists to settle:
+ *    lower     — band each judge from their own answers, take the lower band's value.
+ *    average   — band each judge, average the two values.
+ *    intersect — a criterion is met only if BOTH judges met it; band the intersection.
+ */
+function judgeCategory(spec, answersA, answersB, rule) {
+  const order = spec.bands.map((b) => b.label);
+  const bands = [bandOf(answersA, spec), bandOf(answersB, spec)];
+  const idx = bands.map((b) => order.indexOf(b.label));
+  const lowIdx = Math.min(...idx), highIdx = Math.max(...idx);
+  const lowBand = spec.bands[lowIdx], highBand = spec.bands[highIdx];
+
+  const splitCriteria = spec.criteria
+    .filter((c) => !!answersA[c.id] !== !!answersB[c.id])
+    .map((c) => c.id);
+
+  let value, mergedBand = null;
+  if (rule === "intersect") {
+    const merged = {};
+    for (const c of spec.criteria) merged[c.id] = !!answersA[c.id] && !!answersB[c.id];
+    mergedBand = bandOf(merged, spec);
+    value = mergedBand.value;
+  } else if (rule === "average") {
+    value = (bands[0].value + bands[1].value) / 2;
+  } else {
+    value = lowBand.value;
+  }
+
+  const gap = highIdx - lowIdx;
+  return {
+    bands, lowBand, highBand, gap, value, mergedBand, splitCriteria,
+    // Is the merged value one a band actually names, or a number the rubric never
+    // authored? 04 removed model-authored numbers; a rule that puts one back should
+    // have to say so out loud.
+    valueIsABand: spec.bands.some((b) => b.value === value),
+    // Below BOTH judges: the merge invented a disagreement neither judge reported.
+    belowBoth: value < lowBand.value,
+    verdict: gap === 0 ? "agreed" : gap === 1 ? "adjacent" : "far",
+  };
+}
+
+/** One category's score. The blend is unchanged from today; what feeds it is not. */
+function categoryScore(name, judged, ruleScore, withheld, withheldPolicy) {
+  const share = DATA.shares[name];
+  const weight = DATA.weights[name];
+  const blend = (v) => ruleScore * share + v * (1 - share);
+
+  if (share === undefined) {                       // a rules-only category
+    return { name, weight, score: ruleScore, assessed: true, note: "rules only" };
+  }
+  if (withheld) {
+    if (withheldPolicy === "unassessed") {
+      return { name, weight, score: 0, assessed: false, withheld: true,
+               note: "withheld — the roles did not parse, so no criterion has a subject" };
+    }
+    if (withheldPolicy === "ruleonly") {
+      return { name, weight, score: ruleScore, assessed: share > 0, withheld: true,
+               note: share > 0 ? "withheld — riding on the rule channel alone" : "no channel at all" };
+    }
+    const stand = withheldPolicy === "zero" ? 0 : 50;
+    return { name, weight, score: blend(stand), assessed: true, withheld: true,
+             note: "withheld — scored as if the judge had said " + stand };
+  }
+  if (!judged) {
+    return { name, weight, score: ruleScore, assessed: share > 0, note: "no judge answer" };
+  }
+  return {
+    name, weight, assessed: true, judged,
+    score: blend(judged.value),
+    low: judged.gap ? blend(judged.lowBand.value) : null,
+    high: judged.gap ? blend(judged.highBand.value) : null,
+  };
+}
+
+/** The composite: assessed categories only, renormalised over their weight. */
+function composite(rows) {
+  const scored = rows.filter((r) => r.assessed);
+  const total = scored.reduce((s, r) => s + r.weight, 0);
+  const value = total ? scored.reduce((s, r) => s + r.score * r.weight, 0) / total : 0;
+  return { value: Math.round(value * 10) / 10, assessedWeight: total };
+}
+
+const GRADES = [[90, "A"], [80, "B"], [70, "C"], [60, "D"], [0, "F"]];
+function grade(v) { for (const [t, g] of GRADES) if (v >= t) return g; return "F"; }
+
+/** Everything the page renders, from the whole state, in one call. */
+function scoreRun(state) {
+  const rows = [];
+  for (const spec of DATA.specs) {
+    const name = spec.category;
+    const judged = judgeCategory(spec, state.answers[name].A, state.answers[name].B, state.rule);
+    rows.push(categoryScore(name, judged, state.ruleScores[name], state.withheld, state.withheldPolicy));
+  }
+  for (const name of DATA.ruleOnly) {
+    rows.push(categoryScore(name, null, state.ruleScores[name], false, state.withheldPolicy));
+  }
+  const comp = composite(rows);
+  return { rows, ...comp, grade: grade(comp.value) };
+}
+
+// ===========================================================================
+// END OF THE PURE MODULE. Everything below is the throwaway page.
+// ===========================================================================
+
+const RULES = [
+  ["lower", "The lower band wins",
+   "Band each judge from their own answers. Where they land on different bands, the category takes the lower one — a real band, named, and the higher one is still shown."],
+  ["average", "Average the two bands' values",
+   "Closest to what the code does today. On a split it produces a number no band names — 68 sits between C's 58 and B's 78."],
+  ["intersect", "A criterion is met only if both judges met it",
+   "Combine the answers, not the bands: intersect the met sets and band the result. The most literal reading of “what is combined is answers”."],
+];
+
+const WITHHELD = [
+  ["unassessed", "Not assessed — left out of the composite",
+   "The machinery ticket 03 already built. The composite renormalises over the 25 points the parser gate holds, and the report prints n/a with the reason."],
+  ["zero", "Scored as if the judge had said 0",
+   "The withheld categories still carry their weight, at the bottom of the scale."],
+  ["fifty", "Scored at the middle of the scale (50)",
+   "Splits the difference — the category neither helps nor hurts much."],
+  ["ruleonly", "Rule channel alone — what the code does today",
+   "score.build has not been told about withholding, so the three judged categories with a rule channel ride at whatever the rules left them, usually 100."],
+];
+
+const CONTESTED = [
+  ["bands", "Name the two bands the judges landed on",
+   "“The judges read this differently: Shipped, or Shipped and operated.” The reader gets the two readings, not two numbers."],
+  ["range", "Show a numeric range, as today",
+   "“providers disagreed; shown as a range”, with the blended low and high. Today's wording and today's mechanism."],
+  ["far-only", "Only say anything when the split is non-adjacent",
+   "One adjacent band is the disagreement the other map already calls tolerable; only a two-band gap is worth interrupting the reader for."],
+];
+
+function blankAnswers() {
+  const out = {};
+  for (const spec of DATA.specs) {
+    out[spec.category] = { A: {}, B: {} };
+    for (const c of spec.criteria) {
+      out[spec.category].A[c.id] = false;
+      out[spec.category].B[c.id] = false;
+    }
+  }
+  return out;
+}
+
+function initialState() {
+  const ruleScores = {};
+  for (const name of Object.keys(DATA.weights)) ruleScores[name] = 100;
+  return {
+    rule: "lower", withheldPolicy: "unassessed", contested: "bands",
+    withheld: false, answers: blankAnswers(), ruleScores, lastChange: "",
+  };
+}
+
+let state = initialState();
+
+// -- scenarios --------------------------------------------------------------
+// Answer sets taken from the recorded model judge and the deterministic probe in
+// docs/wayfinder/rubric-grounding/criteria/, which is the only two-judge data that exists.
+
+function setAnswers(cat, judge, met) {
+  for (const id of Object.keys(state.answers[cat][judge])) {
+    state.answers[cat][judge][id] = met.includes(id);
+  }
+}
+function both(cat, met) { setAnswers(cat, "A", met); setAnswers(cat, "B", met); }
+
+const PO = "Production ownership", AG = "Agentic systems", ER = "Evaluation rigour",
+      AI = "AI-assisted coding fluency", RC = "Resume craft";
+
+const SCENARIOS = [
+  {
+    name: "Both judges agree",
+    blurb: "The baseline. A strong resume, both judges answering all five categories the same way. Nothing is contested, nothing is withheld — so every merge rule gives the same answer, and the composite is what the rubric thinks the resume is worth.",
+    watch: "Switch between the three merge rules at the top. The composite does not move. Any disagreement between the rules is a disagreement about *splits*, not about scoring.",
+    steps: [
+      ["Both judges read the behaviour categories", () => {
+        both(PO, ["C1", "C2", "C3", "C4", "C5"]);
+        both(AG, ["C1", "C2", "C3", "C4"]);
+        both(ER, ["C1", "C2", "C3", "C4"]);
+        both(AI, ["C1", "C2", "C3"]);
+      }],
+      ["Both judges read the craft", () => both(RC, ["C1", "C2", "C3", "C4"])],
+      ["The rules found some real defects", () => {
+        state.ruleScores[PO] = 84; state.ruleScores[RC] = 71;
+        state.ruleScores["Parseability"] = 88;
+      }],
+    ],
+  },
+  {
+    name: "One criterion, one band apart",
+    blurb: "The real split from the band probes: on `4-shipped-operated-once` the two judges answered Production ownership's C3 (“an operational fact”) differently and nothing else. One lands on Shipped, the other on Built, not operated. This is the smallest disagreement the rubric can express.",
+    watch: "The band gap is 23 points (35 → 58) — so the old `band_high - band_low >= 12` test fires on the smallest possible disagreement there is. That threshold cannot survive; the question is what replaces it, and what the reader is told.",
+    steps: [
+      ["Both judges: a named thing shipped, and they own it", () => {
+        setAnswers(PO, "A", ["C1", "C2", "C5"]);
+        setAnswers(PO, "B", ["C1", "C2", "C5"]);
+      }],
+      ["Judge B also reads an operational fact (C3)", () => setAnswers(PO, "B", ["C1", "C2", "C3", "C5"])],
+      ["Now try each merge rule at the top of the page", () => {}],
+    ],
+  },
+  {
+    name: "The intersection trap",
+    blurb: "Resume craft does not band like the others: its band is simply how many criteria are met. Here both judges met three of five — the same band, C, Readable, unedited — but not the same three. They agree on the category and disagree on two criteria.",
+    watch: "Under “lower band wins” and “average”, this is agreement: both judges said C, the category scores C. Under “a criterion is met only if both judges met it” the intersection is two criteria, which is band D — a category the judges agreed about is marked down for a disagreement neither of them reported. Over all 496 answer-set pairs this happens on 100 of the 115 pairs where craft's two judges agree on the band.",
+    steps: [
+      ["Judge A: says what it is, names what changed, says what it was for", () => setAnswers(RC, "A", ["C1", "C2", "C3"])],
+      ["Judge B: says what it is, names what changed, could not be anyone's", () => setAnswers(RC, "B", ["C1", "C2", "C5"])],
+      ["Both judges landed on band C — check the table", () => {}],
+      ["Now switch the merge rule to “a criterion is met only if both judges met it”", () => { state.rule = "intersect"; }],
+    ],
+  },
+  {
+    name: "The category with no rule channel",
+    blurb: "Agentic systems has rule_share 0 — no deterministic rule deducts from it, so nothing dilutes the judge. The real split from the probes is on C3 (“what it could do”) on `5-control-no-tools`, one adjacent band. At weight 15 and share 0 the whole band gap lands on the composite.",
+    watch: "The band gap costs 3.0 composite points here against 1.8 in Production ownership, which has the same weight and the same gap but a 0.4 rule channel to absorb it. The map already records this exposure as unresolved; this is what it looks like in a score.",
+    steps: [
+      ["Both judges: a named system that acts, and what bounds it", () => {
+        setAnswers(AG, "A", ["C1", "C2", "C4"]);
+        setAnswers(AG, "B", ["C1", "C2", "C4"]);
+      }],
+      ["Judge A also reads what it could do (C3)", () => setAnswers(AG, "A", ["C1", "C2", "C3", "C4"])],
+      ["Compare against Production ownership by giving it the same split", () => {
+        setAnswers(PO, "A", ["C1", "C2", "C3", "C4"]);
+        setAnswers(PO, "B", ["C1", "C2", "C4"]);
+      }],
+    ],
+  },
+  {
+    name: "Two bands apart",
+    blurb: "Not every split is adjacent. Here the judges disagree about whether a measurement happened at all: one reads Evaluation rigour at E, Nothing measured; the other at C, A number. The rubric-grounding map calls a non-adjacent disagreement a failure of the acceptance bar, not a tolerable spread.",
+    watch: "Under every merge rule this produces a single confident-looking number. Is that defensible? The third option under decision 2 says a two-band gap is the only disagreement worth interrupting the reader for.",
+    steps: [
+      ["Judge A: nothing was measured", () => setAnswers(ER, "A", [])],
+      ["Judge B: a measurement happened, with a named metric and a number", () => setAnswers(ER, "B", ["C1", "C2", "C3"])],
+      ["Look at what the category is worth, and what the report says", () => {}],
+    ],
+  },
+  {
+    name: "A document nothing could judge",
+    blurb: "A two-column resume parses to zero roles. Every criterion asks about a bullet inside a role, so ticket 05 withholds all five judged categories before spending a call — and the parser gate has already found and charged for the defect. score.build has never been told, which is the bug this ticket names.",
+    watch: "Start on “rule channel alone — what the code does today” and watch the composite. Three judged categories ride at 100 on a document no parser can read. Then try the other three policies: only one of them neither inflates nor deflates.",
+    steps: [
+      ["A two-column document: the parser rules bite hard", () => {
+        state.withheld = true;
+        state.withheldPolicy = "ruleonly";
+        state.ruleScores["Parseability"] = 20;
+        state.ruleScores["Structure & formatting"] = 45;
+        state.ruleScores["Title & seniority alignment"] = 100;
+        for (const s of DATA.specs) state.ruleScores[s.category] = 100;
+      }],
+      ["Look at the composite — this is today's behaviour", () => {}],
+      ["Now: not assessed, left out of the composite", () => { state.withheldPolicy = "unassessed"; }],
+      ["And: scored as if the judge had said 0", () => { state.withheldPolicy = "zero"; }],
+    ],
+  },
+];
+
+let tab = 0, step = 0;
+
+// -- rendering --------------------------------------------------------------
+
+const $ = (sel) => document.querySelector(sel);
+
+function radios(host, options, key) {
+  host.innerHTML = options.map(([value, title, blurb]) => `
+    <label class="choice">
+      <input type="radio" name="${key}" value="${value}" ${state[key] === value ? "checked" : ""}>
+      <b>${title}</b><br><span>${blurb}</span>
+    </label>`).join("");
+  host.querySelectorAll("input").forEach((input) => {
+    input.onchange = () => { state[key] = input.value; state.lastChange = input.parentElement.querySelector("b").textContent; render(); };
+  });
+}
+
+function renderState() {
+  const run = scoreRun(state);
+  const alarms = [];
+  for (const row of run.rows) {
+    const j = row.judged;
+    if (!j || row.withheld) continue;
+    if (j.belowBoth) alarms.push(`<b>${row.name}</b>: the merge landed on ${j.mergedBand.label} — below both judges, who said ${j.bands[0].label} and ${j.bands[1].label}. Neither judge reported that.`);
+    else if (j.gap && !j.valueIsABand) alarms.push(`<b>${row.name}</b>: ${j.value} is not a value any band names. The rubric stopped authoring numbers at ticket 04.`);
+    if (j.verdict === "far") alarms.push(`<b>${row.name}</b>: the judges are two bands apart (${j.lowBand.label} vs ${j.highBand.label}). The other map calls that a failure, not a spread.`);
+  }
+  if (state.withheld && state.withheldPolicy === "ruleonly") {
+    alarms.push("Withheld categories are riding on their rule channel alone — today's bug, and the reason this ticket exists.");
+  }
+
+  $("#state").innerHTML = `
+    <div class="headline">
+      <div class="composite">${run.value.toFixed(1)}<span class="grade">${run.grade}</span></div>
+      <div class="note">composite over ${run.assessedWeight} points of assessed weight
+        ${run.assessedWeight < 100 ? `— ${100 - run.assessedWeight} points left out` : ""}</div>
+      ${state.lastChange ? `<div class="changed">last change: ${state.lastChange}</div>` : ""}
+    </div>
+    <table>
+      <thead><tr>
+        <th>Category</th><th class="num">Weight</th><th class="num">Rule ch.</th>
+        <th>Judge A</th><th>Judge B</th><th class="num">Judged value</th>
+        <th class="num">Score</th><th>What the report says</th>
+      </tr></thead>
+      <tbody>${run.rows.map((row) => renderRow(row)).join("")}</tbody>
+    </table>
+    ${alarms.map((a) => `<div class="alarm">${a}</div>`).join("")}`;
+}
+
+function contestedText(row) {
+  const j = row.judged;
+  if (!j || !j.gap) return "";
+  if (state.contested === "far-only" && j.gap === 1) return "";
+  if (state.contested === "range") {
+    return `<span class="tag ${j.verdict === "far" ? "far" : "contested"}">contested</span> `
+      + `<span class="note">providers disagreed; shown as a range ${row.low.toFixed(1)}–${row.high.toFixed(1)}</span>`;
+  }
+  return `<span class="tag ${j.verdict === "far" ? "far" : "contested"}">contested</span> `
+    + `<span class="note">the judges read this differently: ${j.lowBand.name}, or ${j.highBand.name}`
+    + ` (split on ${j.splitCriteria.join(", ")})</span>`;
+}
+
+function renderRow(row) {
+  const j = row.judged;
+  const bands = j ? j.bands.map((b) => `${b.label} <span class="note">${b.value}</span>`) : ["—", "—"];
+  const note = row.withheld
+    ? `<span class="tag withheld">withheld</span> <span class="note">${row.note}</span>`
+    : row.assessed ? contestedText(row) : `<span class="note">${row.note || "not assessed"}</span>`;
+  return `<tr class="${row.assessed ? "" : "unassessed"}">
+    <td>${row.name}</td>
+    <td class="num">${row.weight}</td>
+    <td class="num">${DATA.shares[row.name] === undefined ? "—" : row.ruleScore ?? state.ruleScores[row.name]}</td>
+    <td>${bands[0]}</td><td>${bands[1]}</td>
+    <td class="num">${j && !row.withheld ? j.value : "—"}</td>
+    <td class="num">${row.assessed ? row.score.toFixed(1) : "n/a"}</td>
+    <td>${note}</td>
+  </tr>`;
+}
+
+function renderFreeplay() {
+  $("#freeplay").innerHTML = DATA.specs.map((spec) => {
+    const name = spec.category;
+    const share = DATA.shares[name];
+    return `<div class="cat" data-cat="${name}">
+      <header>
+        <h3>${name}</h3>
+        <span class="w">weight ${DATA.weights[name]} &middot; rule share ${share}${share === 0 ? " (the judge owns the whole category)" : ""}</span>
+      </header>
+      <div class="crit">
+        <div></div><div class="hd">Judge A</div><div class="hd">Judge B</div>
+        ${spec.criteria.map((c) => {
+          const a = state.answers[name].A[c.id], b = state.answers[name].B[c.id];
+          return `<div class="row ${a !== b ? "split" : ""}"><span class="cid">${c.id}</span>${c.name}</div>
+            <div class="row box ${a !== b ? "split" : ""}"><input type="checkbox" data-judge="A" data-id="${c.id}" ${a ? "checked" : ""}></div>
+            <div class="row box ${a !== b ? "split" : ""}"><input type="checkbox" data-judge="B" data-id="${c.id}" ${b ? "checked" : ""}></div>`;
+        }).join("")}
+      </div>
+      <div class="slider">
+        <span>rule channel</span>
+        <input type="range" min="0" max="100" value="${state.ruleScores[name]}" data-slider="${name}">
+        <span>${state.ruleScores[name]}</span>
+      </div>
+    </div>`;
+  }).join("");
+
+  $("#ruleonly").innerHTML = DATA.ruleOnly.map((name) => `
+    <div class="slider">
+      <span style="min-width:210px">${name} <span class="note">(weight ${DATA.weights[name]})</span></span>
+      <input type="range" min="0" max="100" value="${state.ruleScores[name]}" data-slider="${name}">
+      <span>${state.ruleScores[name]}</span>
+    </div>`).join("");
+
+  document.querySelectorAll("[data-cat] input[type=checkbox]").forEach((box) => {
+    box.onchange = () => {
+      const cat = box.closest("[data-cat]").dataset.cat;
+      state.answers[cat][box.dataset.judge][box.dataset.id] = box.checked;
+      state.lastChange = `${cat} ${box.dataset.id}, judge ${box.dataset.judge} → ${box.checked ? "met" : "not met"}`;
+      render();
+    };
+  });
+  document.querySelectorAll("[data-slider]").forEach((slider) => {
+    slider.oninput = () => {
+      state.ruleScores[slider.dataset.slider] = Number(slider.value);
+      state.lastChange = `${slider.dataset.slider} rule channel → ${slider.value}`;
+      render();
+    };
+  });
+}
+
+function renderScenario() {
+  $("#tabs").innerHTML = SCENARIOS.map((s, i) =>
+    `<button aria-selected="${i === tab}" data-tab="${i}">${s.name}</button>`).join("");
+  $("#tabs").querySelectorAll("button").forEach((b) => {
+    b.onclick = () => { tab = Number(b.dataset.tab); startScenario(); };
+  });
+
+  const scenario = SCENARIOS[tab];
+  $("#scenario").innerHTML = `
+    <p>${scenario.blurb}</p>
+    <div class="steps">${scenario.steps.map(([label], i) => `
+      <div class="step">
+        <button data-step="${i}" class="${i === step ? "next" : ""}" ${i > step ? "disabled" : ""}>${i + 1}</button>
+        <p>${label}</p>
+      </div>`).join("")}
+    </div>
+    <div class="watch"><b>What to watch:</b> ${scenario.watch}</div>`;
+  $("#scenario").querySelectorAll("button[data-step]").forEach((b) => {
+    b.onclick = () => {
+      const i = Number(b.dataset.step);
+      SCENARIOS[tab].steps[i][1]();
+      state.lastChange = SCENARIOS[tab].steps[i][0];
+      step = Math.max(step, i + 1);
+      render();
+    };
+  });
+}
+
+function startScenario() {
+  const keep = { rule: state.rule, withheldPolicy: state.withheldPolicy, contested: state.contested };
+  state = Object.assign(initialState(), keep);
+  step = 0;
+  state.lastChange = `reset for “${SCENARIOS[tab].name}”`;
+  render();
+}
+
+function render() {
+  radios($("#rules"), RULES, "rule");
+  radios($("#withheld-policy"), WITHHELD, "withheldPolicy");
+  const toggle = $("#withheld-toggle");
+  toggle.checked = state.withheld;
+  toggle.onchange = () => {
+    state.withheld = toggle.checked;
+    state.lastChange = toggle.checked ? "the roles did not parse — five categories withheld" : "the roles parsed";
+    render();
+  };
+  radios($("#contested-policy"), CONTESTED, "contested");
+  renderState();
+  renderScenario();
+  renderFreeplay();
+}
+
+render();
+</script>
+</body>
+</html>

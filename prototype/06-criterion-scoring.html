@@ -1,0 +1,1996 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototype — scoring from criterion answers (ticket 06)</title>
+<style>
+  :root {
+    --ink: #1c1a17; --muted: #6b6560; --line: #e2ddd6; --bg: #faf8f5;
+    --panel: #fff; --accent: #9a4a1e; --accent-soft: #fbeee6;
+    --ok: #2f6b46; --warn: #9a4a1e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 24px 96px; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  }
+  main { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 30px; margin: 40px 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 19px; margin: 40px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 15px; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  .lede { color: var(--muted); font-size: 16px; max-width: 74ch; }
+  .throwaway {
+    display: inline-block; margin: 14px 0 0; padding: 3px 9px; border-radius: 3px;
+    background: var(--accent-soft); color: var(--accent);
+    font: 600 11px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; }
+  .stack > * + * { margin-top: 16px; }
+  label { cursor: pointer; }
+  .choice { display: block; padding: 7px 0; border-bottom: 1px dotted var(--line); }
+  .choice:last-child { border-bottom: 0; }
+  .choice input { margin-right: 8px; }
+  .choice b { font-weight: 600; }
+  .choice span { color: var(--muted); font-size: 13.5px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
+
+  /* --- state panel --- */
+  .headline { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+  .composite { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .composite .grade { font-size: 20px; color: var(--muted); margin-left: 8px; }
+  .changed { color: var(--accent); font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.unassessed td { color: #a8a29b; }
+  .tag {
+    display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 11px;
+    font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .tag.contested { background: var(--accent-soft); color: var(--accent); }
+  .tag.far { background: #f6dcd2; color: #8a2d0d; }
+  .tag.withheld { background: #eee9e2; color: var(--muted); }
+  .note { color: var(--muted); font-size: 12.5px; }
+  .alarm {
+    margin-top: 14px; padding: 10px 12px; border-left: 3px solid var(--accent);
+    background: var(--accent-soft); font-size: 13.5px;
+  }
+
+  /* --- free play --- */
+  .cat { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 14px 16px; }
+  .cat + .cat { margin-top: 12px; }
+  .cat header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+  .cat header .w { color: var(--muted); font-size: 12.5px; }
+  .crit { display: grid; grid-template-columns: 1fr 62px 62px; gap: 4px 8px; align-items: center; font-size: 13.5px; }
+  .crit .hd { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); text-align: center; }
+  .crit .cid { font: 600 12px ui-monospace, Menlo, monospace; color: var(--muted); margin-right: 6px; }
+  .crit .box { text-align: center; }
+  .crit .row { padding: 3px 0; border-top: 1px dotted var(--line); }
+  .split { background: #fff6f0; }
+  .verdicts { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .verdicts b { color: var(--ink); font-weight: 600; }
+  .slider { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 12.5px; color: var(--muted); }
+  .slider input { flex: 1; }
+
+  /* --- walkthroughs --- */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tabs button {
+    font: inherit; font-size: 13px; padding: 6px 11px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted);
+  }
+  .tabs button[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .steps { margin-top: 14px; }
+  .step { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; border-top: 1px dotted var(--line); }
+  .step button {
+    font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--accent); background: var(--panel); color: var(--accent); white-space: nowrap;
+  }
+  .step button[disabled] { opacity: 0.35; cursor: default; }
+  .step button.next { background: var(--accent); color: #fff; }
+  .step p { margin: 3px 0 0; font-size: 13.5px; }
+  .watch { margin-top: 12px; font-size: 13.5px; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>What is a category worth, when two judges answered its criteria?</h1>
+<p class="lede">
+  Ticket 06 of the rubric-migration map. Until ticket 05 the content judge returned a
+  <em>number</em> per category, and two judges were combined by averaging their numbers.
+  Since 05 the judge answers five yes/no <strong>criteria</strong> per category and names
+  no number at all; the band, and the band's value, are looked up from the answers.
+  Nothing yet turns those answers into a score. This page is the three decisions that
+  replacement needs, made pressable: <strong>how two judges who split on a criterion are
+  combined</strong>, <strong>what the report says when they do</strong>, and <strong>what
+  a withheld category does to the composite</strong>.
+</p>
+<span class="throwaway">Throwaway prototype — the logic module inside is the part meant to survive</span>
+
+<h2>The three decisions</h2>
+<div class="cols">
+  <div class="panel">
+    <h3>1. Two judges, one category</h3>
+    <div id="rules"></div>
+  </div>
+  <div class="panel">
+    <h3>3. A category nothing could judge</h3>
+    <p class="note" style="margin-bottom:10px">
+      A document whose roles did not parse has its five judged categories withheld before
+      any call is spent. What should the composite do with them?
+    </p>
+    <label class="choice" style="border-bottom:1px solid var(--line);margin-bottom:6px">
+      <input type="checkbox" id="withheld-toggle">
+      <b>This document's roles did not parse</b><br>
+      <span>Ticket 05 withholds all five judged categories before a call is spent. Tick it to see what each policy below does.</span>
+    </label>
+    <div id="withheld-policy"></div>
+  </div>
+</div>
+<div class="panel" style="margin-top:16px">
+  <h3>2. What the report says when the judges split</h3>
+  <div id="contested-policy"></div>
+</div>
+
+<h2>The score right now</h2>
+<div class="panel" id="state"></div>
+
+<h2>Guided walkthroughs</h2>
+<p class="lede" style="font-size:15px">
+  Six situations that are hard to reason about on paper. Each one resets the page and
+  then walks you through it a click at a time.
+</p>
+<div class="panel">
+  <div class="tabs" id="tabs"></div>
+  <div id="scenario"></div>
+</div>
+
+<h2>Free play</h2>
+<p class="lede" style="font-size:15px">
+  Every criterion, both judges, all five judged categories. Tick what each judge found.
+  The <em>rule channel</em> slider is what the deterministic rules scored the category —
+  the other half of the blend, and irrelevant where a category's rule share is 0.
+</p>
+<div id="freeplay"></div>
+
+<div class="panel" style="margin-top:16px">
+  <h3>The three rules-only categories</h3>
+  <p class="note">No judge is ever asked about these. They are here because they are the
+    only thing left in the composite when the judged five are withheld.</p>
+  <div id="ruleonly"></div>
+</div>
+
+</main>
+
+<script>
+// ===========================================================================
+// THE DATA: the five specs, the weights and the rule shares, inlined from the
+// package at build time by prototype/build_06_prototype.py.
+// ===========================================================================
+const DATA = {
+ "specs": [
+  {
+   "category": "Production ownership",
+   "measures": "Whether the resume evidences taking a system to production and staying responsible for it after launch.",
+   "doc_frequency": 6,
+   "rule_share": 0.4,
+   "source": "Criteria drafted for ticket 05 against the category 04 defined and the 6/6 evidence 02 recorded (inventory.md sections 1 and 4).",
+   "criteria": [
+    {
+     "id": "C1",
+     "name": "destination",
+     "question": "Does any bullet say the work reached somewhere real -- production, a release, live traffic, users, customers?",
+     "yes_requires": "A quote naming where the work ended up. Building it, designing it, or researching it is not a destination.",
+     "no_looks_like": "Every bullet stops at the artifact: 'Built a classifier', 'Designed a pipeline', 'Explored transformer architectures'.",
+     "aliases": [
+      "production",
+      "prod",
+      "deployed",
+      "deploy",
+      "shipped",
+      "ship",
+      "launched",
+      "launch",
+      "released",
+      "release",
+      "live",
+      "rollout",
+      "rolled out",
+      "canary",
+      "in production",
+      "users",
+      "customers",
+      "traffic",
+      "serving",
+      "served"
+     ],
+     "deterministic": {
+      "kind": "alias"
+     }
+    },
+    {
+     "id": "C2",
+     "name": "named system",
+     "question": "Is at least one shipped thing named specifically enough to ask about in an interview?",
+     "yes_requires": "A named service, product, model, or pipeline in the same bullet as the destination -- vLLM, Llama-3-8B, the eval harness, the retraining loop.",
+     "no_looks_like": "'Shipped AI-powered solutions', 'delivered scalable systems' -- portable to any candidate.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "named_in",
+      "anchor": "C1"
+     }
+    },
+    {
+     "id": "C3",
+     "name": "operational fact",
+     "question": "Does any bullet state a fact that could only be true after the system ran for real?",
+     "yes_requires": "Load carried, users served, an incident, an outage, on-call, uptime, an SLA or SLO, or a regression caught in production.",
+     "no_looks_like": "Only pre-launch numbers -- offline accuracy, a benchmark score, a model size.",
+     "aliases": [
+      "traffic",
+      "uptime",
+      "sla",
+      "slo",
+      "on-call",
+      "on call",
+      "oncall",
+      "incident",
+      "outage",
+      "postmortem",
+      "p99",
+      "p95",
+      "p50",
+      "qps",
+      "rps",
+      "req/min",
+      "requests per second",
+      "throughput",
+      "regression",
+      "rollback",
+      "rolled back",
+      "monitor",
+      "monitoring",
+      "drift",
+      "alert",
+      "alerting",
+      "reached production",
+      "in production"
+     ],
+     "deterministic": {
+      "kind": "alias"
+     }
+    },
+    {
+     "id": "C4",
+     "name": "post-launch work",
+     "question": "Does any bullet describe work done to a system that was already live?",
+     "yes_requires": "Operating, monitoring, debugging, tuning, migrating, porting, replacing, profiling or iterating on something already running -- as opposed to work that ended at release.",
+     "no_looks_like": "Every bullet ends at the launch. Nothing describes what happened to the system afterwards.",
+     "aliases": [
+      "operated",
+      "operating",
+      "operate",
+      "monitored",
+      "monitoring",
+      "debugged",
+      "debugging",
+      "tuned",
+      "tuning",
+      "iterated",
+      "iterating",
+      "migrated",
+      "migrating",
+      "ported",
+      "porting",
+      "replaced",
+      "replacing",
+      "refactored",
+      "profiled",
+      "profiling",
+      "patched",
+      "rolled back",
+      "maintained",
+      "retraining",
+      "retrained"
+     ],
+     "deterministic": {
+      "kind": "alias"
+     }
+    },
+    {
+     "id": "C5",
+     "name": "first-person ownership",
+     "question": "Is the shipped work attributed to this candidate rather than to a team, and without hedging their part?",
+     "yes_requires": "The destination bullet's subject is the candidate. 'Owned', 'Shipped', 'Cut', 'Built' -- an act, not a contribution to one.",
+     "no_looks_like": "'We shipped', 'the team launched', 'helped deliver', 'contributed to', 'assisted with', 'participated in', 'supported the rollout'.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "unhedged_in",
+      "anchor": "C1"
+     }
+    }
+   ],
+   "bands": [
+    {
+     "label": "E",
+     "name": "No destination",
+     "value": 10,
+     "rule": "C1 not met",
+     "when": {
+      "unmet": [
+       "C1"
+      ]
+     },
+     "reads": "Nothing in the resume says any work reached anywhere."
+    },
+    {
+     "label": "D",
+     "name": "Built, not operated",
+     "value": 35,
+     "rule": "C1 met, and either C2 unmet or neither C3 nor C4 met",
+     "when": {
+      "met": [
+       "C1"
+      ],
+      "any": [
+       {
+        "unmet": [
+         "C2"
+        ]
+       },
+       {
+        "count": {
+         "of": [
+          "C3",
+          "C4"
+         ],
+         "max": 0
+        }
+       }
+      ]
+     },
+     "reads": "Something shipped, but it is unnameable, or nothing says it ran or that the candidate stayed with it."
+    },
+    {
+     "label": "C",
+     "name": "Shipped",
+     "value": 58,
+     "rule": "C1 and C2 met, and exactly one of C3, C4",
+     "when": {
+      "met": [
+       "C1",
+       "C2"
+      ],
+      "count": {
+       "of": [
+        "C3",
+        "C4"
+       ],
+       "eq": 1
+      }
+     },
+     "reads": "A named thing reached production, and there is one half of the after-launch story."
+    },
+    {
+     "label": "B",
+     "name": "Shipped and operated",
+     "value": 78,
+     "rule": "C1, C2, C3 and C4 met, C5 unmet",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3",
+       "C4"
+      ],
+      "unmet": [
+       "C5"
+      ]
+     },
+     "reads": "The full arc is evidenced, but the resume attributes it to a team or hedges the candidate's part."
+    },
+    {
+     "label": "A",
+     "name": "Owned in production",
+     "value": 95,
+     "rule": "all five met",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3",
+       "C4",
+       "C5"
+      ]
+     },
+     "reads": "This person took a named system to production, it ran, they stayed with it, and the resume says it was them."
+    }
+   ],
+   "slug": "production-ownership"
+  },
+  {
+   "category": "AI-assisted coding fluency",
+   "slug": "ai-assisted-coding-fluency",
+   "measures": "Whether the resume evidences working fluently with AI coding tools as a practice -- what the candidate does differently because of them, not that they have heard of them.",
+   "doc_frequency": 3,
+   "rule_share": 0.0,
+   "source": "Criteria drafted for ticket 11 against the category 04 defined and the 3/6 evidence 02 recorded (inventory.md, 'What the taxonomy cannot see', item 3: amex, fluidstack, ramp). Written first of the three because rule_share is 0 -- criterion agreement is the only agreement this category has.",
+   "criteria": [
+    {
+     "id": "C1",
+     "name": "named tooling",
+     "question": "Does any bullet name a specific AI coding tool, assistant or agentic development workflow?",
+     "yes_requires": "A quote naming the tool -- Claude Code, Cursor, Copilot, Codex, an agentic coding workflow. A named product or a named practice both count; a category noun on its own does not.",
+     "no_looks_like": "'Familiar with modern AI tooling', 'used LLMs day to day', 'AI-first engineer' -- nothing a reader could go and look up.",
+     "aliases": [
+      "claude code",
+      "claude-code",
+      "cursor",
+      "copilot",
+      "github copilot",
+      "codex",
+      "windsurf",
+      "aider",
+      "cody",
+      "continue.dev",
+      "devin",
+      "sourcegraph",
+      "tabnine",
+      "codeium",
+      "zed",
+      "agentic coding",
+      "agentic development",
+      "ai-assisted coding",
+      "ai assisted coding",
+      "ai pair programming",
+      "pair-programmed with",
+      "llm-assisted",
+      "ai coding tools",
+      "coding agent",
+      "coding agents"
+     ],
+     "deterministic": {
+      "kind": "alias"
+     }
+    },
+    {
+     "id": "C2",
+     "name": "the candidate's own work",
+     "question": "Is the tooling used on the candidate's own engineering work, rather than being a product they built, sold or advised on?",
+     "yes_requires": "The bullet that names the tool describes the candidate writing, reviewing, testing, debugging or refactoring code with it.",
+     "no_looks_like": "'Built an agent on the OpenAI Agents SDK', 'advised customers on Claude Code rollouts' -- real work, and it is Agentic systems or a consulting bullet, not this category.",
+     "aliases": [
+      "wrote",
+      "write",
+      "writing",
+      "refactor",
+      "refactored",
+      "refactoring",
+      "reviewed",
+      "review",
+      "code review",
+      "debug",
+      "debugged",
+      "debugging",
+      "test",
+      "tests",
+      "testing",
+      "implemented",
+      "implementing",
+      "migrated",
+      "migrating",
+      "prototyped",
+      "prototyping",
+      "ported",
+      "scaffolded",
+      "pull request",
+      "pull requests",
+      "pr",
+      "prs",
+      "commits",
+      "codebase"
+     ],
+     "deterministic": {
+      "kind": "alias_in_anchor",
+      "anchor": "C1"
+     }
+    },
+    {
+     "id": "C3",
+     "name": "changed practice",
+     "question": "Does a bullet say what the tooling changed about how the work is done?",
+     "yes_requires": "A stated difference -- what the candidate now does that they did not before, or stopped doing: a review step added, a class of work taken on, a cycle shortened, a task moved from hand-written to generated-and-verified.",
+     "no_looks_like": "The tool is named and nothing follows. 'Used Cursor daily', 'Claude Code power user', a tool sitting in the skills list.",
+     "aliases": [
+      "cut",
+      "reduced",
+      "increased",
+      "raised",
+      "shortened",
+      "accelerated",
+      "sped up",
+      "freed",
+      "shifted",
+      "moved",
+      "replaced",
+      "instead of",
+      "rather than",
+      "now",
+      "no longer",
+      "enabled",
+      "allowed",
+      "let me",
+      "turnaround",
+      "cycle time",
+      "throughput",
+      "iteration speed",
+      "review practice",
+      "before",
+      "after",
+      "previously",
+      "used to"
+     ],
+     "deterministic": {
+      "kind": "alias_in_anchor",
+      "anchor": "C1"
+     }
+    },
+    {
+     "id": "C4",
+     "name": "the change is checkable",
+     "question": "Is that change stated as a fact somebody could check -- a number, a duration, a rate, a before and after?",
+     "yes_requires": "A quantity attached to the change: PRs per week, hours to a first draft, a review-cycle time, a share of a codebase, a migration size.",
+     "no_looks_like": "'Dramatically faster', 'significantly more productive', '10x engineer' -- an adverb where the number goes.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "number_in",
+      "anchor": "C3"
+     }
+    },
+    {
+     "id": "C5",
+     "name": "past their own keyboard",
+     "question": "Does the resume say the practice reached past the candidate's own editor -- other people, a standard, or a guardrail?",
+     "yes_requires": "Team adoption, a written guideline, a review or eval standard for generated code, a tool or harness they built for others, teaching or onboarding.",
+     "no_looks_like": "Every mention is first-person solo use; nothing says anyone else's work changed. A tool the candidate built and sold or shipped to others is a product, not their practice spreading -- C2 has already answered no in that case, and so does this one.",
+     "aliases": [
+      "team",
+      "teams",
+      "org",
+      "onboarded",
+      "onboarding",
+      "taught",
+      "teaching",
+      "trained the",
+      "rolled out",
+      "adoption",
+      "adopted",
+      "guideline",
+      "guidelines",
+      "playbook",
+      "standard",
+      "standards",
+      "convention",
+      "conventions",
+      "rubric",
+      "internal tool",
+      "harness",
+      "template",
+      "templates",
+      "documented",
+      "documentation",
+      "workshop",
+      "brown bag",
+      "evangelis"
+     ],
+     "deterministic": {
+      "kind": "none"
+     }
+    }
+   ],
+   "bands": [
+    {
+     "label": "E",
+     "name": "No tooling named",
+     "value": 10,
+     "rule": "C1 not met",
+     "when": {
+      "unmet": [
+       "C1"
+      ]
+     },
+     "reads": "Nothing in the resume names an AI coding tool or an agentic development practice."
+    },
+    {
+     "label": "D",
+     "name": "Named, not practised",
+     "value": 35,
+     "rule": "C1 met, and either C2 or C3 unmet",
+     "when": {
+      "met": [
+       "C1"
+      ],
+      "any": [
+       {
+        "unmet": [
+         "C2"
+        ]
+       },
+       {
+        "unmet": [
+         "C3"
+        ]
+       }
+      ]
+     },
+     "reads": "A tool is named, but it is somebody else's product, or nothing says what it changed about the work."
+    },
+    {
+     "label": "C",
+     "name": "A practice, described",
+     "value": 58,
+     "rule": "C1, C2 and C3 met, neither C4 nor C5",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3"
+      ],
+      "count": {
+       "of": [
+        "C4",
+        "C5"
+       ],
+       "max": 0
+      }
+     },
+     "reads": "The candidate says what the tooling changed about their own work, and asks the reader to take it on trust."
+    },
+    {
+     "label": "B",
+     "name": "A practice, evidenced",
+     "value": 78,
+     "rule": "C1, C2 and C3 met, and exactly one of C4, C5",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3"
+      ],
+      "count": {
+       "of": [
+        "C4",
+        "C5"
+       ],
+       "eq": 1
+      }
+     },
+     "reads": "The change is either measured or visible in someone else's work -- one of the two."
+    },
+    {
+     "label": "A",
+     "name": "Fluent, and it shows",
+     "value": 95,
+     "rule": "all five met",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3",
+       "C4",
+       "C5"
+      ]
+     },
+     "reads": "A named tool changed named work by a checkable amount, and the practice reached past this one person."
+    }
+   ]
+  },
+  {
+   "category": "Evaluation rigour",
+   "slug": "evaluation-rigour",
+   "measures": "Whether the resume evidences measuring model quality with something that could have returned a negative answer.",
+   "doc_frequency": 5,
+   "rule_share": 0.4,
+   "source": "Criteria drafted for ticket 11 against the category 04 defined and the 5/6 evidence 02 recorded (inventory.md section 5). Wording drawn from the baseline run: both judges, unprompted, reached for evaluation methodology, benchmark provenance, baselines, eval set and measurement method (baseline-agreement.md, findings-identity.md section 2).",
+   "criteria": [
+    {
+     "id": "C1",
+     "name": "a measurement happened",
+     "question": "Does any bullet say the quality of a model or its output was measured -- an eval, a benchmark, a test set, an A/B test, human annotation, a quality metric?",
+     "yes_requires": "A quote naming the act of measuring. The measurement may be crude; this criterion only asks that one exists.",
+     "no_looks_like": "Every bullet stops at building or shipping: 'Fine-tuned a classifier', 'built a RAG pipeline' -- nothing says anyone checked whether it worked. Serving numbers are not a quality measurement either: latency, throughput, cost and uptime say how the system ran, not whether its answers were any good, and Production ownership's C3 already asks for those.",
+     "aliases": [
+      "eval",
+      "evals",
+      "evaluation",
+      "evaluations",
+      "evaluated",
+      "evaluating",
+      "benchmark",
+      "benchmarked",
+      "benchmarks",
+      "test set",
+      "held-out",
+      "holdout",
+      "held out",
+      "golden set",
+      "gold set",
+      "a/b test",
+      "a/b tests",
+      "ab test",
+      "online test",
+      "offline test",
+      "annotation",
+      "annotators",
+      "human review",
+      "human raters",
+      "accuracy",
+      "precision",
+      "recall",
+      "f1",
+      "auc",
+      "roc",
+      "bleu",
+      "rouge",
+      "perplexity",
+      "win rate",
+      "pass@",
+      "hit rate",
+      "measured",
+      "measurement",
+      "scored against",
+      "regression suite",
+      "regression test",
+      "ablation",
+      "ablations"
+     ],
+     "deterministic": {
+      "kind": "alias"
+     }
+    },
+    {
+     "id": "C2",
+     "name": "named metric and number",
+     "question": "Is the measurement stated as a named metric with a number?",
+     "yes_requires": "A metric a reader could recompute and the value it took -- 'F1 0.82', 'pass@1 from 41% to 63%', 'p95 hallucination rate under 2%'.",
+     "no_looks_like": "'Improved model quality', 'strong benchmark results', 'high accuracy'. Also a number attached to something other than quality -- a token count, a dataset size, a GPU count -- standing in for a result.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "number_in",
+      "anchor": "C1"
+     }
+    },
+    {
+     "id": "C3",
+     "name": "what it was run on",
+     "question": "Does the resume say what the measurement was run on?",
+     "yes_requires": "A named dataset, a held-out or golden set, a stated number of annotated examples, production traffic, or named human raters -- the provenance of the number, not only its value.",
+     "no_looks_like": "A metric with no subject. 'Hit 92% accuracy' -- on what, chosen how, how many examples.",
+     "aliases": [
+      "dataset",
+      "datasets",
+      "test set",
+      "held-out",
+      "holdout",
+      "held out",
+      "golden set",
+      "gold set",
+      "eval set",
+      "evaluation set",
+      "validation set",
+      "corpus",
+      "examples",
+      "samples",
+      "annotated",
+      "annotators",
+      "labelled",
+      "labeled",
+      "labels",
+      "production traffic",
+      "live traffic",
+      "real user",
+      "real traffic",
+      "queries",
+      "transcripts",
+      "mmlu",
+      "humaneval",
+      "swe-bench",
+      "gsm8k",
+      "hellaswag",
+      "mt-bench",
+      "internal benchmark",
+      "curated"
+     ],
+     "deterministic": {
+      "kind": "alias",
+      "requires": "C1"
+     }
+    },
+    {
+     "id": "C4",
+     "name": "compared to something",
+     "question": "Is the number compared with something -- a baseline, a prior model, a before and after, a target?",
+     "yes_requires": "The other end of the comparison, named: the model or method that was beaten, the previous value, the bar that had to be cleared.",
+     "no_looks_like": "A single standalone number. '0.87 F1' is unreadable without knowing what 0.87 replaced or beat.",
+     "aliases": [
+      "baseline",
+      "baselines",
+      "prior",
+      "previous",
+      "incumbent",
+      "compared",
+      "comparison",
+      "versus",
+      "vs",
+      "vs.",
+      "against",
+      "outperformed",
+      "beat",
+      "improved from",
+      "up from",
+      "down from",
+      "rose from",
+      "fell from",
+      "target",
+      "sla",
+      "threshold",
+      "state of the art",
+      "sota",
+      "human baseline",
+      "holdback",
+      "relative to",
+      "ablation"
+     ],
+     "deterministic": {
+      "kind": "alias",
+      "requires": "C1"
+     },
+     "alias_patterns": [
+      "\\bfrom\\s+\\$?\\d",
+      "\\b\\d+(?:\\.\\d+)?%?\\s+to\\s+\\$?\\d"
+     ]
+    },
+    {
+     "id": "C5",
+     "name": "could have returned a negative answer",
+     "question": "Does any bullet show the measurement was capable of coming back bad -- and say what happened when it did?",
+     "yes_requires": "A regression caught, a failure mode found, a model or approach rejected on the numbers, a launch gated or blocked, an eval that ran on every change. fluidstack's bar: an eval that told you the truth about model quality before users did.",
+     "no_looks_like": "Every number is a win. The evals appear only where they confirmed the work, and nothing was ever turned down because of one.",
+     "aliases": [
+      "regression",
+      "regressions",
+      "caught",
+      "failure mode",
+      "failure modes",
+      "edge case",
+      "edge cases",
+      "rejected",
+      "ruled out",
+      "did not ship",
+      "blocked the release",
+      "gated",
+      "gating",
+      "rolled back",
+      "rollback",
+      "false positive",
+      "false negative",
+      "drift",
+      "degradation",
+      "degraded",
+      "on every change",
+      "every pull request",
+      "continuous integration",
+      "pre-release",
+      "abandoned",
+      "shelved"
+     ],
+     "deterministic": {
+      "kind": "alias",
+      "requires": "C1"
+     }
+    }
+   ],
+   "bands": [
+    {
+     "label": "E",
+     "name": "Nothing measured",
+     "value": 10,
+     "rule": "C1 not met",
+     "when": {
+      "unmet": [
+       "C1"
+      ]
+     },
+     "reads": "Nothing in the resume says anyone checked whether the work was any good."
+    },
+    {
+     "label": "D",
+     "name": "Measured, not reported",
+     "value": 35,
+     "rule": "C1 met, and either C2 unmet or neither C3 nor C4 met",
+     "when": {
+      "met": [
+       "C1"
+      ],
+      "any": [
+       {
+        "unmet": [
+         "C2"
+        ]
+       },
+       {
+        "count": {
+         "of": [
+          "C3",
+          "C4"
+         ],
+         "max": 0
+        }
+       }
+      ]
+     },
+     "reads": "Evaluation is claimed, but no metric and number arrive, or the number stands alone with nothing behind or beside it."
+    },
+    {
+     "label": "C",
+     "name": "A number",
+     "value": 58,
+     "rule": "C1 and C2 met, and exactly one of C3, C4",
+     "when": {
+      "met": [
+       "C1",
+       "C2"
+      ],
+      "count": {
+       "of": [
+        "C3",
+        "C4"
+       ],
+       "eq": 1
+      }
+     },
+     "reads": "A named metric with a value, and half of what makes it readable -- what it ran on, or what it beat, not both."
+    },
+    {
+     "label": "B",
+     "name": "A readable result",
+     "value": 78,
+     "rule": "C1, C2, C3 and C4 met, C5 unmet",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3",
+       "C4"
+      ],
+      "unmet": [
+       "C5"
+      ]
+     },
+     "reads": "The number, its subject and its comparison are all present -- and every measurement in the resume came back a win."
+    },
+    {
+     "label": "A",
+     "name": "Evaluation that could say no",
+     "value": 95,
+     "rule": "all five met",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3",
+       "C4",
+       "C5"
+      ]
+     },
+     "reads": "The resume shows a measurement that was allowed to fail, and what changed when it did."
+    }
+   ]
+  },
+  {
+   "category": "Agentic systems",
+   "slug": "agentic-systems",
+   "measures": "Whether the resume evidences building systems that reason over context, call tools and take actions.",
+   "doc_frequency": 6,
+   "rule_share": 0.0,
+   "source": "Criteria drafted for ticket 11 against the category 04 defined and the 6/6 evidence 02 recorded (inventory.md section 2). Structure transferred from Production ownership, as 05 predicted it would: a gate, a naming criterion, a pair of mechanism criteria, and one separator on top.",
+   "criteria": [
+    {
+     "id": "C1",
+     "name": "a system that acts",
+     "question": "Does any bullet say the candidate built a system that takes actions on its own -- an agent, an agentic workflow, a tool-calling loop, a pipeline that decides its own next step?",
+     "yes_requires": "A quote naming the thing built and the fact that it acts rather than answers. Calling a model in a loop and doing something with the result counts; the word 'agent' is not required.",
+     "no_looks_like": "A model that only returns text -- a classifier, a summariser, a chatbot that answers and stops. Also using someone else's coding agent on your own work: that is AI-assisted coding fluency, and 02 warns this is the conflation to avoid.",
+     "aliases": [
+      "agent",
+      "agents",
+      "agentic",
+      "tool-calling",
+      "tool calling",
+      "tool use",
+      "function calling",
+      "multi-agent",
+      "orchestrator",
+      "orchestration",
+      "autonomous",
+      "workflow engine",
+      "planner",
+      "planning loop",
+      "react loop",
+      "mcp",
+      "model context protocol",
+      "langgraph",
+      "langchain",
+      "autogen",
+      "crewai",
+      "temporal",
+      "state machine",
+      "takes actions",
+      "acts on"
+     ],
+     "deterministic": {
+      "kind": "alias"
+     }
+    },
+    {
+     "id": "C2",
+     "name": "named system",
+     "question": "Is the agentic system named specifically enough to ask about in an interview?",
+     "yes_requires": "A named product, service or framework in the same bullet as the system -- the triage agent, an MCP server, LangGraph, Temporal, the model it ran on.",
+     "no_looks_like": "'Built agentic AI solutions', 'delivered autonomous workflows' -- portable to any candidate.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "named_in",
+      "anchor": "C1"
+     }
+    },
+    {
+     "id": "C3",
+     "name": "what it could do",
+     "question": "Does the resume say what the system could actually do -- which tools, APIs or systems it reached, or what actions it took in the world?",
+     "yes_requires": "The action surface, named: the ticketing system it wrote to, the search index it queried, the refund it issued, the PR it opened, the internal APIs it was given.",
+     "no_looks_like": "'Reasons over context and takes actions' -- the job description's own words handed back with no tools in them. Two near-misses that are not an action surface: the domain noun inside the system's own name ('a ticket-triage agent' does not evidence reaching a ticketing system), and the escalation path, which is what C4 asks about.",
+     "aliases": [
+      "api",
+      "apis",
+      "tools",
+      "tool",
+      "endpoint",
+      "endpoints",
+      "database",
+      "queried",
+      "queries",
+      "search",
+      "retrieval",
+      "rag",
+      "index",
+      "webhook",
+      "crm",
+      "jira",
+      "zendesk",
+      "salesforce",
+      "slack",
+      "github",
+      "shell",
+      "browser",
+      "calendar",
+      "email",
+      "ticket",
+      "tickets",
+      "refund",
+      "refunds",
+      "wrote to",
+      "writes to",
+      "called",
+      "calls",
+      "invoked",
+      "executes",
+      "executed",
+      "actions",
+      "sandbox",
+      "function"
+     ],
+     "deterministic": {
+      "kind": "alias",
+      "requires": "C1"
+     }
+    },
+    {
+     "id": "C4",
+     "name": "what decided the next step",
+     "question": "Does the resume say what drove the system from one step to the next?",
+     "yes_requires": "The control, named: a planner, a router, a state machine, a retry or fallback policy, a confidence threshold, an escalation path to a human, a step budget.",
+     "no_looks_like": "The system is described as a single call. Nothing says how it chose, retried, stopped, or handed over.",
+     "aliases": [
+      "planner",
+      "planning",
+      "router",
+      "routing",
+      "state machine",
+      "workflow",
+      "retry",
+      "retries",
+      "fallback",
+      "fallbacks",
+      "escalate",
+      "escalation",
+      "escalated",
+      "confidence",
+      "threshold",
+      "budget",
+      "step limit",
+      "loop",
+      "iterate",
+      "iterated",
+      "decides",
+      "decided",
+      "chooses",
+      "chose",
+      "branch",
+      "branching",
+      "policy",
+      "handoff",
+      "hand off",
+      "human in the loop",
+      "human-in-the-loop",
+      "queue",
+      "scheduler",
+      "memory",
+      "context window"
+     ],
+     "deterministic": {
+      "kind": "alias",
+      "requires": "C1"
+     }
+    },
+    {
+     "id": "C5",
+     "name": "what bounded it",
+     "question": "Does any bullet say what kept the system inside its limits?",
+     "yes_requires": "Guardrails, authorization or scoping of what it was allowed to touch, an approval step, an audit trail, a sandbox, a rate or spend cap, or an eval that gated its behaviour. fluidstack states this as the requirement: guardrails, authorization, audit, and evals.",
+     "no_looks_like": "The agent is described as capable and nothing says what it was not allowed to do.",
+     "aliases": [
+      "guardrail",
+      "guardrails",
+      "authorization",
+      "authorisation",
+      "auth",
+      "permission",
+      "permissions",
+      "scoped",
+      "scope",
+      "allowlist",
+      "allow-list",
+      "whitelist",
+      "approval",
+      "approvals",
+      "approve",
+      "audit",
+      "audit trail",
+      "logging",
+      "logged",
+      "traced",
+      "tracing",
+      "sandbox",
+      "sandboxed",
+      "isolated",
+      "rate limit",
+      "rate-limited",
+      "spend cap",
+      "budget cap",
+      "dry run",
+      "dry-run",
+      "kill switch",
+      "circuit breaker",
+      "safety",
+      "red team",
+      "red-team",
+      "policy check",
+      "human approval"
+     ],
+     "deterministic": {
+      "kind": "alias",
+      "requires": "C1"
+     }
+    }
+   ],
+   "bands": [
+    {
+     "label": "E",
+     "name": "No agentic system",
+     "value": 10,
+     "rule": "C1 not met",
+     "when": {
+      "unmet": [
+       "C1"
+      ]
+     },
+     "reads": "Nothing in the resume says the candidate built a system that acts."
+    },
+    {
+     "label": "D",
+     "name": "Claimed, not described",
+     "value": 35,
+     "rule": "C1 met, and either C2 unmet or neither C3 nor C4 met",
+     "when": {
+      "met": [
+       "C1"
+      ],
+      "any": [
+       {
+        "unmet": [
+         "C2"
+        ]
+       },
+       {
+        "count": {
+         "of": [
+          "C3",
+          "C4"
+         ],
+         "max": 0
+        }
+       }
+      ]
+     },
+     "reads": "An agent is claimed, but it is unnameable, or nothing says what it could reach or how it decided anything."
+    },
+    {
+     "label": "C",
+     "name": "Half a mechanism",
+     "value": 58,
+     "rule": "C1 and C2 met, and exactly one of C3, C4",
+     "when": {
+      "met": [
+       "C1",
+       "C2"
+      ],
+      "count": {
+       "of": [
+        "C3",
+        "C4"
+       ],
+       "eq": 1
+      }
+     },
+     "reads": "A named agent with either its tools or its control described -- not both."
+    },
+    {
+     "label": "B",
+     "name": "Mechanism, unbounded",
+     "value": 78,
+     "rule": "C1, C2, C3 and C4 met, C5 unmet",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3",
+       "C4"
+      ],
+      "unmet": [
+       "C5"
+      ]
+     },
+     "reads": "The reader can see what it reached and what drove it, and nothing says what it was not allowed to do."
+    },
+    {
+     "label": "A",
+     "name": "Bounded agent in the world",
+     "value": 95,
+     "rule": "all five met",
+     "when": {
+      "met": [
+       "C1",
+       "C2",
+       "C3",
+       "C4",
+       "C5"
+      ]
+     },
+     "reads": "A named system that reached real tools, decided its own next step, and had stated limits."
+    }
+   ],
+   "rule_share_source": "0, not 04's 0.4: ticket 07 (rule-mapping.md section 5) found this category has no deducting rule and no jd_dimensions.py dimension, so a non-zero rule_share blends the band against a constant 100 rather than a channel. Restored to 0.4 if 09 gives it a dimension."
+  },
+  {
+   "category": "Resume craft",
+   "slug": "resume-craft",
+   "measures": "Whether the document survives a six-second recruiter scan and reads as edited prose.",
+   "doc_frequency": null,
+   "rule_share": 0.7,
+   "shape": "count",
+   "source": "Criteria drafted for ticket 12 against the category 04 defined. Not corpus-derived and cannot be: the postings describe the job, not the resume, so this category has no document frequency and an authored weight. The five criteria are what survives subtracting the ~40 deterministic rules 07 files here -- see resume-craft-criteria.md section 'The subtraction'.",
+   "criteria": [
+    {
+     "id": "C1",
+     "name": "says what it is",
+     "question": "Does the resume say what this person is, above the first role, rather than leaving the reader to infer it from a job title?",
+     "yes_requires": "A quote above the first role naming the discipline -- a summary line or a role line. 'AI Engineer, 3 yrs -- LLM serving and evals.'",
+     "no_looks_like": "A name, an email, and straight into a job. The reader has to read a bullet before knowing what they are looking at.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "identity"
+     }
+    },
+    {
+     "id": "C2",
+     "name": "names what changed",
+     "question": "Does every role have at least one bullet naming something that is different because of the work?",
+     "yes_requires": "One quote per role stating a change -- something cut, raised, replaced, unblocked, shipped. Not the assignment, the difference.",
+     "no_looks_like": "A role whose bullets are all responsibilities: 'Responsible for maintaining the pipeline', 'Worked on model architectures', 'Involved in the migration'.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "outcome_per_role"
+     }
+    },
+    {
+     "id": "C3",
+     "name": "says what it was for",
+     "question": "Does the resume say what the work was for -- a product, a user, a problem -- rather than only the stack and the number?",
+     "yes_requires": "A quote naming the thing the work served. 'for ticket triage', 'so support agents could answer without escalating'.",
+     "no_looks_like": "Every bullet is a technology and a metric with no subject. 'Cut p99 latency 380ms to 95ms with vLLM' -- for what, and who noticed?",
+     "aliases": [
+      "users",
+      "user",
+      "customers",
+      "customer",
+      "support",
+      "agents",
+      "tickets",
+      "triage",
+      "checkout",
+      "onboarding",
+      "fraud",
+      "billing",
+      "claims",
+      "patients",
+      "clinicians",
+      "drivers",
+      "merchants",
+      "sellers",
+      "buyers",
+      "students",
+      "moderation",
+      "recommendations",
+      "search results",
+      "product",
+      "shoppers",
+      "subscribers",
+      "borrowers",
+      "underwriting",
+      "so that",
+      "so support",
+      "for the team",
+      "internal teams",
+      "field staff"
+     ],
+     "deterministic": {
+      "kind": "alias"
+     }
+    },
+    {
+     "id": "C4",
+     "name": "roles read differently",
+     "question": "Does each role read as a different job, rather than the same work described again?",
+     "yes_requires": "The roles differ in what they claim -- different systems, different scope, different problems. One role is enough to satisfy this.",
+     "no_looks_like": "Two roles whose bullets are interchangeable, or a promotion where only the title changed.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "roles_differ"
+     }
+    },
+    {
+     "id": "C5",
+     "name": "could not be anyone's",
+     "question": "Is every bullet specific enough that it could not move unchanged to a stranger's resume?",
+     "yes_requires": "No bullet survives having its names, numbers and tools stripped and still saying something.",
+     "no_looks_like": "'Leveraged cutting-edge AI technologies to deliver robust and scalable solutions' -- true of anyone who has ever been employed.",
+     "aliases": [],
+     "deterministic": {
+      "kind": "unportable"
+     }
+    }
+   ],
+   "bands": [
+    {
+     "label": "E",
+     "name": "Not written for a reader",
+     "value": 10,
+     "rule": "at most one criterion met",
+     "when": {
+      "count": {
+       "of": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+       ],
+       "max": 1
+      }
+     },
+     "reads": "Nothing about the document is aimed at the person reading it."
+    },
+    {
+     "label": "D",
+     "name": "Needs a rewrite",
+     "value": 35,
+     "rule": "exactly two met",
+     "when": {
+      "count": {
+       "of": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+       ],
+       "eq": 2
+      }
+     },
+     "reads": "Two of the five hold. The rest is a draft."
+    },
+    {
+     "label": "C",
+     "name": "Readable, unedited",
+     "value": 58,
+     "rule": "exactly three met",
+     "when": {
+      "count": {
+       "of": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+       ],
+       "eq": 3
+      }
+     },
+     "reads": "A reader can follow it and will notice what was left in."
+    },
+    {
+     "label": "B",
+     "name": "One thing left",
+     "value": 78,
+     "rule": "exactly four met",
+     "when": {
+      "count": {
+       "of": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+       ],
+       "eq": 4
+      }
+     },
+     "reads": "Edited, with one criterion still unmet -- and the report can name which."
+    },
+    {
+     "label": "A",
+     "name": "Edited",
+     "value": 95,
+     "rule": "all five met",
+     "when": {
+      "count": {
+       "of": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5"
+       ],
+       "min": 5
+      }
+     },
+     "reads": "It says what it is, what changed, what it was for, that the jobs differed, and none of it could be anyone else's."
+    }
+   ]
+  }
+ ],
+ "weights": {
+  "Parseability": 15.0,
+  "Structure & formatting": 5.0,
+  "Title & seniority alignment": 5.0,
+  "Production ownership": 15.0,
+  "Agentic systems": 15.0,
+  "Evaluation rigour": 12.5,
+  "AI-assisted coding fluency": 7.5,
+  "Resume craft": 25.0
+ },
+ "shares": {
+  "Production ownership": 0.4,
+  "AI-assisted coding fluency": 0.0,
+  "Evaluation rigour": 0.4,
+  "Agentic systems": 0.0,
+  "Resume craft": 0.7
+ },
+ "ruleOnly": [
+  "Parseability",
+  "Structure & formatting",
+  "Title & seniority alignment"
+ ]
+};
+
+// ===========================================================================
+// THE PURE MODULE — no DOM below this line until the marker says otherwise.
+// This is the part that lifts into ats/score.py once a rule is chosen.
+// ===========================================================================
+
+/** One `when` clause: met / unmet / count / any, all of which must hold together.
+ *  A direct port of ats/rubric.py `_clause`. */
+function clauseHolds(clause, met) {
+  for (const cid of clause.met || []) if (!met.has(cid)) return false;
+  for (const cid of clause.unmet || []) if (met.has(cid)) return false;
+  const count = clause.count;
+  if (count) {
+    const hits = count.of.filter((c) => met.has(c)).length;
+    if ("eq" in count && hits !== count.eq) return false;
+    if ("min" in count && hits < count.min) return false;
+    if ("max" in count && hits > count.max) return false;
+  }
+  const alts = clause.any;
+  if (alts && !alts.some((alt) => clauseHolds(alt, met))) return false;
+  return true;
+}
+
+/** The band lookup: first `when` that matches, in declared order (ats/rubric.py band_of). */
+function bandOf(answers, spec) {
+  const met = new Set(Object.keys(answers).filter((k) => answers[k]));
+  for (const band of spec.bands) if (clauseHolds(band.when, met)) return band;
+  throw new Error(spec.slug + ": the lookup is not total");
+}
+
+/** How two judges' answers to one category become one value.
+ *
+ *  `rule` is the decision this prototype exists to settle:
+ *    lower     — band each judge from their own answers, take the lower band's value.
+ *    average   — band each judge, average the two values.
+ *    intersect — a criterion is met only if BOTH judges met it; band the intersection.
+ */
+function judgeCategory(spec, answersA, answersB, rule) {
+  const order = spec.bands.map((b) => b.label);
+  const bands = [bandOf(answersA, spec), bandOf(answersB, spec)];
+  const idx = bands.map((b) => order.indexOf(b.label));
+  const lowIdx = Math.min(...idx), highIdx = Math.max(...idx);
+  const lowBand = spec.bands[lowIdx], highBand = spec.bands[highIdx];
+
+  const splitCriteria = spec.criteria
+    .filter((c) => !!answersA[c.id] !== !!answersB[c.id])
+    .map((c) => c.id);
+
+  let value, mergedBand = null;
+  if (rule === "intersect") {
+    const merged = {};
+    for (const c of spec.criteria) merged[c.id] = !!answersA[c.id] && !!answersB[c.id];
+    mergedBand = bandOf(merged, spec);
+    value = mergedBand.value;
+  } else if (rule === "average") {
+    value = (bands[0].value + bands[1].value) / 2;
+  } else {
+    value = lowBand.value;
+  }
+
+  const gap = highIdx - lowIdx;
+  return {
+    bands, lowBand, highBand, gap, value, mergedBand, splitCriteria,
+    // Is the merged value one a band actually names, or a number the rubric never
+    // authored? 04 removed model-authored numbers; a rule that puts one back should
+    // have to say so out loud.
+    valueIsABand: spec.bands.some((b) => b.value === value),
+    // Below BOTH judges: the merge invented a disagreement neither judge reported.
+    belowBoth: value < lowBand.value,
+    verdict: gap === 0 ? "agreed" : gap === 1 ? "adjacent" : "far",
+  };
+}
+
+/** One category's score. The blend is unchanged from today; what feeds it is not. */
+function categoryScore(name, judged, ruleScore, withheld, withheldPolicy) {
+  const share = DATA.shares[name];
+  const weight = DATA.weights[name];
+  const blend = (v) => ruleScore * share + v * (1 - share);
+
+  if (share === undefined) {                       // a rules-only category
+    return { name, weight, score: ruleScore, assessed: true, note: "rules only" };
+  }
+  if (withheld) {
+    if (withheldPolicy === "unassessed") {
+      return { name, weight, score: 0, assessed: false, withheld: true,
+               note: "withheld — the roles did not parse, so no criterion has a subject" };
+    }
+    if (withheldPolicy === "ruleonly") {
+      return { name, weight, score: ruleScore, assessed: share > 0, withheld: true,
+               note: share > 0 ? "withheld — riding on the rule channel alone" : "no channel at all" };
+    }
+    const stand = withheldPolicy === "zero" ? 0 : 50;
+    return { name, weight, score: blend(stand), assessed: true, withheld: true,
+             note: "withheld — scored as if the judge had said " + stand };
+  }
+  if (!judged) {
+    return { name, weight, score: ruleScore, assessed: share > 0, note: "no judge answer" };
+  }
+  return {
+    name, weight, assessed: true, judged,
+    score: blend(judged.value),
+    low: judged.gap ? blend(judged.lowBand.value) : null,
+    high: judged.gap ? blend(judged.highBand.value) : null,
+  };
+}
+
+/** The composite: assessed categories only, renormalised over their weight. */
+function composite(rows) {
+  const scored = rows.filter((r) => r.assessed);
+  const total = scored.reduce((s, r) => s + r.weight, 0);
+  const value = total ? scored.reduce((s, r) => s + r.score * r.weight, 0) / total : 0;
+  return { value: Math.round(value * 10) / 10, assessedWeight: total };
+}
+
+const GRADES = [[90, "A"], [80, "B"], [70, "C"], [60, "D"], [0, "F"]];
+function grade(v) { for (const [t, g] of GRADES) if (v >= t) return g; return "F"; }
+
+/** Everything the page renders, from the whole state, in one call. */
+function scoreRun(state) {
+  const rows = [];
+  for (const spec of DATA.specs) {
+    const name = spec.category;
+    const judged = judgeCategory(spec, state.answers[name].A, state.answers[name].B, state.rule);
+    rows.push(categoryScore(name, judged, state.ruleScores[name], state.withheld, state.withheldPolicy));
+  }
+  for (const name of DATA.ruleOnly) {
+    rows.push(categoryScore(name, null, state.ruleScores[name], false, state.withheldPolicy));
+  }
+  const comp = composite(rows);
+  return { rows, ...comp, grade: grade(comp.value) };
+}
+
+// ===========================================================================
+// END OF THE PURE MODULE. Everything below is the throwaway page.
+// ===========================================================================
+
+const RULES = [
+  ["lower", "The lower band wins",
+   "Band each judge from their own answers. Where they land on different bands, the category takes the lower one — a real band, named, and the higher one is still shown."],
+  ["average", "Average the two bands' values",
+   "Closest to what the code does today. On a split it produces a number no band names — 68 sits between C's 58 and B's 78."],
+  ["intersect", "A criterion is met only if both judges met it",
+   "Combine the answers, not the bands: intersect the met sets and band the result. The most literal reading of “what is combined is answers”."],
+];
+
+const WITHHELD = [
+  ["unassessed", "Not assessed — left out of the composite",
+   "The machinery ticket 03 already built. The composite renormalises over the 25 points the parser gate holds, and the report prints n/a with the reason."],
+  ["zero", "Scored as if the judge had said 0",
+   "The withheld categories still carry their weight, at the bottom of the scale."],
+  ["fifty", "Scored at the middle of the scale (50)",
+   "Splits the difference — the category neither helps nor hurts much."],
+  ["ruleonly", "Rule channel alone — what the code does today",
+   "score.build has not been told about withholding, so the three judged categories with a rule channel ride at whatever the rules left them, usually 100."],
+];
+
+const CONTESTED = [
+  ["bands", "Name the two bands the judges landed on",
+   "“The judges read this differently: Shipped, or Shipped and operated.” The reader gets the two readings, not two numbers."],
+  ["range", "Show a numeric range, as today",
+   "“providers disagreed; shown as a range”, with the blended low and high. Today's wording and today's mechanism."],
+  ["far-only", "Only say anything when the split is non-adjacent",
+   "One adjacent band is the disagreement the other map already calls tolerable; only a two-band gap is worth interrupting the reader for."],
+];
+
+function blankAnswers() {
+  const out = {};
+  for (const spec of DATA.specs) {
+    out[spec.category] = { A: {}, B: {} };
+    for (const c of spec.criteria) {
+      out[spec.category].A[c.id] = false;
+      out[spec.category].B[c.id] = false;
+    }
+  }
+  return out;
+}
+
+function initialState() {
+  const ruleScores = {};
+  for (const name of Object.keys(DATA.weights)) ruleScores[name] = 100;
+  return {
+    rule: "lower", withheldPolicy: "unassessed", contested: "bands",
+    withheld: false, answers: blankAnswers(), ruleScores, lastChange: "",
+  };
+}
+
+let state = initialState();
+
+// -- scenarios --------------------------------------------------------------
+// Answer sets taken from the recorded model judge and the deterministic probe in
+// docs/wayfinder/rubric-grounding/criteria/, which is the only two-judge data that exists.
+
+function setAnswers(cat, judge, met) {
+  for (const id of Object.keys(state.answers[cat][judge])) {
+    state.answers[cat][judge][id] = met.includes(id);
+  }
+}
+function both(cat, met) { setAnswers(cat, "A", met); setAnswers(cat, "B", met); }
+
+const PO = "Production ownership", AG = "Agentic systems", ER = "Evaluation rigour",
+      AI = "AI-assisted coding fluency", RC = "Resume craft";
+
+const SCENARIOS = [
+  {
+    name: "Both judges agree",
+    blurb: "The baseline. A strong resume, both judges answering all five categories the same way. Nothing is contested, nothing is withheld — so every merge rule gives the same answer, and the composite is what the rubric thinks the resume is worth.",
+    watch: "Switch between the three merge rules at the top. The composite does not move. Any disagreement between the rules is a disagreement about *splits*, not about scoring.",
+    steps: [
+      ["Both judges read the behaviour categories", () => {
+        both(PO, ["C1", "C2", "C3", "C4", "C5"]);
+        both(AG, ["C1", "C2", "C3", "C4"]);
+        both(ER, ["C1", "C2", "C3", "C4"]);
+        both(AI, ["C1", "C2", "C3"]);
+      }],
+      ["Both judges read the craft", () => both(RC, ["C1", "C2", "C3", "C4"])],
+      ["The rules found some real defects", () => {
+        state.ruleScores[PO] = 84; state.ruleScores[RC] = 71;
+        state.ruleScores["Parseability"] = 88;
+      }],
+    ],
+  },
+  {
+    name: "One criterion, one band apart",
+    blurb: "The real split from the band probes: on `4-shipped-operated-once` the two judges answered Production ownership's C3 (“an operational fact”) differently and nothing else. One lands on Shipped, the other on Built, not operated. This is the smallest disagreement the rubric can express.",
+    watch: "The band gap is 23 points (35 → 58) — so the old `band_high - band_low >= 12` test fires on the smallest possible disagreement there is. That threshold cannot survive; the question is what replaces it, and what the reader is told.",
+    steps: [
+      ["Both judges: a named thing shipped, and they own it", () => {
+        setAnswers(PO, "A", ["C1", "C2", "C5"]);
+        setAnswers(PO, "B", ["C1", "C2", "C5"]);
+      }],
+      ["Judge B also reads an operational fact (C3)", () => setAnswers(PO, "B", ["C1", "C2", "C3", "C5"])],
+      ["Now try each merge rule at the top of the page", () => {}],
+    ],
+  },
+  {
+    name: "The intersection trap",
+    blurb: "Resume craft does not band like the others: its band is simply how many criteria are met. Here both judges met three of five — the same band, C, Readable, unedited — but not the same three. They agree on the category and disagree on two criteria.",
+    watch: "Under “lower band wins” and “average”, this is agreement: both judges said C, the category scores C. Under “a criterion is met only if both judges met it” the intersection is two criteria, which is band D — a category the judges agreed about is marked down for a disagreement neither of them reported. Over all 496 answer-set pairs this happens on 100 of the 115 pairs where craft's two judges agree on the band.",
+    steps: [
+      ["Judge A: says what it is, names what changed, says what it was for", () => setAnswers(RC, "A", ["C1", "C2", "C3"])],
+      ["Judge B: says what it is, names what changed, could not be anyone's", () => setAnswers(RC, "B", ["C1", "C2", "C5"])],
+      ["Both judges landed on band C — check the table", () => {}],
+      ["Now switch the merge rule to “a criterion is met only if both judges met it”", () => { state.rule = "intersect"; }],
+    ],
+  },
+  {
+    name: "The category with no rule channel",
+    blurb: "Agentic systems has rule_share 0 — no deterministic rule deducts from it, so nothing dilutes the judge. The real split from the probes is on C3 (“what it could do”) on `5-control-no-tools`, one adjacent band. At weight 15 and share 0 the whole band gap lands on the composite.",
+    watch: "The band gap costs 3.0 composite points here against 1.8 in Production ownership, which has the same weight and the same gap but a 0.4 rule channel to absorb it. The map already records this exposure as unresolved; this is what it looks like in a score.",
+    steps: [
+      ["Both judges: a named system that acts, and what bounds it", () => {
+        setAnswers(AG, "A", ["C1", "C2", "C4"]);
+        setAnswers(AG, "B", ["C1", "C2", "C4"]);
+      }],
+      ["Judge A also reads what it could do (C3)", () => setAnswers(AG, "A", ["C1", "C2", "C3", "C4"])],
+      ["Compare against Production ownership by giving it the same split", () => {
+        setAnswers(PO, "A", ["C1", "C2", "C3", "C4"]);
+        setAnswers(PO, "B", ["C1", "C2", "C4"]);
+      }],
+    ],
+  },
+  {
+    name: "Two bands apart",
+    blurb: "Not every split is adjacent. Here the judges disagree about whether a measurement happened at all: one reads Evaluation rigour at E, Nothing measured; the other at C, A number. The rubric-grounding map calls a non-adjacent disagreement a failure of the acceptance bar, not a tolerable spread.",
+    watch: "Under every merge rule this produces a single confident-looking number. Is that defensible? The third option under decision 2 says a two-band gap is the only disagreement worth interrupting the reader for.",
+    steps: [
+      ["Judge A: nothing was measured", () => setAnswers(ER, "A", [])],
+      ["Judge B: a measurement happened, with a named metric and a number", () => setAnswers(ER, "B", ["C1", "C2", "C3"])],
+      ["Look at what the category is worth, and what the report says", () => {}],
+    ],
+  },
+  {
+    name: "A document nothing could judge",
+    blurb: "A two-column resume parses to zero roles. Every criterion asks about a bullet inside a role, so ticket 05 withholds all five judged categories before spending a call — and the parser gate has already found and charged for the defect. score.build has never been told, which is the bug this ticket names.",
+    watch: "Start on “rule channel alone — what the code does today” and watch the composite. Three judged categories ride at 100 on a document no parser can read. Then try the other three policies: only one of them neither inflates nor deflates.",
+    steps: [
+      ["A two-column document: the parser rules bite hard", () => {
+        state.withheld = true;
+        state.withheldPolicy = "ruleonly";
+        state.ruleScores["Parseability"] = 20;
+        state.ruleScores["Structure & formatting"] = 45;
+        state.ruleScores["Title & seniority alignment"] = 100;
+        for (const s of DATA.specs) state.ruleScores[s.category] = 100;
+      }],
+      ["Look at the composite — this is today's behaviour", () => {}],
+      ["Now: not assessed, left out of the composite", () => { state.withheldPolicy = "unassessed"; }],
+      ["And: scored as if the judge had said 0", () => { state.withheldPolicy = "zero"; }],
+    ],
+  },
+];
+
+let tab = 0, step = 0;
+
+// -- rendering --------------------------------------------------------------
+
+const $ = (sel) => document.querySelector(sel);
+
+function radios(host, options, key) {
+  host.innerHTML = options.map(([value, title, blurb]) => `
+    <label class="choice">
+      <input type="radio" name="${key}" value="${value}" ${state[key] === value ? "checked" : ""}>
+      <b>${title}</b><br><span>${blurb}</span>
+    </label>`).join("");
+  host.querySelectorAll("input").forEach((input) => {
+    input.onchange = () => { state[key] = input.value; state.lastChange = input.parentElement.querySelector("b").textContent; render(); };
+  });
+}
+
+function renderState() {
+  const run = scoreRun(state);
+  const alarms = [];
+  for (const row of run.rows) {
+    const j = row.judged;
+    if (!j || row.withheld) continue;
+    if (j.belowBoth) alarms.push(`<b>${row.name}</b>: the merge landed on ${j.mergedBand.label} — below both judges, who said ${j.bands[0].label} and ${j.bands[1].label}. Neither judge reported that.`);
+    else if (j.gap && !j.valueIsABand) alarms.push(`<b>${row.name}</b>: ${j.value} is not a value any band names. The rubric stopped authoring numbers at ticket 04.`);
+    if (j.verdict === "far") alarms.push(`<b>${row.name}</b>: the judges are two bands apart (${j.lowBand.label} vs ${j.highBand.label}). The other map calls that a failure, not a spread.`);
+  }
+  if (state.withheld && state.withheldPolicy === "ruleonly") {
+    alarms.push("Withheld categories are riding on their rule channel alone — today's bug, and the reason this ticket exists.");
+  }
+
+  $("#state").innerHTML = `
+    <div class="headline">
+      <div class="composite">${run.value.toFixed(1)}<span class="grade">${run.grade}</span></div>
+      <div class="note">composite over ${run.assessedWeight} points of assessed weight
+        ${run.assessedWeight < 100 ? `— ${100 - run.assessedWeight} points left out` : ""}</div>
+      ${state.lastChange ? `<div class="changed">last change: ${state.lastChange}</div>` : ""}
+    </div>
+    <table>
+      <thead><tr>
+        <th>Category</th><th class="num">Weight</th><th class="num">Rule ch.</th>
+        <th>Judge A</th><th>Judge B</th><th class="num">Judged value</th>
+        <th class="num">Score</th><th>What the report says</th>
+      </tr></thead>
+      <tbody>${run.rows.map((row) => renderRow(row)).join("")}</tbody>
+    </table>
+    ${alarms.map((a) => `<div class="alarm">${a}</div>`).join("")}`;
+}
+
+function contestedText(row) {
+  const j = row.judged;
+  if (!j || !j.gap) return "";
+  if (state.contested === "far-only" && j.gap === 1) return "";
+  if (state.contested === "range") {
+    return `<span class="tag ${j.verdict === "far" ? "far" : "contested"}">contested</span> `
+      + `<span class="note">providers disagreed; shown as a range ${row.low.toFixed(1)}–${row.high.toFixed(1)}</span>`;
+  }
+  return `<span class="tag ${j.verdict === "far" ? "far" : "contested"}">contested</span> `
+    + `<span class="note">the judges read this differently: ${j.lowBand.name}, or ${j.highBand.name}`
+    + ` (split on ${j.splitCriteria.join(", ")})</span>`;
+}
+
+function renderRow(row) {
+  const j = row.judged;
+  const bands = j ? j.bands.map((b) => `${b.label} <span class="note">${b.value}</span>`) : ["—", "—"];
+  const note = row.withheld
+    ? `<span class="tag withheld">withheld</span> <span class="note">${row.note}</span>`
+    : row.assessed ? contestedText(row) : `<span class="note">${row.note || "not assessed"}</span>`;
+  return `<tr class="${row.assessed ? "" : "unassessed"}">
+    <td>${row.name}</td>
+    <td class="num">${row.weight}</td>
+    <td class="num">${DATA.shares[row.name] === undefined ? "—" : row.ruleScore ?? state.ruleScores[row.name]}</td>
+    <td>${bands[0]}</td><td>${bands[1]}</td>
+    <td class="num">${j && !row.withheld ? j.value : "—"}</td>
+    <td class="num">${row.assessed ? row.score.toFixed(1) : "n/a"}</td>
+    <td>${note}</td>
+  </tr>`;
+}
+
+function renderFreeplay() {
+  $("#freeplay").innerHTML = DATA.specs.map((spec) => {
+    const name = spec.category;
+    const share = DATA.shares[name];
+    return `<div class="cat" data-cat="${name}">
+      <header>
+        <h3>${name}</h3>
+        <span class="w">weight ${DATA.weights[name]} &middot; rule share ${share}${share === 0 ? " (the judge owns the whole category)" : ""}</span>
+      </header>
+      <div class="crit">
+        <div></div><div class="hd">Judge A</div><div class="hd">Judge B</div>
+        ${spec.criteria.map((c) => {
+          const a = state.answers[name].A[c.id], b = state.answers[name].B[c.id];
+          return `<div class="row ${a !== b ? "split" : ""}"><span class="cid">${c.id}</span>${c.name}</div>
+            <div class="row box ${a !== b ? "split" : ""}"><input type="checkbox" data-judge="A" data-id="${c.id}" ${a ? "checked" : ""}></div>
+            <div class="row box ${a !== b ? "split" : ""}"><input type="checkbox" data-judge="B" data-id="${c.id}" ${b ? "checked" : ""}></div>`;
+        }).join("")}
+      </div>
+      <div class="slider">
+        <span>rule channel</span>
+        <input type="range" min="0" max="100" value="${state.ruleScores[name]}" data-slider="${name}">
+        <span>${state.ruleScores[name]}</span>
+      </div>
+    </div>`;
+  }).join("");
+
+  $("#ruleonly").innerHTML = DATA.ruleOnly.map((name) => `
+    <div class="slider">
+      <span style="min-width:210px">${name} <span class="note">(weight ${DATA.weights[name]})</span></span>
+      <input type="range" min="0" max="100" value="${state.ruleScores[name]}" data-slider="${name}">
+      <span>${state.ruleScores[name]}</span>
+    </div>`).join("");
+
+  document.querySelectorAll("[data-cat] input[type=checkbox]").forEach((box) => {
+    box.onchange = () => {
+      const cat = box.closest("[data-cat]").dataset.cat;
+      state.answers[cat][box.dataset.judge][box.dataset.id] = box.checked;
+      state.lastChange = `${cat} ${box.dataset.id}, judge ${box.dataset.judge} → ${box.checked ? "met" : "not met"}`;
+      render();
+    };
+  });
+  document.querySelectorAll("[data-slider]").forEach((slider) => {
+    slider.oninput = () => {
+      state.ruleScores[slider.dataset.slider] = Number(slider.value);
+      state.lastChange = `${slider.dataset.slider} rule channel → ${slider.value}`;
+      render();
+    };
+  });
+}
+
+function renderScenario() {
+  $("#tabs").innerHTML = SCENARIOS.map((s, i) =>
+    `<button aria-selected="${i === tab}" data-tab="${i}">${s.name}</button>`).join("");
+  $("#tabs").querySelectorAll("button").forEach((b) => {
+    b.onclick = () => { tab = Number(b.dataset.tab); startScenario(); };
+  });
+
+  const scenario = SCENARIOS[tab];
+  $("#scenario").innerHTML = `
+    <p>${scenario.blurb}</p>
+    <div class="steps">${scenario.steps.map(([label], i) => `
+      <div class="step">
+        <button data-step="${i}" class="${i === step ? "next" : ""}" ${i > step ? "disabled" : ""}>${i + 1}</button>
+        <p>${label}</p>
+      </div>`).join("")}
+    </div>
+    <div class="watch"><b>What to watch:</b> ${scenario.watch}</div>`;
+  $("#scenario").querySelectorAll("button[data-step]").forEach((b) => {
+    b.onclick = () => {
+      const i = Number(b.dataset.step);
+      SCENARIOS[tab].steps[i][1]();
+      state.lastChange = SCENARIOS[tab].steps[i][0];
+      step = Math.max(step, i + 1);
+      render();
+    };
+  });
+}
+
+function startScenario() {
+  const keep = { rule: state.rule, withheldPolicy: state.withheldPolicy, contested: state.contested };
+  state = Object.assign(initialState(), keep);
+  step = 0;
+  state.lastChange = `reset for “${SCENARIOS[tab].name}”`;
+  render();
+}
+
+function render() {
+  radios($("#rules"), RULES, "rule");
+  radios($("#withheld-policy"), WITHHELD, "withheldPolicy");
+  const toggle = $("#withheld-toggle");
+  toggle.checked = state.withheld;
+  toggle.onchange = () => {
+    state.withheld = toggle.checked;
+    state.lastChange = toggle.checked ? "the roles did not parse — five categories withheld" : "the roles parsed";
+    render();
+  };
+  radios($("#contested-policy"), CONTESTED, "contested");
+  renderState();
+  renderScenario();
+  renderFreeplay();
+}
+
+render();
+</script>
+</body>
+</html>
