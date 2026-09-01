@@ -1,6 +1,6 @@
 type: prototype (HITL)
 status: open
-claimed:
+claimed: claude
 blocked-by: 05
 
 # Score from criterion answers
