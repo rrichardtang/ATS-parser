@@ -409,6 +409,79 @@ def test_two_judges_reporting_one_defect_collide_on_kind_and_place(monkeypatch):
     assert len(result.data) == 1
 
 
+def test_two_judges_splitting_on_a_criterion_produce_a_contested_category(monkeypatch):
+    """06's scoring channel, end to end through the pass.
+
+    Both providers answer the same five questions; they differ on C3 alone. The lower
+    band wins, the higher one is named, and the split is recorded whether or not it
+    moved the band.
+    """
+    def dispatch(provider, system, user, temperature):
+        c3 = "yes" if provider.name == "openai" else "no"
+        return _answers(
+            ("Production ownership", "C1", "yes", "", "Owned GLIDE-ME end to end",
+             "exp[0].bullet[0]"),
+            ("Production ownership", "C2", "yes", "", "GLIDE-ME", "exp[0].bullet[0]"),
+            ("Production ownership", "C3", c3, "nothing operational",
+             "Owned GLIDE-ME end to end", "exp[0].bullet[0]"),
+            ("Production ownership", "C4", "no", "no post-launch work", "", ""),
+            ("Production ownership", "C5", "yes", "", "Owned GLIDE-ME end to end",
+             "exp[0].bullet[0]"),
+        )
+
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    result = passes.content_pass(
+        [Provider("anthropic", "k", "m"), Provider("openai", "k", "m")],
+        _resume(), "text", "", [], samples=1, temperature=0.0,
+    )
+
+    judged = result.judged[Category.PRODUCTION_OWNERSHIP]
+    assert judged.judges == 2
+    assert (judged.band, judged.value) == ("D", 35.0)
+    assert (judged.high_band, judged.high_value) == ("C", 58.0)
+    assert judged.contested and judged.gap == 1
+    assert judged.split_criteria == ["production-ownership/C3"]
+    assert result.meta["contested"] == ["Production ownership"]
+    assert result.meta["criterion_splits"] == ["production-ownership/C3"]
+
+
+def test_a_category_no_judge_answered_completely_gets_no_value(monkeypatch):
+    """CONTENT_REPLY answers three of `Production ownership`'s five criteria, so no
+    band can be looked up -- and an abstention must not arrive as a low band."""
+    result = _one_content_pass(monkeypatch, CONTENT_REPLY, _resume())
+    assert Category.PRODUCTION_OWNERSHIP not in result.judged
+
+
+def test_the_judged_value_reaches_the_report(monkeypatch, fixtures):
+    """The whole path: answers -> band -> value -> blend -> composite.
+
+    All five `Production ownership` criteria answered `no` is band E, worth 10, and at
+    rule_share 0.4 that is what the category's model half is. Before 06 the category
+    showed its rule channel alone.
+    """
+    def dispatch(provider, system, user, temperature):
+        if "ANSWER THE CRITERIA" not in system:
+            return _router(system)
+        return _answers(*[
+            ("Production ownership", f"C{i}", "no", "not evidenced", "", "")
+            for i in range(1, 6)
+        ])
+
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
+
+    report = analyze(RunInput(pdf_path=str(fixtures["strong"]),
+                              ensemble_mode="economy", enable_rewrites=False))
+
+    row = next(c for c in report.categories
+               if c.category is Category.PRODUCTION_OWNERSHIP)
+    assert row.assessed and not row.contested
+    # rule_score * 0.4 + 10 * 0.6, so the judged half caps it well under the rule
+    # channel's own reading whatever the rules found.
+    assert row.score <= 46.0
+    assert not any("not wired yet" in note for note in report.notes)
+
+
 def test_the_content_prompt_asks_the_criteria_and_no_longer_asks_for_a_score():
     system = prompts.content_system()
 
@@ -444,3 +517,9 @@ def test_a_document_whose_roles_did_not_parse_is_withheld(monkeypatch, fixtures)
     assert any("withheld" in note for note in report.notes)
     assert not [f for f in report.findings if f.source.startswith("llm:")
                 and f.rule_id.startswith("production-ownership/")]
+    # 06: and the composite is told, so the three judged categories with a rule
+    # channel no longer ride at 100 on a document no parser can read.
+    for row in report.categories:
+        if row.category in JUDGED_CATEGORIES:
+            assert not row.assessed and row.note.startswith("withheld")
+    assert sum(c.weight for c in report.categories if c.assessed) == 25.0

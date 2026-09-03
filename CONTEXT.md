@@ -115,3 +115,28 @@ _Avoid_: provider (a provider is an API; a judge is a role), model, grader
 The spread between two judges on the same category and resume. The rubric's
 acceptance test, not a diagnostic about the resume.
 _Avoid_: disagreement, variance, band (the report's word "banded" means something else)
+
+**Contested**:
+A category whose judges landed on different bands. The category scores the **lower**
+band and the report names both readings, because two band names say what the judges
+disagreed about where two numbers say only that they did. Measured in bands apart, not
+points: the narrowest disagreement the rubric can express is one adjacent band, which
+is 17 points at its narrowest, so no point threshold can tell a small split from a
+large one. Placeholder word, owned by the rubric-grounding map.
+_Avoid_: banded, disagreed, ranged, split (a **criterion split** is one question, not a
+category)
+
+**Criterion split**:
+One criterion two judges answered differently. Most cost nothing: the band lookup is
+shared, so a split only moves a band when it crosses a rule boundary — which is the
+property the criteria form was chosen for. A split that crosses one makes the category
+*contested*; a split the lookup absorbs is recorded and changes no score.
+
+**Withheld**:
+A judged category that cannot be judged on this document at all, because the parse
+carries nothing for its criteria to be about — no roles survived extraction, or the
+roles carry no bullets. Decided before any call is spent, and **not assessed**: left
+out of the composite, which renormalises over what was actually checked. Not a zero
+(the parser gate has already charged for the defect) and not a constant (that would put
+a number nobody measured on half the composite).
+_Avoid_: skipped, unscored, n/a (n/a is what the report prints, not what this is)

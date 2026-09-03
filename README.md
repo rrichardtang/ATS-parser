@@ -55,7 +55,7 @@ flowchart TD
     EX --> SEC["sections.py<br/>contact, roles, bullets, dates"]
     SEC --> DET["Deterministic checks<br/>parseability, structure, slop patterns,<br/>recruiter scan, keyword coverage"]
 
-    DET --> P1["Pass 1 — content judge<br/>both providers, averaged + banded"]
+    DET --> P1["Pass 1 — content judge<br/>both providers, banded per judge"]
     DET --> P2["Pass 2 — slop judge<br/>k-of-N per provider, union across"]
 
     P1 --> GEN

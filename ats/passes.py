@@ -20,6 +20,7 @@ from .models import (
     CriterionAnswer,
     Finding,
     Gate,
+    JudgedCategory,
     Provenance,
     Rewrite,
     Severity,
@@ -307,11 +308,10 @@ def content_pass(
     * the **report** channel -- placed findings and unmet criteria -- is unioned
       across judgements here, keyed on `(rule_id, locator)` and on the criterion id
       respectively, exactly as findings were unioned before 05.
-    * the **scoring** channel -- the answers themselves -- is deliberately *not*
-      folded. Two judges answering the same five questions differently is a criterion
-      split, not a spread of numbers, and what to do about it is ticket 06's decision.
-      The unfolded answers stay on each `ContentJudgment`, which is where 06 and
-      `ats/agreement.py` read them.
+    * the **scoring** channel -- the answers themselves -- folds through the band
+      lookup instead, in `judge_categories`: each judge is banded from its own answers
+      and the lower band wins (06). The unfolded answers stay on each `ContentJudgment`
+      regardless, because `ats/agreement.py` measures the split the fold resolves.
     """
     withheld = withholding_reason(resume)
     if withheld:
@@ -352,18 +352,58 @@ def content_pass(
             seen_unmet.add(criterion.criterion_id)
             unmet.append(criterion)
 
+    judged = judge_categories(judgments)
+
     return ensemble.PassResult(
         data=findings,
         providers_used=sorted({j.provider for j in judgments}),
         errors=errors,
+        judged=judged,
         meta={
             "providers": sorted({j.provider for j in judgments}),
+            "contested": sorted(c.value for c in judged if judged[c].contested),
+            "criterion_splits": sorted(
+                cid for j in judged.values() for cid in j.split_criteria),
             "unmet": [c.model_dump(mode="json") for c in unmet],
             "criteria_answered": len(answered),
             "criteria_asked": sum(len(c) for _slug, c in criteria_index().values()),
             "samples_per_provider": samples,
         },
     )
+
+
+def judge_categories(judgments: list[ContentJudgment]) -> dict[Category, JudgedCategory]:
+    """What every judge's criterion answers make each category worth (06).
+
+    The scoring channel 05 deliberately left unfolded, folded at last. One judge is one
+    `(provider, sample)` reply, not one provider: sampling noise and genuine provider
+    disagreement are the same shape from here, and `weights.toml` ships one sample per
+    provider, so collapsing samples first would only hide the noise the agreement
+    harness exists to measure.
+
+    A category no judge answered completely is absent from the result rather than
+    present at a guess, which is what lets `score.build` tell "nobody could answer this"
+    apart from "the answer was low".
+    """
+    index = criteria_index()
+    slug_of = {category: slug for category, (slug, _criteria) in index.items()}
+    per_category: dict[Category, list[dict[str, bool]]] = {}
+    for judgment in judgments:
+        answers: dict[Category, dict[str, bool]] = {}
+        for answer in criterion_answers(judgment.categories):
+            answers.setdefault(answer.category, {})[
+                answer.criterion_id.split("/", 1)[1]] = answer.met
+        for category, answered in answers.items():
+            per_category.setdefault(category, []).append(answered)
+
+    judged: dict[Category, JudgedCategory] = {}
+    for category, answer_sets in per_category.items():
+        combined = ensemble.combine_bands(
+            rubric.load_spec(slug_of[category]), answer_sets
+        )
+        if combined is not None:
+            judged[category] = combined
+    return judged
 
 
 def slop_pass(

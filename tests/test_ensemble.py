@@ -6,10 +6,11 @@ what keeps best-of-N honest, so it is tested directly.
 """
 import pytest
 
+from ats.rubric import load_spec
 from ats.ensemble import (
     audit_clean,
     audit_score,
-    combine_scores,
+    combine_bands,
     combine_slop,
     filter_slop,
     rank_score,
@@ -151,11 +152,63 @@ def test_unquotable_findings_are_discarded():
     assert len(filter_slop(items, resume)) == 1
 
 
-def test_score_band_appears_only_on_real_disagreement():
-    agree, meta = combine_scores({"a": {"Resume craft": 70}, "b": {"Resume craft": 74}})
-    assert meta["disagreements"] == []
-    _, meta2 = combine_scores({"a": {"Resume craft": 40}, "b": {"Resume craft": 85}})
-    assert meta2["disagreements"]
+def _po(*met):
+    return {f"C{i}": f"C{i}" in met for i in range(1, 6)}
+
+
+def test_one_judge_names_a_band_and_contests_nothing():
+    judged = combine_bands(load_spec("production-ownership"), [_po("C1", "C2", "C3")])
+    assert (judged.band, judged.value) == ("C", 58.0)
+    assert not judged.contested and judged.split_criteria == []
+
+
+def test_the_lower_band_wins_and_the_higher_one_is_still_named():
+    """06's rule. C3 is the only split, and it is the one that crosses a boundary."""
+    judged = combine_bands(load_spec("production-ownership"),
+                           [_po("C1", "C2", "C3"), _po("C1", "C2")])
+    assert (judged.band, judged.value) == ("D", 35.0)
+    assert (judged.high_band, judged.high_value) == ("C", 58.0)
+    assert judged.contested and judged.gap == 1
+    assert judged.split_criteria == ["production-ownership/C3"]
+    assert "Built, not operated" in judged.reads_as()
+    assert "Shipped" in judged.reads_as()
+
+
+def test_a_split_the_lookup_absorbs_is_recorded_but_not_contested():
+    """04's claim, in one assertion: only a split that crosses a rule boundary costs a
+    band. C5 does not move a resume that is already below band B."""
+    judged = combine_bands(load_spec("production-ownership"),
+                           [_po("C1", "C2", "C5"), _po("C1", "C2")])
+    assert not judged.contested and judged.gap == 0
+    assert judged.split_criteria == ["production-ownership/C5"]
+    assert judged.reads_as() == ""
+
+
+def test_the_merge_never_lands_below_a_band_both_judges_agreed_on():
+    """The measured case against intersecting the answers instead of the bands.
+
+    Both judges met three of `Resume craft`'s five criteria -- band C either way -- but
+    not the same three. Intersecting gives two criteria, which is band D: a markdown
+    for a disagreement neither judge reported.
+    """
+    craft = load_spec("resume-craft")
+    left = {"C1": True, "C2": True, "C3": True, "C4": False, "C5": False}
+    right = {"C1": True, "C2": True, "C3": False, "C4": False, "C5": True}
+    judged = combine_bands(craft, [left, right])
+    assert judged.band == "C" and not judged.contested
+    intersected = {cid: left[cid] and right[cid] for cid in left}
+    from ats.rubric import band_of
+    assert band_of(intersected, craft)["label"] == "D"
+
+
+def test_an_incomplete_answer_set_names_no_band():
+    """`band_of` refuses to band an abstention, so a judge that abstained is dropped
+    rather than read as having answered `no`."""
+    partial = {"C1": True, "C2": True}
+    assert combine_bands(load_spec("production-ownership"), [partial]) is None
+    judged = combine_bands(load_spec("production-ownership"),
+                           [partial, _po("C1", "C2", "C3")])
+    assert judged.judges == 1 and judged.band == "C" and not judged.contested
 
 
 def test_degrades_when_a_provider_returns_nothing():

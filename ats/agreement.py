@@ -39,7 +39,7 @@ from typing import Any, Callable, Iterable
 from . import config, passes, pipeline
 from .extract import extract
 from .llm import Provider
-from .models import Category, Finding, UnmetCriterion
+from .models import Category, Finding, JudgedCategory, UnmetCriterion
 from .reliability import Alpha, alpha
 from .score import build
 from .sections import parse
@@ -276,18 +276,23 @@ class Scored:
 
 
 def score_judgment(run: ResumeRun, judgment: passes.ContentJudgment) -> Scored | None:
-    """None when the judgement carried no number.
+    """One judge's composite, scored the way the pipeline scores a run.
 
-    Which, since 05, is every live judgement: the model answers criteria and the
-    value is a lookup 06 has yet to wire. What still lands here is a run recorded
-    under the old prompt, which is the before picture every rubric change is judged
-    against.
+    Since 06 the live path is the same lookup the report uses: this judgement's
+    criterion answers are banded by `passes.judge_categories`, which with one judgement
+    is one judge and therefore never contested. The numeric path below it stays for
+    runs recorded under the pre-05 prompt, where the model authored a number and there
+    are no answers to look a band up from -- that recording is the *before* picture
+    every rubric change is measured against, and losing the ability to score it would
+    lose the comparison. None when the judgement carries neither.
     """
-    values: dict[Category, tuple[float, float, float]] = {}
-    for name, entry in judgment.categories.items():
-        value = numeric_of(entry)
-        if value is not None:
-            values[Category(name)] = (value, value, value)
+    values = passes.judge_categories([judgment])
+    if not values:
+        for name, entry in judgment.categories.items():
+            value = numeric_of(entry)
+            if value is not None:
+                values[Category(name)] = JudgedCategory(
+                    category=Category(name), value=value)
     if not values:
         return None
     as_built = build(run.deterministic + judgment.findings, llm_categories=values)

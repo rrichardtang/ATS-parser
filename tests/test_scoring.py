@@ -15,10 +15,21 @@ from ats.models import (
     Category,
     Finding,
     Gate,
+    JudgedCategory,
     Provenance,
     Severity,
 )
 from ats.score import build, rule_shares
+
+
+def _judged(category, band, value, high=None, high_value=None):
+    """One category's judged half, as `passes.judge_categories` would hand it over."""
+    return JudgedCategory(
+        category=category, value=value, band=band, band_name=band,
+        high_band=high or band, high_band_name=high or band,
+        high_value=high_value if high_value is not None else value,
+        gap=1 if high else 0, judges=2 if high else 1,
+    )
 
 
 def _finding(rule_id="x/y", category=Category.STRUCTURE, severity=Severity.MINOR,
@@ -251,11 +262,106 @@ def test_a_category_no_channel_reaches_is_not_scored_at_all():
 
 def test_a_judged_category_the_judge_answered_is_scored():
     """And the exclusion lifts the moment a judge does answer it."""
-    report = build([], llm_categories={Category.AGENTIC_SYSTEMS: (58.0, 58.0, 58.0)})
+    report = build([], llm_categories={Category.AGENTIC_SYSTEMS: _judged(
+        Category.AGENTIC_SYSTEMS, "C", 58.0)})
     row = next(c for c in report.categories if c.category is Category.AGENTIC_SYSTEMS)
     assert row.assessed
     # rule_share 0, so the judge's number is the whole of the score.
     assert row.score == 58.0
+
+
+def test_a_contested_category_scores_the_lower_band_and_names_the_other():
+    """06's rule, and what the reader is told about it.
+
+    `Production ownership` at rule_share 0.4 and a clean rule channel: the score is the
+    blend of the LOW band, and the high one rides beside it in words rather than
+    replacing the score with a range.
+    """
+    judged = _judged(Category.PRODUCTION_OWNERSHIP, "D", 35.0,
+                     high="C", high_value=58.0)
+    judged.band_name, judged.high_band_name = "Built, not operated", "Shipped"
+    judged.split_criteria = ["production-ownership/C3"]
+    report = build([], llm_categories={Category.PRODUCTION_OWNERSHIP: judged})
+
+    row = next(c for c in report.categories
+               if c.category is Category.PRODUCTION_OWNERSHIP)
+    assert row.contested
+    assert row.score == 61.0, "100 * 0.4 + 35 * 0.6 -- the lower band, blended"
+    assert (row.low, row.high) == (61.0, 74.8)
+    assert "Built, not operated" in row.note and "Shipped" in row.note
+    assert "production-ownership/C3" in row.note
+    assert "range" not in row.note, "two band names, not two numbers"
+
+
+def test_judges_that_agree_contest_nothing():
+    judged = _judged(Category.PRODUCTION_OWNERSHIP, "C", 58.0)
+    report = build([], llm_categories={Category.PRODUCTION_OWNERSHIP: judged})
+    row = next(c for c in report.categories
+               if c.category is Category.PRODUCTION_OWNERSHIP)
+    assert not row.contested and row.note == "" and row.low is None
+
+
+def test_a_withheld_category_neither_inflates_nor_deflates_the_composite():
+    """The bug 06 names, and its fix.
+
+    On a document whose roles did not parse, `content_pass` withholds all five judged
+    categories before spending a call. Told nothing, `build` floated the three with a
+    rule channel at 100 -- 52.5 of the composite's points manufactured out of checks
+    that never ran. Withheld categories are left out instead, and the composite
+    renormalises over the 25 points the parser gate actually assessed.
+    """
+    reason = "withheld -- no roles survived extraction"
+    withheld = {c: reason for c in JUDGED_CATEGORIES}
+    findings = [_finding(rule_id="parse/multi-column",
+                         category=Category.PARSEABILITY, severity=Severity.CRITICAL)]
+
+    told = build(list(findings), withheld=withheld)
+    untold = build(list(findings))
+
+    rows = {c.category: c for c in told.categories}
+    for category in JUDGED_CATEGORIES:
+        assert not rows[category].assessed
+        assert rows[category].score == 0.0
+        assert rows[category].note == reason
+    assert told.composite < untold.composite, "the 100s are gone"
+    # The composite is exactly the parser gate's three categories, renormalised.
+    scored = [c for c in told.categories if c.assessed]
+    assert {c.category for c in scored} == {
+        Category.PARSEABILITY, Category.STRUCTURE, Category.TITLE}
+    assert sum(c.weight for c in scored) == 25.0
+
+
+def test_a_withheld_category_is_not_rescued_by_a_deduction():
+    """`assessed`'s self-correcting clause must not reach a withheld category.
+
+    A slop finding still fires on a two-column document, and it does not make the
+    craft criteria answerable -- they have no bullets to be about. The finding still
+    prints; it costs the composite nothing, and says so rather than quoting points the
+    score never lost.
+    """
+    slop = _finding(rule_id="slop/x", category=Category.RESUME_CRAFT,
+                    severity=Severity.MAJOR, gate=Gate.MANAGER)
+    report = build([slop], withheld={Category.RESUME_CRAFT: "withheld -- no roles"})
+
+    row = next(c for c in report.categories if c.category is Category.RESUME_CRAFT)
+    assert not row.assessed
+    assert report.findings[0].points == 0.0
+    assert not [r for r in report.ledger if r.rule_id == "slop/x"]
+
+
+def test_a_withheld_category_cannot_also_carry_a_judged_value():
+    """Withholding happens before the call, so this cannot arise from the pipeline --
+    but a caller that passes both must not get a blended score out of a category the
+    report is about to print as unassessable."""
+    report = build(
+        [],
+        llm_categories={Category.PRODUCTION_OWNERSHIP:
+                        _judged(Category.PRODUCTION_OWNERSHIP, "A", 95.0)},
+        withheld={Category.PRODUCTION_OWNERSHIP: "withheld -- no roles"},
+    )
+    row = next(c for c in report.categories
+               if c.category is Category.PRODUCTION_OWNERSHIP)
+    assert not row.assessed and row.score == 0.0
 
 
 def test_a_provider_category_nobody_asked_about_is_dropped():
@@ -269,9 +375,8 @@ def test_a_provider_category_nobody_asked_about_is_dropped():
                          severity=Severity.CRITICAL)]
     clean = build(list(findings))
     with_noise = build(list(findings), llm_categories={
-        Category.PARSEABILITY: (100.0, 100.0, 100.0),
-        Category.STRUCTURE: (100.0, 100.0, 100.0),
-        Category.TITLE: (100.0, 100.0, 100.0),
+        c: _judged(c, "A", 100.0)
+        for c in (Category.PARSEABILITY, Category.STRUCTURE, Category.TITLE)
     })
     assert with_noise.composite == clean.composite
     for row in with_noise.categories:
