@@ -364,6 +364,16 @@ def test_a_withheld_category_cannot_also_carry_a_judged_value():
     assert not row.assessed and row.score == 0.0
 
 
+def test_a_gap_with_no_band_across_it_is_refused_at_the_boundary():
+    """`contested` reads `gap` and the blend reads `high_value`, so an unpaired object
+    would be a TypeError inside `score.build` rather than a bad object at its edge."""
+    with pytest.raises(ValidationError):
+        JudgedCategory(category=Category.RESUME_CRAFT, value=35.0, band="D", gap=1)
+    # the uncontested direction is fine: combine_bands fills high_value either way
+    JudgedCategory(category=Category.RESUME_CRAFT, value=35.0, band="D",
+                   high_value=35.0, gap=0)
+
+
 def test_a_provider_category_nobody_asked_about_is_dropped():
     """`Parseability`, `Structure` and `Title` are decided by rules alone.
 

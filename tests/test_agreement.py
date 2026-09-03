@@ -367,3 +367,31 @@ def test_a_resume_only_one_judge_scored_gets_no_composite_verdict(monkeypatch, f
     assert any("429 rate limited" in note for note in report.notes), \
         "a sweep that lost calls must say so beside its numbers"
     assert "judged by   anthropic" in text
+
+
+def test_a_recording_that_carries_both_shapes_keeps_its_numbers():
+    """A judgement can hold criteria for one category and a pre-05 `score` for another.
+
+    The numeric fallback fills per *category*, not per judgement: an all-or-nothing
+    fallback drops every recorded number the moment one category bands, which inflates
+    the before picture the fallback exists to preserve. `Resume craft` read 100 -- its
+    rule channel alone -- instead of the 82 its recorded 40 buys.
+    """
+    from ats.agreement import ResumeRun, score_judgment
+
+    criteria = [{"id": f"C{i}", "answer": "no", "why": "x", "evidence": "", "locator": ""}
+                for i in range(1, 6)]
+
+    def scored(categories):
+        judgment = passes.ContentJudgment(
+            provider="anthropic", sample=0, categories=categories, findings=[])
+        return score_judgment(
+            ResumeRun(name="r", path="r", judgments=[judgment]), judgment)
+
+    mixed = scored({"Production ownership": {"criteria": criteria},
+                    "Resume craft": {"score": 40}})
+    pure = scored({"Resume craft": {"score": 40}})
+
+    assert mixed.categories["Resume craft"] == pure.categories["Resume craft"] == 82.0
+    # and the criteria half still bands rather than falling back
+    assert mixed.categories["Production ownership"] == 46.0

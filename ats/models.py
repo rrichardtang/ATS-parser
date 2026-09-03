@@ -246,6 +246,26 @@ class JudgedCategory(BaseModel):
     split_criteria: list[str] = Field(default_factory=list)
     judges: int = 1
 
+    @model_validator(mode="after")
+    def _gap_carries_its_other_band(self) -> "JudgedCategory":
+        """A gap and the band across it are one fact, so they cannot arrive apart.
+
+        `contested` reads `gap`, and `score.build` blends `high_value` the moment it is
+        true. Left unpaired, a `gap` set without a `high_value` is a TypeError inside
+        the blend rather than a bad object at the boundary -- and the failure would
+        surface as a crashed report, one field away from the numeric constructor in
+        `agreement.py` that legitimately sets neither.
+
+        One-directional on purpose: `combine_bands` fills `high_value` for every
+        category it bands, so an *uncontested* one carries a `high_value` equal to its
+        own value. It is a gap with nothing across it that cannot exist.
+        """
+        if self.gap > 0 and self.high_value is None:
+            raise ValueError(
+                f"{self.category.value}: a gap of {self.gap} bands names no band to be "
+                f"contested with -- `high_value` is required whenever `gap` is set")
+        return self
+
     @property
     def contested(self) -> bool:
         """Two judges, two bands. The word is the other map's placeholder."""
@@ -300,10 +320,6 @@ class CategoryScore(BaseModel):
     assessed: bool = True
     # Two judges, two bands. `note` says which two, in words.
     contested: bool = False
-
-    @property
-    def is_banded(self) -> bool:
-        return self.low is not None and self.high is not None
 
 
 class LedgerRow(BaseModel):

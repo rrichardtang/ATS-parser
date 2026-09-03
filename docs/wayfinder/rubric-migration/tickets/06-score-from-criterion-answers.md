@@ -158,6 +158,31 @@ cleanly and buries its evidence, under both rubrics."* It no longer does — 86.
 - **The unmet criteria** still ride in `content_pass`'s meta, unread by the report. 06
   scores from answers; where a non-finding renders is the map's other open row.
 
+## Found by review, after the decisions
+
+Two defects the `felix-the-fixer` pass caught in this ticket's own diff, both fixed
+here with a regression test:
+
+- **The numeric fallback in `agreement.score_judgment` was all-or-nothing.** A
+  recording can carry both shapes at once -- criteria for a category 05 had rewritten
+  and a bare `score` for one it had not -- and `if not values:` dropped every recorded
+  number the moment a single category banded. Measured: `Resume craft` read **100**
+  (its rule channel alone) against the **82** its recorded 40 buys, inflating the
+  *before* picture the fallback exists to preserve. It now fills per category.
+- **`gap` and `high_value` could arrive apart.** `contested` reads `gap` and the blend
+  reads `high_value`, so an unpaired object was a `TypeError` inside `score.build`
+  rather than a bad object at its boundary -- one field away from the numeric
+  constructor above, which legitimately sets neither. A model validator refuses it now.
+  One-directional: `combine_bands` fills `high_value` for every category it bands, so
+  an uncontested one carries a `high_value` equal to its own value; it is a gap with
+  nothing across it that cannot exist.
+
+`CategoryScore.is_banded` went with the template change that was its last reader.
+
+The review also raised the withheld run's **human gate 100**, which is the row this
+ticket had already opened on the map rather than a regression -- the code behaved the
+same before the diff. It stays a decision, not a patch.
+
 ## Changed
 
 - `ats/models.py` — `JudgedCategory` (the value, both bands, the gap, the splits, and

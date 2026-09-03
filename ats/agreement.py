@@ -287,12 +287,17 @@ def score_judgment(run: ResumeRun, judgment: passes.ContentJudgment) -> Scored |
     lose the comparison. None when the judgement carries neither.
     """
     values = passes.judge_categories([judgment])
-    if not values:
-        for name, entry in judgment.categories.items():
-            value = numeric_of(entry)
-            if value is not None:
-                values[Category(name)] = JudgedCategory(
-                    category=Category(name), value=value)
+    # Per category, not per judgement. A recording can carry both shapes at once --
+    # criteria for a category 05 had rewritten and a bare `score` for one it had not --
+    # and an all-or-nothing fallback drops every number in it the moment one category
+    # bands, which silently inflates the *before* picture the fallback exists to keep.
+    for name, entry in judgment.categories.items():
+        category = Category(name)
+        if category in values:
+            continue
+        value = numeric_of(entry)
+        if value is not None:
+            values[category] = JudgedCategory(category=category, value=value)
     if not values:
         return None
     as_built = build(run.deterministic + judgment.findings, llm_categories=values)
