@@ -32,16 +32,28 @@ Nothing has run. The specification exists as five JSON files and eight prose doc
 in a docs folder; `app.py`, `score.py` and `prompts.py` still score with the five
 categories 04 retired. This map is the gap.
 
-## The approach: run both, replace last
+## The approach: run both, replace last — and what actually happened
 
-The new rubric is added **beside** the old one, not in place of it. Same resume, both
-scored, both printed, until the new one has been looked at on real documents.
+The plan was that the new rubric would be added **beside** the old one, not in place of
+it: same resume, both scored, both printed, until the new one had been looked at on real
+documents. The reason was the ordering problem the other map ran into — the new rubric
+cannot be judged until it runs, and replacing outright makes the first run the moment
+the comparison is lost.
 
-The reason is the ordering problem the other map ran into: the new rubric cannot be
-judged until it runs, and replacing outright makes the first run the moment the
-comparison is lost. [baseline-agreement.md](../rubric-grounding/baseline-agreement.md)
-is a recorded *before* picture; a side-by-side is the *after*, on the same documents,
-with nothing to reconstruct. Retiring the old path is the last ticket, not the first.
+**It was not followed, and the map records that rather than quietly restating it.** 03
+swapped `models.Category` in place; 04, 05 and 06 built on the swapped enum. The five
+retired categories appear nowhere in `ats/`, `scripts/` or `app.py`, so there is no old
+path left to run beside the new one. Nobody decided to abandon the approach; each ticket
+took the shortest path through its own question and the approach expired underneath
+them.
+
+What survives is the *before* picture as a **recording** —
+[`baseline/run-summary.json`](../rubric-grounding/baseline/run-summary.json), 30 August,
+redacted — and the comparison is against that rather than against a second live path.
+07 is re-scoped accordingly, and carries the two measured obstacles: the recording no
+longer loads (`Finding.message` was redacted away and is required; the old category names
+no longer resolve). The cost of the drift is real and named there: a recording eight
+weeks old cannot tell a rubric effect from a parser change.
 
 ## What exists to migrate
 
