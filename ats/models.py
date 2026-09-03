@@ -343,11 +343,18 @@ class FindingGroup(BaseModel):
         return len(self.instances)
 
 
+def _gate_text(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.0f}"
+
+
 class Report(BaseModel):
     composite: float
     grade: str
-    parser_subscore: float
-    human_subscore: float
+    # None where the gate could not be spoken for -- see `score._subscore`. A gate whose
+    # categories were withheld reports no number rather than averaging over whichever
+    # ones happened to survive.
+    parser_subscore: float | None
+    human_subscore: float | None
     categories: list[CategoryScore] = Field(default_factory=list)
     findings: list[Finding] = Field(default_factory=list)
     rewrites: list[Rewrite] = Field(default_factory=list)
@@ -355,6 +362,21 @@ class Report(BaseModel):
     partial: bool = False
     notes: list[str] = Field(default_factory=list)
     run_meta: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def parser_gate_text(self) -> str:
+        return _gate_text(self.parser_subscore)
+
+    @property
+    def human_gate_text(self) -> str:
+        """A gate nobody could assess prints `n/a`, never a number.
+
+        A property rather than a helper in `report.py` because the Jinja template is one
+        of the three renderers and cannot call a Python function that is not registered
+        as a global. Two implementations of one rule is how the manufactured 100 would
+        come back in whichever renderer was not updated.
+        """
+        return _gate_text(self.human_subscore)
 
     def by_gate(self, gate: Gate) -> list[Finding]:
         return [f for f in self.findings if f.gate is gate]

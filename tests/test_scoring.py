@@ -120,6 +120,25 @@ def test_unevidenced_findings_are_dropped():
     assert build([bare]).findings == []
 
 
+def test_a_gate_of_withheld_categories_reports_no_score():
+    """A gate cannot average over the one category that happened to survive.
+
+    Five of the six human-gate categories are withheld on a document whose roles did
+    not parse. `Title & seniority alignment` is the survivor, undeducted at 100, and
+    renormalising over it alone printed **human gate 100** on a document no parser can
+    read -- the same manufactured result `assessed` already refuses per category.
+    """
+    withheld = {c: "no roles survived extraction" for c in JUDGED_CATEGORIES}
+    report = build([_finding("parse/multi-column", Category.PARSEABILITY)],
+                   withheld=withheld)
+
+    assert report.human_subscore is None
+    # The parser gate holds no withheld category, so it still reports.
+    assert report.parser_subscore is not None
+    # And the composite is unaffected -- withholding is not a deduction.
+    assert report.composite > 0
+
+
 def test_gate_subscores_are_independent():
     parser_only = build([_finding(category=Category.PARSEABILITY, severity=Severity.MAJOR,
                                   provenance=Provenance.PARSER_MECHANICS)])

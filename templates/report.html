@@ -94,8 +94,8 @@
     </div>
 
     <div class="gates-score">
-      <div class="gate-box"><div class="k">Parser gate</div><div class="v">{{ "%.0f"|format(report.parser_subscore) }}</div></div>
-      <div class="gate-box"><div class="k">Human gate</div><div class="v">{{ "%.0f"|format(report.human_subscore) }}</div></div>
+      <div class="gate-box"><div class="k">Parser gate</div><div class="v">{{ report.parser_gate_text }}</div></div>
+      <div class="gate-box"><div class="k">Human gate</div><div class="v">{{ report.human_gate_text }}</div></div>
     </div>
 
     <div class="cats">

@@ -251,8 +251,8 @@ def build(
         blended=bool(llm_categories),
     )
 
-    parser_sub = _subscore(categories, Gate.PARSER, weights)
-    human_sub = _subscore(categories, {Gate.RECRUITER, Gate.MANAGER}, weights)
+    parser_sub = _subscore(categories, Gate.PARSER, withheld)
+    human_sub = _subscore(categories, {Gate.RECRUITER, Gate.MANAGER}, withheld)
     if unreadable:
         # Nothing about the content was assessed, so claiming a human-gate score
         # would be inventing a result.
@@ -278,13 +278,38 @@ def build(
     )
 
 
-def _subscore(categories: list[CategoryScore], gate, weights: dict[Category, float]) -> float:
+def _subscore(
+    categories: list[CategoryScore],
+    gate,
+    withheld: dict[Category, str] | None = None,
+) -> float | None:
+    """One gate's score, or None where the gate cannot be spoken for.
+
+    `None` rather than a number, for the same reason `CategoryScore.assessed` exists:
+    the average renormalises over the rows it has, so a gate whose categories were
+    mostly withheld reports the few that survived as though they were the whole gate.
+    Measured on `two_column`, which parses to zero roles: five of the six human-gate
+    categories withheld, `Title & seniority alignment` alone assessed at 100, and the
+    report printed **human gate 100** beside five rows reading `n/a` -- a perfect score
+    for a document no parser can read.
+
+    A withheld category is not a badly-scoring one; it is one nobody looked at. So the
+    gate holding it declines rather than averaging over the remainder. This is narrower
+    than "any unassessed category": a judged category with no judge answer is a degraded
+    run, already flagged partial, and suppressing the gate there would take the number
+    away on every deterministic-only run.
+    """
     gates = gate if isinstance(gate, set) else {gate}
     from .models import CATEGORY_GATE
-    rows = [c for c in categories if CATEGORY_GATE[c.category] in gates and c.assessed]
+    in_gate = [c for c in categories if CATEGORY_GATE[c.category] in gates]
+    if withheld and any(c.category in withheld for c in in_gate):
+        return None
+    rows = [c for c in in_gate if c.assessed]
     total = sum(c.weight for c in rows)
     if not total:
-        return 100.0
+        # Nothing in the gate was assessed. 100 here was the same manufactured result
+        # the unreadable path already refuses to print.
+        return None
     return round(sum(c.score * c.weight for c in rows) / total, 1)
 
 
