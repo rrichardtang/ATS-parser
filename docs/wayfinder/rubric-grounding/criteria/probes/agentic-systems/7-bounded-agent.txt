@@ -1,0 +1,9 @@
+Rin Okabe
+rin.okabe@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Corvid Labs    Jan 2022 - Present
+• Built Ferrymarch, a ticket-triage agent on LangGraph, that reads Zendesk conversations and writes replies back through their API.
+• Gave it a planner that retries a failed step twice and then escalates the case to a human.
+• Scoped its credentials to one Zendesk group, held refunds behind a human approval step, and logged every action it took to an audit trail.

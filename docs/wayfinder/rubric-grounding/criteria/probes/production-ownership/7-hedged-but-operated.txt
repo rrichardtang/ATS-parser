@@ -1,0 +1,10 @@
+Dana Ruiz
+dana.ruiz@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Halstead Analytics    Jan 2023 - Present
+• Helped ship a Mistral-7B summariser to production, now serving 40k requests a day.
+• Carried the pager for it alone after launch and cut p99 from 2.4s to 700ms.
+• Debugged a silent quality regression three months in and added the eval that would have caught it.
+• Tuned the retrieval index monthly against fresh ticket data.

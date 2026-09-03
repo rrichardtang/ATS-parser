@@ -1,0 +1,9 @@
+Tomas Beckett
+tomas.beckett@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Vellum Row    Feb 2022 - Present
+• Fine-tuned a Mistral-7B classifier for support ticket routing and shipped it.
+• Built the retrieval pipeline that feeds it, on Postgres and pgvector.
+• Wrote the retraining job that refreshes the model every two weeks.

@@ -1,0 +1,95 @@
+# Severity costs and the authored half of the category weights. The report shows
+# exactly what each number cost, so you can disagree with it.
+#
+# The weights come in two blocks and only one of them is yours to edit.
+
+# AUTHORED -- judgment calls. Edit these. No posting states what these measure, so
+# there is no document frequency to derive them from: they are worth what someone
+# decided they are worth.
+[categories]
+"Parseability" = 15
+"Structure & formatting" = 5
+"Title & seniority alignment" = 5
+"Resume craft" = 25
+
+# DERIVED -- do NOT put category numbers here. The four behaviour categories are
+# weighted by how many of your target postings state the behaviour they measure, so
+# adding a posting moves them with nobody editing anything (rubric-grounding 04). What
+# is authored is only how many of the composite's 100 points the four of them share,
+# which the migration map's 02 measured and set at 50; the split between them is
+# `jd_dimensions.derived_weights` over the digest, and hand-writing one of those
+# numbers here would silently desynchronise it from the corpus.
+[derived]
+budget = 50
+
+# The counts to divide when no personal corpus has been built -- the six postings the
+# repo ships a digest for, as of the 30 August scan. This is not a second set of
+# weights: it is the same derivation over a recorded count, so a fresh checkout scores
+# the way the corpus it shipped with says to. Build a corpus and the live digest wins.
+[derived.fallback_document_frequency]
+"Production ownership" = 6
+"Agentic systems" = 6
+"Evaluation rigour" = 5
+"AI-assisted coding fluency" = 3
+postings = 6
+
+[severity]
+critical = 25
+major = 12
+minor = 4
+
+# Heuristic rules -- ones resting on author judgment rather than measurable evidence --
+# are capped here no matter what severity they declare.
+[provenance_caps]
+heuristic = "minor"
+
+[scoring]
+# No hard gates: a single non-fraud finding may not cost more than its category's
+# weight. A missing phone number is a two-point fix, not a verdict.
+max_single_finding_share = 1.0
+# Hidden-text injection is the one deliberate exception -- it is a fraud-flag risk,
+# not a style preference, and it caps the composite.
+fraud_cap = 40
+
+[ensemble]
+# Budget diversity before depth: the first unit of spend buys a second provider.
+mode = "default"          # economy | default | thorough
+content_samples = 1        # per provider
+slop_samples = 3           # per provider
+slop_vote_k = 2            # k-of-N within a provider
+# Only reaches models that still accept a sampling parameter (the gpt-4 era and
+# earlier -- see ats/llm.py LEGACY_OPENAI). Current Claude and OpenAI models removed
+# it and sample at their own default of 1.0, so on those this setting does not lower
+# sampling -- it raises it, and the slop pass's k-of-N vote (which needs samples to
+# quote the identical line) gets harder to satisfy, not easier.
+temperature = 0.7
+# Pass 3 generation: candidates come from diverse objectives (mechanism/outcome/
+# ownership-led -- see ats/prompts.py OBJECTIVES) x providers, not resampling one
+# prompt. rewrite_objectives picks how many of the 3 lenses to use; rewrite_samples
+# is how many times each (objective, provider) pair is sampled.
+rewrite_objectives = 3
+rewrite_samples = 1
+# Every candidate is fact-checked (ats/ensemble.py audit_clean) before any quality
+# opinion is formed. rewrite_judge turns on the LLM quality ranking + polish-the-
+# winner step on top of that (+2 calls); off, a bullet's fact-checked candidates go
+# straight to the final gate as plain best-of-N.
+rewrite_judge = true
+# A rewrite must beat the original by this margin on the ranking set, and must not
+# regress on the audit set. Failing to improve is fine; shipping a hacked rewrite is not.
+rewrite_margin = 1.0
+
+[ensemble.thorough]
+content_samples = 1
+slop_samples = 5
+slop_vote_k = 3
+rewrite_objectives = 3
+rewrite_samples = 2
+rewrite_judge = true
+
+[ensemble.economy]
+content_samples = 1
+slop_samples = 1
+slop_vote_k = 1
+rewrite_objectives = 1
+rewrite_samples = 1
+rewrite_judge = false

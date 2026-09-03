@@ -1,0 +1,218 @@
+{
+  "judge": "model-claude",
+  "recorded": "2026-08-30",
+  "category": "Evaluation rigour",
+  "method": "One model judge (this session's Claude) reading each document and answering the five Evaluation rigour criteria in ../../evaluation-rigour.json, without sight of the deterministic answers. Written down rather than called live: scripts/agreement_harness.py exists but this environment has no provider credentials, so ticket 11 used the same recorded-verdict proxy ticket 05 used. `scanned` is absent because it has no text layer at all.",
+  "fixtures": {
+    "strong": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Owned the eval harness for our RAG pipeline'",
+        "C2": "'raised answer-groundedness from 71% to 88%' -- a named quality metric with values",
+        "C3": "'900 labelled QA pairs'",
+        "C4": "'from 71% to 88%' -- the value it replaced is stated",
+        "C5": "'drift monitor that caught a 9-point AUC regression before it reached production'"
+      }
+    },
+    "no_phone": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Owned the eval harness for our RAG pipeline'",
+        "C2": "'raised answer-groundedness from 71% to 88%' -- a named quality metric with values",
+        "C3": "'900 labelled QA pairs'",
+        "C4": "'from 71% to 88%' -- the value it replaced is stated",
+        "C5": "'drift monitor that caught a 9-point AUC regression before it reached production'"
+      }
+    },
+    "buried_evidence": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Owned the eval harness for our RAG pipeline'",
+        "C2": "'raised answer-groundedness from 71% to 88%' -- a named quality metric with values",
+        "C3": "'900 labelled QA pairs'",
+        "C4": "'from 71% to 88%' -- the value it replaced is stated",
+        "C5": "every number in the surviving role is a win; nothing was ever turned down"
+      }
+    },
+    "slop": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "nothing in either role says any quality was measured",
+        "C2": "nothing in either role says any quality was measured",
+        "C3": "nothing in either role says any quality was measured",
+        "C4": "nothing in either role says any quality was measured",
+        "C5": "nothing in either role says any quality was measured"
+      }
+    },
+    "two_column": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Built eval harness' read across the interleaved columns",
+        "C2": "'71% to 88% groundedness'",
+        "C3": "'900 QA pairs'",
+        "C4": "'71% to 88%'",
+        "C5": "nothing says a measurement ever came back bad"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "hidden_text": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'380ms to 95ms p99' is a serving number, not a measurement of output quality",
+        "C2": "no quality measurement to state",
+        "C3": "no quality measurement to place",
+        "C4": "no quality measurement to compare",
+        "C5": "no quality measurement at all"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "1-nothing-measured": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "building, shipping and retraining, and nothing that checks the result",
+        "C2": "building, shipping and retraining, and nothing that checks the result",
+        "C3": "building, shipping and retraining, and nothing that checks the result",
+        "C4": "building, shipping and retraining, and nothing that checks the result",
+        "C5": "building, shipping and retraining, and nothing that checks the result"
+      }
+    },
+    "2-numbers-but-no-measurement": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "requests a minute, p99 latency and incidents say how it ran, not whether it was any good",
+        "C2": "no quality metric among the numbers",
+        "C3": "nothing measured, so nothing to place",
+        "C4": "nothing measured, so nothing to compare",
+        "C5": "nothing measured could have said no"
+      }
+    },
+    "3-eval-claimed-no-number": {
+      "answers": {
+        "C1": true,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Built an evaluation harness for the ticket router'",
+        "C2": "the harness exists and no metric or value is ever stated",
+        "C3": "nothing says what it was run on",
+        "C4": "no value, so nothing to compare",
+        "C5": "'ran it before each release' -- the suite stood between the work and a release"
+      }
+    },
+    "4-a-number-alone": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Got routing accuracy to 92%'",
+        "C2": "accuracy, 92%",
+        "C3": "'on the ticket classifier' names the model, not what the number was measured over",
+        "C4": "92% stands alone",
+        "C5": "the only number is a win"
+      }
+    },
+    "5-number-with-provenance": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Got routing accuracy to 92%'",
+        "C2": "accuracy, 92%",
+        "C3": "'a held-out set of 400 tickets labelled by two support leads'",
+        "C4": "nothing says what 92% beat",
+        "C5": "the only number is a win"
+      }
+    },
+    "6-readable-result": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Took routing accuracy to 92%'",
+        "C2": "accuracy, 92%",
+        "C3": "'a held-out set of 400 tickets labelled by two support leads'",
+        "C4": "'up from the 71% the keyword baseline reached'",
+        "C5": "every measurement in the resume came back a win"
+      }
+    },
+    "7-eval-that-said-no": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Took routing accuracy to 92%'",
+        "C2": "accuracy, 92%",
+        "C3": "'a held-out set of 400 tickets labelled by two support leads'",
+        "C4": "'up from the 71% the keyword baseline reached'",
+        "C5": "'caught a regression on refund tickets that would have shipped'"
+      }
+    }
+  }
+}

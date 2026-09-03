@@ -1,0 +1,136 @@
+{
+  "category": "AI-assisted coding fluency",
+  "slug": "ai-assisted-coding-fluency",
+  "measures": "Whether the resume evidences working fluently with AI coding tools as a practice -- what the candidate does differently because of them, not that they have heard of them.",
+  "doc_frequency": 3,
+  "rule_share": 0.0,
+  "source": "Criteria drafted for ticket 11 against the category 04 defined and the 3/6 evidence 02 recorded (inventory.md, 'What the taxonomy cannot see', item 3: amex, fluidstack, ramp). Written first of the three because rule_share is 0 -- criterion agreement is the only agreement this category has.",
+  "criteria": [
+    {
+      "id": "C1",
+      "name": "named tooling",
+      "question": "Does any bullet name a specific AI coding tool, assistant or agentic development workflow?",
+      "yes_requires": "A quote naming the tool -- Claude Code, Cursor, Copilot, Codex, an agentic coding workflow. A named product or a named practice both count; a category noun on its own does not.",
+      "no_looks_like": "'Familiar with modern AI tooling', 'used LLMs day to day', 'AI-first engineer' -- nothing a reader could go and look up.",
+      "aliases": ["claude code", "claude-code", "cursor", "copilot", "github copilot", "codex", "windsurf", "aider", "cody", "continue.dev", "devin", "sourcegraph", "tabnine", "codeium", "zed", "agentic coding", "agentic development", "ai-assisted coding", "ai assisted coding", "ai pair programming", "pair-programmed with", "llm-assisted", "ai coding tools", "coding agent", "coding agents"],
+      "deterministic": {
+        "kind": "alias"
+      }
+    },
+    {
+      "id": "C2",
+      "name": "the candidate's own work",
+      "question": "Is the tooling used on the candidate's own engineering work, rather than being a product they built, sold or advised on?",
+      "yes_requires": "The bullet that names the tool describes the candidate writing, reviewing, testing, debugging or refactoring code with it.",
+      "no_looks_like": "'Built an agent on the OpenAI Agents SDK', 'advised customers on Claude Code rollouts' -- real work, and it is Agentic systems or a consulting bullet, not this category.",
+      "aliases": ["wrote", "write", "writing", "refactor", "refactored", "refactoring", "reviewed", "review", "code review", "debug", "debugged", "debugging", "test", "tests", "testing", "implemented", "implementing", "migrated", "migrating", "prototyped", "prototyping", "ported", "scaffolded", "pull request", "pull requests", "pr", "prs", "commits", "codebase"],
+      "deterministic": {
+        "kind": "alias_in_anchor",
+        "anchor": "C1"
+      }
+    },
+    {
+      "id": "C3",
+      "name": "changed practice",
+      "question": "Does a bullet say what the tooling changed about how the work is done?",
+      "yes_requires": "A stated difference -- what the candidate now does that they did not before, or stopped doing: a review step added, a class of work taken on, a cycle shortened, a task moved from hand-written to generated-and-verified.",
+      "no_looks_like": "The tool is named and nothing follows. 'Used Cursor daily', 'Claude Code power user', a tool sitting in the skills list.",
+      "aliases": ["cut", "reduced", "increased", "raised", "shortened", "accelerated", "sped up", "freed", "shifted", "moved", "replaced", "instead of", "rather than", "now", "no longer", "enabled", "allowed", "let me", "turnaround", "cycle time", "throughput", "iteration speed", "review practice", "before", "after", "previously", "used to"],
+      "deterministic": {
+        "kind": "alias_in_anchor",
+        "anchor": "C1"
+      }
+    },
+    {
+      "id": "C4",
+      "name": "the change is checkable",
+      "question": "Is that change stated as a fact somebody could check -- a number, a duration, a rate, a before and after?",
+      "yes_requires": "A quantity attached to the change: PRs per week, hours to a first draft, a review-cycle time, a share of a codebase, a migration size.",
+      "no_looks_like": "'Dramatically faster', 'significantly more productive', '10x engineer' -- an adverb where the number goes.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "number_in",
+        "anchor": "C3"
+      }
+    },
+    {
+      "id": "C5",
+      "name": "past their own keyboard",
+      "question": "Does the resume say the practice reached past the candidate's own editor -- other people, a standard, or a guardrail?",
+      "yes_requires": "Team adoption, a written guideline, a review or eval standard for generated code, a tool or harness they built for others, teaching or onboarding.",
+      "no_looks_like": "Every mention is first-person solo use; nothing says anyone else's work changed. A tool the candidate built and sold or shipped to others is a product, not their practice spreading -- C2 has already answered no in that case, and so does this one.",
+      "aliases": ["team", "teams", "org", "onboarded", "onboarding", "taught", "teaching", "trained the", "rolled out", "adoption", "adopted", "guideline", "guidelines", "playbook", "standard", "standards", "convention", "conventions", "rubric", "internal tool", "harness", "template", "templates", "documented", "documentation", "workshop", "brown bag", "evangelis"],
+      "deterministic": {
+        "kind": "none"
+      }
+    }
+  ],
+  "bands": [
+    {
+      "label": "E",
+      "name": "No tooling named",
+      "value": 10,
+      "rule": "C1 not met",
+      "when": {
+        "unmet": ["C1"]
+      },
+      "reads": "Nothing in the resume names an AI coding tool or an agentic development practice."
+    },
+    {
+      "label": "D",
+      "name": "Named, not practised",
+      "value": 35,
+      "rule": "C1 met, and either C2 or C3 unmet",
+      "when": {
+        "met": ["C1"],
+        "any": [
+          {
+            "unmet": ["C2"]
+          },
+          {
+            "unmet": ["C3"]
+          }
+        ]
+      },
+      "reads": "A tool is named, but it is somebody else's product, or nothing says what it changed about the work."
+    },
+    {
+      "label": "C",
+      "name": "A practice, described",
+      "value": 58,
+      "rule": "C1, C2 and C3 met, neither C4 nor C5",
+      "when": {
+        "met": ["C1", "C2", "C3"],
+        "count": {
+          "of": ["C4", "C5"],
+          "max": 0
+        }
+      },
+      "reads": "The candidate says what the tooling changed about their own work, and asks the reader to take it on trust."
+    },
+    {
+      "label": "B",
+      "name": "A practice, evidenced",
+      "value": 78,
+      "rule": "C1, C2 and C3 met, and exactly one of C4, C5",
+      "when": {
+        "met": ["C1", "C2", "C3"],
+        "count": {
+          "of": ["C4", "C5"],
+          "eq": 1
+        }
+      },
+      "reads": "The change is either measured or visible in someone else's work -- one of the two."
+    },
+    {
+      "label": "A",
+      "name": "Fluent, and it shows",
+      "value": 95,
+      "rule": "all five met",
+      "when": {
+        "met": ["C1", "C2", "C3", "C4", "C5"]
+      },
+      "reads": "A named tool changed named work by a checkable amount, and the practice reached past this one person."
+    }
+  ]
+}

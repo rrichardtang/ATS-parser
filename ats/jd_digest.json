@@ -1,0 +1,159 @@
+{
+  "document_count": 6,
+  "target_titles": [
+    "AI Engineer III \u2013 Agentic AI",
+    "Applied AI Engineer",
+    "Forward Deployed AI Engineer",
+    "Machine Learning Engineer",
+    "Applied AI Engineer, Codex Core Agent",
+    "Applied AI Engineer, Fullstack"
+  ],
+  "required": [
+    {
+      "term": "foundation/python",
+      "doc_frequency": 3
+    },
+    {
+      "term": "foundation/typescript",
+      "doc_frequency": 3
+    },
+    {
+      "term": "llm_systems/prompt-engineering",
+      "doc_frequency": 3
+    },
+    {
+      "term": "evaluation/eval-harness",
+      "doc_frequency": 3
+    },
+    {
+      "term": "llm_systems/agents",
+      "doc_frequency": 2
+    },
+    {
+      "term": "core_ml/fine-tuning",
+      "doc_frequency": 2
+    },
+    {
+      "term": "foundation/cloud",
+      "doc_frequency": 1
+    }
+  ],
+  "nice_to_have": [
+    {
+      "term": "llm_systems/agents",
+      "doc_frequency": 2
+    },
+    {
+      "term": "llm_systems/rag",
+      "doc_frequency": 1
+    },
+    {
+      "term": "llm_systems/prompt-engineering",
+      "doc_frequency": 1
+    },
+    {
+      "term": "serving/kubernetes",
+      "doc_frequency": 1
+    },
+    {
+      "term": "evaluation/eval-harness",
+      "doc_frequency": 1
+    },
+    {
+      "term": "foundation/python",
+      "doc_frequency": 1
+    },
+    {
+      "term": "foundation/cloud",
+      "doc_frequency": 1
+    },
+    {
+      "term": "foundation/typescript",
+      "doc_frequency": 1
+    }
+  ],
+  "dimensions": {
+    "production": {
+      "count": 6,
+      "total": 6
+    },
+    "ownership": {
+      "count": 6,
+      "total": 6
+    },
+    "reliability": {
+      "count": 6,
+      "total": 6
+    },
+    "agentic": {
+      "count": 6,
+      "total": 6
+    },
+    "evaluation": {
+      "count": 5,
+      "total": 6
+    },
+    "ai_assisted_coding": {
+      "count": 3,
+      "total": 6
+    },
+    "seniority": {
+      "count": 2,
+      "total": 6
+    },
+    "experience_gate": {
+      "count": 3,
+      "total": 6
+    }
+  },
+  "category_document_frequency": {
+    "Production ownership": {
+      "count": 6,
+      "total": 6
+    },
+    "Agentic systems": {
+      "count": 6,
+      "total": 6
+    },
+    "Evaluation rigour": {
+      "count": 5,
+      "total": 6
+    },
+    "AI-assisted coding fluency": {
+      "count": 3,
+      "total": 6
+    }
+  },
+  "sources": [
+    {
+      "title": "AI Engineer III \u2013 Agentic AI",
+      "company": "American Express",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Applied AI Engineer",
+      "company": "Anthropic",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Forward Deployed AI Engineer",
+      "company": "Edra",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Machine Learning Engineer",
+      "company": "Fluidstack",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Applied AI Engineer, Codex Core Agent",
+      "company": "OpenAI",
+      "date_added": "2026-08-30"
+    },
+    {
+      "title": "Applied AI Engineer, Fullstack",
+      "company": "Ramp",
+      "date_added": "2026-08-30"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+# source: composite
+# retrieved: 2026-08-29
+# title: AI Engineer, LLM Platform
+# level: mid
+Build and operate the serving path for large language model features in production.
+You will own inference latency, throughput and cost for models behind user-facing
+products, and the evaluation harness that decides whether a change ships.
+
+Requirements
+- 2-5 years building production software in Python.
+- Hands-on experience serving transformer models: vLLM, TGI, Triton or equivalent.
+- Comfort with GPU memory, batching strategy, quantization and KV cache behaviour.
+- Experience with FastAPI or similar for wrapping inference behind an API.
+- Docker and Kubernetes for deployment; familiarity with AWS, GCP or Azure.
+- You have measured p50/p95/p99 latency and throughput and improved them.
+- Experience designing offline evaluation: golden datasets, regression suites,
+  LLM-as-judge pipelines, and human review workflows.
+- Monitoring and observability for model behaviour: drift, hallucination rate,
+  cost per request, token usage.
+Nice to have: fine-tuning experience with LoRA or QLoRA, PyTorch internals,
+CUDA profiling, experience with Ray or Spark for offline batch inference.

@@ -1,0 +1,9 @@
+Priya Anand
+priya.anand@example.com
+
+EXPERIENCE
+
+Senior Software Engineer, Marrow Systems    Mar 2022 - Present
+• Write most new service code in Cursor now, and moved my code review habit from reading diffs to writing tests against them.
+• Built the invoice extraction service in Python and took it to production.
+• Kept the on-call rota for the service.

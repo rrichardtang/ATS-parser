@@ -1,0 +1,15 @@
+Marcus Idowu
+marcus.idowu@example.com
+
+SUMMARY
+AI Engineer with four years in data platforms and applied machine learning.
+
+EXPERIENCE
+
+Senior Engineer, Kestrel Group    Jun 2023 - Present
+• Cut p99 latency from 380ms to 95ms for the support triage assistant, so agents stopped waiting on it mid-call.
+• Reduced GPU spend 34% by replacing padded batching with length-bucketed batching.
+
+Engineer, Kestrel Group    Jan 2021 - May 2023
+• Cut p99 latency from 380ms to 95ms for the support triage assistant, so agents stopped waiting on it mid-call.
+• Reduced GPU spend 34% by replacing padded batching with length-bucketed batching.

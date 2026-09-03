@@ -1,0 +1,9 @@
+Rin Okabe
+rin.okabe@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Corvid Labs    Jan 2022 - Present
+• Write most new service code in Cursor now, and no longer hand-write the repetitive parts of a migration.
+• Shipped a Llama-3-8B summariser for meeting notes to production.
+• Built the fine-tuning pipeline behind it and the nightly refresh job.

@@ -1,0 +1,235 @@
+{
+  "judge": "model-claude",
+  "recorded": "2026-08-30",
+  "category": "AI-assisted coding fluency",
+  "method": "One model judge (this session's Claude) reading each document and answering the five AI-assisted coding fluency criteria in ../../ai-assisted-coding-fluency.json, without sight of the deterministic answers. Written down rather than called live: scripts/agreement_harness.py exists but this environment has no provider credentials, so ticket 11 used the same recorded-verdict proxy ticket 05 used. `scanned` is absent because it has no text layer at all.",
+  "fixtures": {
+    "strong": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C2": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C3": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C4": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C5": "no AI coding tool, assistant or agentic development practice is named anywhere"
+      }
+    },
+    "no_phone": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C2": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C3": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C4": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C5": "no AI coding tool, assistant or agentic development practice is named anywhere"
+      }
+    },
+    "buried_evidence": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C2": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C3": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C4": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C5": "no AI coding tool, assistant or agentic development practice is named anywhere"
+      }
+    },
+    "slop": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'cutting-edge AI technologies' names no tool a reader could look up",
+        "C2": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C3": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C4": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C5": "no AI coding tool, assistant or agentic development practice is named anywhere"
+      }
+    },
+    "two_column": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C2": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C3": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C4": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C5": "no AI coding tool, assistant or agentic development practice is named anywhere"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "hidden_text": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C2": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C3": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C4": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C5": "no AI coding tool, assistant or agentic development practice is named anywhere"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "1-no-tooling-named": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C2": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C3": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C4": "no AI coding tool, assistant or agentic development practice is named anywhere",
+        "C5": "no AI coding tool, assistant or agentic development practice is named anywhere"
+      }
+    },
+    "2-tool-named-only": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Used Cursor and GitHub Copilot daily'",
+        "C2": "'across the billing codebase' -- the candidate's own code",
+        "C3": "the tools are named and nothing follows; 'daily' is frequency, not a change",
+        "C4": "no change stated to quantify",
+        "C5": "every mention is solo use"
+      }
+    },
+    "3-product-not-practice": {
+      "answers": {
+        "C1": true,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'an internal coding agent, on top of the Claude Code SDK'",
+        "C2": "Halcyon is a product the candidate built for others; nothing says they code with it",
+        "C3": "no change to the candidate's own work is stated",
+        "C4": "no change stated to quantify",
+        "C5": "'four engineering groups' adopted a product, which C2 has already ruled out as this candidate's practice"
+      }
+    },
+    "4-practice-described": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Write most new service code in Cursor now'",
+        "C2": "writing service code -- the candidate's own work",
+        "C3": "'moved my code review habit from reading diffs to writing tests against them'",
+        "C4": "the change is stated with no quantity at all",
+        "C5": "first-person throughout; nobody else's work changed"
+      }
+    },
+    "5-practice-measured": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'Write most new service code with Claude Code now'",
+        "C2": "writing service code, and reviewable pull requests",
+        "C3": "'the trip from ticket to a reviewable pull request is 4 hours rather than the 2 days it took before'",
+        "C4": "4 hours against 2 days -- a before and after somebody could check",
+        "C5": "first-person throughout"
+      }
+    },
+    "6-practice-spread": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": false,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Write most new service code in Cursor now'",
+        "C2": "writing service code",
+        "C3": "'no longer hand-write the repetitive parts of a migration'",
+        "C4": "'most' and 'repetitive parts' are the only quantities",
+        "C5": "'Wrote the guidelines the group uses for reviewing AI-generated code, and onboarded six engineers'"
+      }
+    },
+    "7-fluent": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Write most new service code with Claude Code now'",
+        "C2": "writing service code, and reviewable pull requests",
+        "C3": "'4 hours rather than the 2 days it took before'",
+        "C4": "4 hours against 2 days",
+        "C5": "'guidelines the group uses' and 'onboarded six engineers onto the workflow'"
+      }
+    },
+    "8-tool-not-on-the-list": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'Write most new service code with Goose now' -- a named coding agent",
+        "C2": "writing service code, and reviewable pull requests",
+        "C3": "'4 hours rather than the 2 days it took before'",
+        "C4": "4 hours against 2 days",
+        "C5": "'guidelines the group uses' and 'onboarded six engineers onto the workflow'"
+      },
+      "note": "Written to break the deterministic C1: the tool is real and the alias list has never heard of it."
+    }
+  }
+}

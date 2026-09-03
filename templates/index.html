@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="intake">
+  <div>
+    <p class="lede">
+      Upload a resume PDF. You get a list of specific defects, each with the line it
+      is on and the fix &mdash; not a verdict.
+    </p>
+
+    <dl class="gates">
+      <dt>Gate 1 &mdash; the parser</dt>
+      <dd>Can an ATS extract your fields? Hidden text, columns, tables, header content.</dd>
+      <dt>Gate 2 &mdash; the humans</dt>
+      <dd>A recruiter scanning for seconds, then a hiring manager asking whether the
+          work is real. These fail for unrelated reasons, so they are scored separately.</dd>
+    </dl>
+
+    <p class="hint">
+      Most ATSs do not auto-reject on resume content &mdash; people do. So the question
+      is not how to beat a filter; it is whether the file parses, whether a search
+      surfaces you, and whether a human is convinced.
+    </p>
+  </div>
+
+  <form id="analyze-form" action="/analyze" method="post" enctype="multipart/form-data">
+    <fieldset>
+      <legend>Resume</legend>
+      <label for="pdf">PDF file</label>
+      <input id="pdf" type="file" name="pdf" accept="application/pdf" required>
+      <label for="jd">Job description <span style="font-weight:400;color:var(--ink-soft)">— optional</span></label>
+      <textarea id="jd" name="jd" placeholder="Paste a posting to add a requirement-gap diff."></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>Model access</legend>
+      <p class="hint" style="margin:0 0 .5rem">
+        Both keys enables cross-provider checking: a model is weakest at spotting its
+        own phrasing, so two providers catch what one misses. Either alone works.
+        Neither still runs every deterministic check.
+      </p>
+      <label for="anthropic_key">Anthropic API key</label>
+      <input id="anthropic_key" type="password" name="anthropic_key" placeholder="sk-ant-…" autocomplete="off">
+      <label for="openai_key">OpenAI API key</label>
+      <input id="openai_key" type="password" name="openai_key" placeholder="sk-…" autocomplete="off">
+      <p class="hint">Kept in memory for this request. Never written to disk or logged.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Depth</legend>
+      <label for="mode">Ensemble</label>
+      <select id="mode" name="mode">
+        <option value="economy">Economy — 4 calls to score</option>
+        <option value="default" selected>Default — 8 calls to score</option>
+        <option value="thorough">Thorough — 12 calls to score</option>
+      </select>
+      <p class="hint">This analyzes and scores the resume only. Rewrite suggestions
+        are a separate step &mdash; a button appears at the bottom of the report,
+        so generating them (and spending the extra calls) is always your call.</p>
+    </fieldset>
+
+    <button class="go" type="submit">Analyze resume</button>
+    <div class="spinner" role="status" aria-live="polite"></div>
+  </form>
+</div>
+
+<div id="out"></div>
+{% endblock %}

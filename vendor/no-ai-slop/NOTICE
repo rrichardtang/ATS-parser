@@ -1,0 +1,23 @@
+The slop patterns in ats/slop_patterns.py are adapted from the no-ai-slop skill.
+
+    Source:  https://github.com/petergyang/no-ai-slop
+    Author:  Peter Yang
+    Licence: MIT (see LICENSE in this directory)
+
+SKILL.md is vendored verbatim so the adaptation is auditable and upstream changes
+can be diffed in.
+
+Two deliberate departures, both documented in ats/slop_patterns.py:
+
+1. Scope. The source targets prose. A resume bullet is a different form, so each
+   pattern declares where it applies. Prose-only patterns (kickers, recap endings,
+   throat-clearing) run against the summary section, never against bullets.
+
+2. Trimmed lexicon. Terms that predate LLMs and merely read as formal -- notably
+   "spearheaded" -- are excluded, so the detector flags machine phrasing rather
+   than formal writing.
+
+The source's governing rule is adopted as-is and shapes the whole product: "Do not
+rewrite, score the draft, or guess whether AI wrote it. AI detectors guess. Named
+patterns are evidence the user can check." Nothing in this tool emits an
+AI-likelihood score.

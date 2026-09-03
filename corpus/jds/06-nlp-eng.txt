@@ -1,0 +1,16 @@
+# source: composite
+# retrieved: 2026-08-29
+# title: NLP Engineer
+# level: mid
+Work on text understanding: classification, extraction, and summarization at scale.
+
+Requirements
+- 2-4 years NLP or applied ML experience.
+- Python, PyTorch, transformers; BERT-family and decoder-only model families.
+- Fine-tuning for classification and extraction; LoRA and parameter-efficient methods.
+- Annotation and dataset construction; inter-annotator agreement; active learning.
+- Evaluation: precision, recall, F1, confusion analysis and error taxonomies.
+- Serving models with acceptable latency; distillation and quantization.
+- SQL and Spark for corpus-scale processing.
+Nice to have: multilingual modelling, information retrieval, knowledge graphs,
+speech or OCR pipelines, Whisper.

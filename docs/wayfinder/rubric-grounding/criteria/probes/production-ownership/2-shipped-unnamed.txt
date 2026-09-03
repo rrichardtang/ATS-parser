@@ -1,0 +1,10 @@
+Dana Ruiz
+dana.ruiz@example.com
+
+EXPERIENCE
+
+Machine Learning Engineer, Halstead Analytics    Jan 2023 - Present
+• Deployed AI-powered solutions to production, delivering robust and scalable outcomes.
+• Shipped several machine learning features that improved the customer experience.
+• Released a data-driven system that streamlined internal workflows.
+• Launched multiple models into the production environment.

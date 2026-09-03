@@ -1,3 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/fixtures/*.pdf
+runs/
 node_modules/
 
 # AI agent config: allowlist what's meant to be shared, ignore the rest

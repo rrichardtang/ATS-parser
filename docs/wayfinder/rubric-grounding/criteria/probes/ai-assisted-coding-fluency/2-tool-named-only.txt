@@ -1,0 +1,9 @@
+Priya Anand
+priya.anand@example.com
+
+EXPERIENCE
+
+Senior Software Engineer, Marrow Systems    Mar 2022 - Present
+• Used Cursor and GitHub Copilot daily across the billing codebase.
+• Built the invoice extraction service in Python and took it to production.
+• Comfortable with agentic development workflows.

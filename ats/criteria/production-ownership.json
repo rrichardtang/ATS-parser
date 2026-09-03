@@ -1,0 +1,135 @@
+{
+  "category": "Production ownership",
+  "measures": "Whether the resume evidences taking a system to production and staying responsible for it after launch.",
+  "doc_frequency": 6,
+  "rule_share": 0.4,
+  "source": "Criteria drafted for ticket 05 against the category 04 defined and the 6/6 evidence 02 recorded (inventory.md sections 1 and 4).",
+  "criteria": [
+    {
+      "id": "C1",
+      "name": "destination",
+      "question": "Does any bullet say the work reached somewhere real -- production, a release, live traffic, users, customers?",
+      "yes_requires": "A quote naming where the work ended up. Building it, designing it, or researching it is not a destination.",
+      "no_looks_like": "Every bullet stops at the artifact: 'Built a classifier', 'Designed a pipeline', 'Explored transformer architectures'.",
+      "aliases": ["production", "prod", "deployed", "deploy", "shipped", "ship", "launched", "launch", "released", "release", "live", "rollout", "rolled out", "canary", "in production", "users", "customers", "traffic", "serving", "served"],
+      "deterministic": {
+        "kind": "alias"
+      }
+    },
+    {
+      "id": "C2",
+      "name": "named system",
+      "question": "Is at least one shipped thing named specifically enough to ask about in an interview?",
+      "yes_requires": "A named service, product, model, or pipeline in the same bullet as the destination -- vLLM, Llama-3-8B, the eval harness, the retraining loop.",
+      "no_looks_like": "'Shipped AI-powered solutions', 'delivered scalable systems' -- portable to any candidate.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "named_in",
+        "anchor": "C1"
+      }
+    },
+    {
+      "id": "C3",
+      "name": "operational fact",
+      "question": "Does any bullet state a fact that could only be true after the system ran for real?",
+      "yes_requires": "Load carried, users served, an incident, an outage, on-call, uptime, an SLA or SLO, or a regression caught in production.",
+      "no_looks_like": "Only pre-launch numbers -- offline accuracy, a benchmark score, a model size.",
+      "aliases": ["traffic", "uptime", "sla", "slo", "on-call", "on call", "oncall", "incident", "outage", "postmortem", "p99", "p95", "p50", "qps", "rps", "req/min", "requests per second", "throughput", "regression", "rollback", "rolled back", "monitor", "monitoring", "drift", "alert", "alerting", "reached production", "in production"],
+      "deterministic": {
+        "kind": "alias"
+      }
+    },
+    {
+      "id": "C4",
+      "name": "post-launch work",
+      "question": "Does any bullet describe work done to a system that was already live?",
+      "yes_requires": "Operating, monitoring, debugging, tuning, migrating, porting, replacing, profiling or iterating on something already running -- as opposed to work that ended at release.",
+      "no_looks_like": "Every bullet ends at the launch. Nothing describes what happened to the system afterwards.",
+      "aliases": ["operated", "operating", "operate", "monitored", "monitoring", "debugged", "debugging", "tuned", "tuning", "iterated", "iterating", "migrated", "migrating", "ported", "porting", "replaced", "replacing", "refactored", "profiled", "profiling", "patched", "rolled back", "maintained", "retraining", "retrained"],
+      "deterministic": {
+        "kind": "alias"
+      }
+    },
+    {
+      "id": "C5",
+      "name": "first-person ownership",
+      "question": "Is the shipped work attributed to this candidate rather than to a team, and without hedging their part?",
+      "yes_requires": "The destination bullet's subject is the candidate. 'Owned', 'Shipped', 'Cut', 'Built' -- an act, not a contribution to one.",
+      "no_looks_like": "'We shipped', 'the team launched', 'helped deliver', 'contributed to', 'assisted with', 'participated in', 'supported the rollout'.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "unhedged_in",
+        "anchor": "C1"
+      }
+    }
+  ],
+  "bands": [
+    {
+      "label": "E",
+      "name": "No destination",
+      "value": 10,
+      "rule": "C1 not met",
+      "when": {
+        "unmet": ["C1"]
+      },
+      "reads": "Nothing in the resume says any work reached anywhere."
+    },
+    {
+      "label": "D",
+      "name": "Built, not operated",
+      "value": 35,
+      "rule": "C1 met, and either C2 unmet or neither C3 nor C4 met",
+      "when": {
+        "met": ["C1"],
+        "any": [
+          {
+            "unmet": ["C2"]
+          },
+          {
+            "count": {
+              "of": ["C3", "C4"],
+              "max": 0
+            }
+          }
+        ]
+      },
+      "reads": "Something shipped, but it is unnameable, or nothing says it ran or that the candidate stayed with it."
+    },
+    {
+      "label": "C",
+      "name": "Shipped",
+      "value": 58,
+      "rule": "C1 and C2 met, and exactly one of C3, C4",
+      "when": {
+        "met": ["C1", "C2"],
+        "count": {
+          "of": ["C3", "C4"],
+          "eq": 1
+        }
+      },
+      "reads": "A named thing reached production, and there is one half of the after-launch story."
+    },
+    {
+      "label": "B",
+      "name": "Shipped and operated",
+      "value": 78,
+      "rule": "C1, C2, C3 and C4 met, C5 unmet",
+      "when": {
+        "met": ["C1", "C2", "C3", "C4"],
+        "unmet": ["C5"]
+      },
+      "reads": "The full arc is evidenced, but the resume attributes it to a team or hedges the candidate's part."
+    },
+    {
+      "label": "A",
+      "name": "Owned in production",
+      "value": 95,
+      "rule": "all five met",
+      "when": {
+        "met": ["C1", "C2", "C3", "C4", "C5"]
+      },
+      "reads": "This person took a named system to production, it ran, they stayed with it, and the resume says it was them."
+    }
+  ],
+  "slug": "production-ownership"
+}

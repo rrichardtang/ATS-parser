@@ -1,0 +1,15 @@
+Marcus Idowu
+marcus.idowu@example.com
+
+SUMMARY
+AI Engineer with four years in data platforms and applied machine learning.
+
+EXPERIENCE
+
+Senior Engineer, Kestrel Group    Jun 2023 - Present
+• Cut p99 inference latency from 380ms to 95ms by moving Llama-3-8B to vLLM with continuous batching.
+• Reduced GPU spend 34% by replacing padded batching with length-bucketed batching.
+
+Engineer, Halloway Partners    Jan 2021 - May 2023
+• Replaced a nightly Airflow batch with a streaming pipeline, cutting feature staleness from 18 hours to 4 minutes.
+• Ported the scoring service from Flask to FastAPI; throughput went from 40 to 310 requests per second.

@@ -1,0 +1,133 @@
+{
+  "category": "Resume craft",
+  "slug": "resume-craft",
+  "measures": "Whether the document survives a six-second recruiter scan and reads as edited prose.",
+  "doc_frequency": null,
+  "rule_share": 0.7,
+  "shape": "count",
+  "source": "Criteria drafted for ticket 12 against the category 04 defined. Not corpus-derived and cannot be: the postings describe the job, not the resume, so this category has no document frequency and an authored weight. The five criteria are what survives subtracting the ~40 deterministic rules 07 files here -- see resume-craft-criteria.md section 'The subtraction'.",
+  "criteria": [
+    {
+      "id": "C1",
+      "name": "says what it is",
+      "question": "Does the resume say what this person is, above the first role, rather than leaving the reader to infer it from a job title?",
+      "yes_requires": "A quote above the first role naming the discipline -- a summary line or a role line. 'AI Engineer, 3 yrs -- LLM serving and evals.'",
+      "no_looks_like": "A name, an email, and straight into a job. The reader has to read a bullet before knowing what they are looking at.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "identity"
+      }
+    },
+    {
+      "id": "C2",
+      "name": "names what changed",
+      "question": "Does every role have at least one bullet naming something that is different because of the work?",
+      "yes_requires": "One quote per role stating a change -- something cut, raised, replaced, unblocked, shipped. Not the assignment, the difference.",
+      "no_looks_like": "A role whose bullets are all responsibilities: 'Responsible for maintaining the pipeline', 'Worked on model architectures', 'Involved in the migration'.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "outcome_per_role"
+      }
+    },
+    {
+      "id": "C3",
+      "name": "says what it was for",
+      "question": "Does the resume say what the work was for -- a product, a user, a problem -- rather than only the stack and the number?",
+      "yes_requires": "A quote naming the thing the work served. 'for ticket triage', 'so support agents could answer without escalating'.",
+      "no_looks_like": "Every bullet is a technology and a metric with no subject. 'Cut p99 latency 380ms to 95ms with vLLM' -- for what, and who noticed?",
+      "aliases": ["users", "user", "customers", "customer", "support", "agents", "tickets", "triage", "checkout", "onboarding", "fraud", "billing", "claims", "patients", "clinicians", "drivers", "merchants", "sellers", "buyers", "students", "moderation", "recommendations", "search results", "product", "shoppers", "subscribers", "borrowers", "underwriting", "so that", "so support", "for the team", "internal teams", "field staff"],
+      "deterministic": {
+        "kind": "alias"
+      }
+    },
+    {
+      "id": "C4",
+      "name": "roles read differently",
+      "question": "Does each role read as a different job, rather than the same work described again?",
+      "yes_requires": "The roles differ in what they claim -- different systems, different scope, different problems. One role is enough to satisfy this.",
+      "no_looks_like": "Two roles whose bullets are interchangeable, or a promotion where only the title changed.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "roles_differ"
+      }
+    },
+    {
+      "id": "C5",
+      "name": "could not be anyone's",
+      "question": "Is every bullet specific enough that it could not move unchanged to a stranger's resume?",
+      "yes_requires": "No bullet survives having its names, numbers and tools stripped and still saying something.",
+      "no_looks_like": "'Leveraged cutting-edge AI technologies to deliver robust and scalable solutions' -- true of anyone who has ever been employed.",
+      "aliases": [],
+      "deterministic": {
+        "kind": "unportable"
+      }
+    }
+  ],
+  "bands": [
+    {
+      "label": "E",
+      "name": "Not written for a reader",
+      "value": 10,
+      "rule": "at most one criterion met",
+      "when": {
+        "count": {
+          "of": ["C1", "C2", "C3", "C4", "C5"],
+          "max": 1
+        }
+      },
+      "reads": "Nothing about the document is aimed at the person reading it."
+    },
+    {
+      "label": "D",
+      "name": "Needs a rewrite",
+      "value": 35,
+      "rule": "exactly two met",
+      "when": {
+        "count": {
+          "of": ["C1", "C2", "C3", "C4", "C5"],
+          "eq": 2
+        }
+      },
+      "reads": "Two of the five hold. The rest is a draft."
+    },
+    {
+      "label": "C",
+      "name": "Readable, unedited",
+      "value": 58,
+      "rule": "exactly three met",
+      "when": {
+        "count": {
+          "of": ["C1", "C2", "C3", "C4", "C5"],
+          "eq": 3
+        }
+      },
+      "reads": "A reader can follow it and will notice what was left in."
+    },
+    {
+      "label": "B",
+      "name": "One thing left",
+      "value": 78,
+      "rule": "exactly four met",
+      "when": {
+        "count": {
+          "of": ["C1", "C2", "C3", "C4", "C5"],
+          "eq": 4
+        }
+      },
+      "reads": "Edited, with one criterion still unmet -- and the report can name which."
+    },
+    {
+      "label": "A",
+      "name": "Edited",
+      "value": 95,
+      "rule": "all five met",
+      "when": {
+        "count": {
+          "of": ["C1", "C2", "C3", "C4", "C5"],
+          "min": 5
+        }
+      },
+      "reads": "It says what it is, what changed, what it was for, that the jobs differed, and none of it could be anyone else's."
+    }
+  ]
+}

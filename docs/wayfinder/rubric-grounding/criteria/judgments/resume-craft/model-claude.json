@@ -1,0 +1,218 @@
+{
+  "judge": "model-claude",
+  "recorded": "2026-08-30",
+  "category": "Resume craft",
+  "method": "One model judge (this session's Claude) reading each document and answering the five Resume craft criteria in ../../resume-craft.json, without sight of the deterministic answers. Written down rather than called live: no provider credentials in this environment, so ticket 12 used the same recorded-verdict proxy as 05 and 11. `scanned` is absent because it has no text layer at all.",
+  "fixtures": {
+    "strong": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'AI Engineer, 3 years. LLM serving, evaluation, and RAG systems in production.'",
+        "C2": "'Cut p99 inference latency 380ms to 95ms' in the first role; 'Replaced a nightly Airflow batch job with a streaming feature pipeline' in the second",
+        "C3": "'Shipped a LoRA fine-tune of Mistral-7B for ticket triage' -- triage is the problem the work served",
+        "C4": "LLM serving and evals in the first role, feature pipelines and retraining in the second",
+        "C5": "every bullet carries a system, a number and a change; none would survive being moved"
+      }
+    },
+    "no_phone": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'AI Engineer, 3 years. LLM serving, evaluation, and RAG systems in production.'",
+        "C2": "'Cut p99 inference latency 380ms to 95ms' in the first role; 'Replaced a nightly Airflow batch job with a streaming feature pipeline' in the second",
+        "C3": "'Shipped a LoRA fine-tune of Mistral-7B for ticket triage' -- triage is the problem the work served",
+        "C4": "LLM serving and evals in the first role, feature pipelines and retraining in the second",
+        "C5": "every bullet carries a system, a number and a change; none would survive being moved"
+      }
+    },
+    "slop": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'A passionate engineer who delves into the realm of AI' names no discipline and no level -- a recruiter learns nothing to file this under",
+        "C2": "neither role has a bullet naming anything that changed",
+        "C3": "'various processes' and 'transformative model architectures' -- nothing the work served",
+        "C4": "the two roles carry the same four bullets verbatim",
+        "C5": "'Leveraged cutting-edge AI technologies to deliver robust and scalable solutions' would fit anyone"
+      }
+    },
+    "buried_evidence": {
+      "answers": {
+        "C1": false,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "Interests and Education come first and neither says what this person is",
+        "C2": "'Cut p99 inference latency 380ms to 95ms'",
+        "C3": "'for ticket triage'",
+        "C4": "one role, which the criterion says is enough",
+        "C5": "every surviving bullet names a system and a number"
+      }
+    },
+    "two_column": {
+      "answers": {
+        "C1": false,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "the skills column is the first thing above the roles; nothing says what this person is",
+        "C2": "'Cut p99 latency 380ms to 95ms'; 'Shipped LoRA fine-tune, +11 pts exact match'",
+        "C3": "'exact match on ticket triage'",
+        "C4": "serving work and fine-tuning work, read across the columns",
+        "C5": "specific throughout"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "hidden_text": {
+      "answers": {
+        "C1": false,
+        "C2": true,
+        "C3": false,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "contact details, then straight into a bullet",
+        "C2": "'Built and shipped an LLM serving path on vLLM, 380ms to 95ms p99'",
+        "C3": "nothing says what the serving path served",
+        "C4": "one bullet; nothing is retold",
+        "C5": "names vLLM and two latencies"
+      },
+      "note": "Recorded so --score-degraded reproduces the degraded-parse comparison. Withheld by default."
+    },
+    "1-nothing-for-a-reader": {
+      "answers": {
+        "C1": false,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "a name, an email, and straight into a job",
+        "C2": "every bullet is a responsibility",
+        "C3": "'across the organisation' is the closest thing to a subject",
+        "C4": "the two roles carry the same three bullets verbatim",
+        "C5": "'Leveraged cutting-edge technologies to deliver robust and scalable solutions'"
+      }
+    },
+    "2-two-of-five": {
+      "answers": {
+        "C1": true,
+        "C2": false,
+        "C3": false,
+        "C4": false,
+        "C5": false
+      },
+      "evidence": {
+        "C1": "'AI Engineer with four years in data platforms and applied machine learning.'",
+        "C2": "'Responsible for', 'Worked on', 'Involved in', 'Participated in' -- four assignments, no change",
+        "C3": "nothing the work served",
+        "C4": "different filler is not a different job: neither role reads as a job at all, so nothing distinguishes them",
+        "C5": "'Involved in delivering robust and scalable solutions that supported strategic transformation'"
+      }
+    },
+    "3-readable-unedited": {
+      "answers": {
+        "C1": true,
+        "C2": false,
+        "C3": false,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'AI Engineer with four years in data platforms and applied machine learning.'",
+        "C2": "'Maintained', 'Developed', 'Implemented', 'Wrote' -- what was worked on, never what changed",
+        "C3": "a nightly feature refresh and a scoring model, with nothing said about what either was for",
+        "C4": "Airflow and pgvector in one role, Flask and Terraform in the other",
+        "C5": "each bullet names systems specific to this job"
+      }
+    },
+    "4-one-thing-left": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": false,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'AI Engineer with four years in data platforms and applied machine learning.'",
+        "C2": "'Cut p99 inference latency from 380ms to 95ms'; 'Replaced a nightly Airflow batch with a streaming pipeline'",
+        "C3": "four bullets of stack and metric; nothing says who the latency was for or what the pipeline fed",
+        "C4": "serving work and pipeline work",
+        "C5": "named systems and real numbers throughout"
+      }
+    },
+    "5-edited": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'AI Engineer with four years in data platforms and applied machine learning.'",
+        "C2": "'Cut p99 latency from 380ms to 95ms'; 'Replaced a nightly Airflow batch with a streaming pipeline'",
+        "C3": "'for the support triage assistant, so agents stopped waiting on it mid-call'; 'fraud-signal staleness'",
+        "C4": "serving work and pipeline work",
+        "C5": "named systems and real numbers throughout"
+      }
+    },
+    "6-same-job-twice": {
+      "answers": {
+        "C1": true,
+        "C2": true,
+        "C3": true,
+        "C4": false,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "'AI Engineer with four years in data platforms and applied machine learning.'",
+        "C2": "'Cut p99 latency from 380ms to 95ms'",
+        "C3": "'for the support triage assistant'",
+        "C4": "the promotion carries the same two bullets; only the title changed",
+        "C5": "named systems and real numbers throughout"
+      }
+    },
+    "7-no-identity": {
+      "answers": {
+        "C1": false,
+        "C2": true,
+        "C3": true,
+        "C4": true,
+        "C5": true
+      },
+      "evidence": {
+        "C1": "a name, an email, and straight into a job",
+        "C2": "'Cut p99 latency from 380ms to 95ms'",
+        "C3": "'for the support triage assistant'",
+        "C4": "serving work and pipeline work",
+        "C5": "named systems and real numbers throughout"
+      }
+    }
+  }
+}

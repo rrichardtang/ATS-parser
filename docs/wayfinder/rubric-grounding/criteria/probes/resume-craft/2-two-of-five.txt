@@ -1,0 +1,15 @@
+Marcus Idowu
+marcus.idowu@example.com
+
+SUMMARY
+AI Engineer with four years in data platforms and applied machine learning.
+
+EXPERIENCE
+
+Senior Engineer, Kestrel Group    Jun 2023 - Present
+• Responsible for utilising modern frameworks to facilitate data-driven insights across the organisation.
+• Worked on various initiatives to streamline internal processes and empower stakeholders.
+
+Engineer, Halloway Partners    Jan 2021 - May 2023
+• Involved in delivering robust and scalable solutions that supported strategic transformation.
+• Participated in cross-functional efforts to drive innovation and operational excellence.
