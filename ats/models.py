@@ -200,6 +200,71 @@ class UnmetCriterion(BaseModel):
     message: str
 
 
+class JudgedCategory(BaseModel):
+    """What the judges' criterion answers make one category worth (06).
+
+    The unit `score.build` blends, replacing the `(mean, low, high)` tuple it read
+    when the model authored a number. Every field here is a lookup or a comparison of
+    lookups; nothing in it was chosen by a model.
+
+    **The lower band wins.** Each judge is banded from its own answers by
+    `rubric.band_of`, and where two judges land on different bands the category takes
+    the lower one. Two reasons, both measured in
+    `docs/wayfinder/rubric-migration/criterion-scoring.md`:
+
+    * Averaging the two values puts back the model-authored number 04 removed --
+      between C's 58 and B's 78 there is no band, so 68 is a number no rubric names.
+    * Intersecting the two judges' *answers* -- the most literal reading of "what is
+      combined is answers" -- inverts on `Resume craft`, whose band is the count of
+      criteria met rather than a ladder of preconditions. Two judges who each met
+      three of five, but not the same three, agree on band C and intersect to band D:
+      a markdown for a disagreement neither judge reported, on 100 of the 115
+      answer-set pairs where craft's judges agree. A rule that holds for four
+      categories and inverts on the fifth is not a rule.
+
+    `band` is None only for a run recorded under the pre-05 prompt, where the model
+    authored a number and there are no answers to look a band up from. The agreement
+    harness builds those so the *before* picture still scores; nothing live does.
+    """
+
+    category: Category
+    # The band the category scores: the lowest any judge named, and its value.
+    value: float
+    band: str | None = None
+    band_name: str = ""
+    # The highest band any judge named, present only when the judges split. `gap` is
+    # how many bands apart the two extremes are -- 1 is the smallest disagreement the
+    # rubric can express, and the other map calls anything above 1 a failure rather
+    # than a spread.
+    high_band: str | None = None
+    high_band_name: str = ""
+    high_value: float | None = None
+    gap: int = 0
+    # Qualified criterion ids the judges answered differently. A split that does not
+    # cross a band boundary leaves `gap` at 0 and still lands here: it is what the
+    # category cost in agreement, and the shared lookup absorbed it.
+    split_criteria: list[str] = Field(default_factory=list)
+    judges: int = 1
+
+    @property
+    def contested(self) -> bool:
+        """Two judges, two bands. The word is the other map's placeholder."""
+        return self.gap > 0
+
+    def reads_as(self) -> str:
+        """The plain sentence the report prints instead of a numeric range.
+
+        Two numbers tell a candidate less than two readings, and the readings are what
+        the bands are for -- `Shipped` and `Shipped and operated` say what the judges
+        actually disagreed about, where 41.2-54.4 says only that they did.
+        """
+        if not self.contested:
+            return ""
+        split = ", ".join(self.split_criteria)
+        return (f"the judges read this differently: {self.band_name}, or "
+                f"{self.high_band_name}" + (f" (split on {split})" if split else ""))
+
+
 class Rewrite(BaseModel):
     """A proposed edit. Never applied automatically -- a human accepts it in a diff."""
 
@@ -226,10 +291,15 @@ class CategoryScore(BaseModel):
     category: Category
     score: float
     weight: float
+    # The blended value of the lowest and highest band the judges named, present only
+    # when they split. `score` is the low one: 06 chose the lower band, so the range
+    # is what the reader is shown *beside* the score, never instead of it.
     low: float | None = None
     high: float | None = None
     note: str = ""
     assessed: bool = True
+    # Two judges, two bands. `note` says which two, in words.
+    contested: bool = False
 
     @property
     def is_banded(self) -> bool:

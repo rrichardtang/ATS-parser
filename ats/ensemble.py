@@ -26,13 +26,12 @@ import logging
 import re
 from dataclasses import dataclass, field
 
+from . import rubric
 from .invariants import evaluate, has_metric, vacuous_number
-from .models import Rewrite
+from .models import Category, JudgedCategory, Rewrite
 from .slop import PATTERNS, Scope, _is_protected
 
 log = logging.getLogger("ats.ensemble")
-
-BAND_THRESHOLD = 12.0
 
 
 @dataclass
@@ -43,6 +42,11 @@ class PassResult:
     providers_used: list[str] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
     meta: dict = field(default_factory=dict)
+    # The content pass's second channel, and the only pass that fills it: what the
+    # judges' criterion answers make each category worth. It is not `data` because
+    # `data` is findings, and it is not `meta` because `meta` is round-tripped into
+    # the report's JSON and these are objects `score.build` consumes.
+    judged: dict = field(default_factory=dict)
 
 
 def gather(fns: list, timeout: int = 180) -> tuple[list, list[str]]:
@@ -136,29 +140,52 @@ def filter_slop(items: list[dict], resume_text: str) -> list[dict]:
     return kept
 
 
-def combine_scores(
-    per_provider: dict[str, dict[str, float]],
-) -> tuple[dict[str, tuple[float, float, float]], dict]:
-    """Average category scores across providers; band them where they disagree.
+def combine_bands(spec: dict, answer_sets: list[dict[str, bool]]) -> JudgedCategory | None:
+    """One category, one judge per answer set: the band each names, and the lower one.
 
-    Averaging across providers reduces systematic provider bias, which resampling a
-    single model cannot. Wide disagreement is information -- it means the resume is
-    genuinely ambiguous on that dimension -- so it is shown as a range rather than
-    hidden behind a falsely precise midpoint.
+    Replaces `combine_scores`, which averaged the numbers providers returned and widened
+    a category to a range when they differed by 12 or more. Neither half survives 05:
+    there are no numbers to average, and the narrowest disagreement the rubric can
+    express -- one adjacent band -- is 17 points at its narrowest, so a 12-point test
+    fires on every split there is. What replaces the threshold is band adjacency, which
+    is the quantity the specs actually define.
+
+    **The lower band wins**, and both bands travel on the result so the report can name
+    the two readings rather than print a range. `models.JudgedCategory` carries why, and
+    `docs/wayfinder/rubric-migration/criterion-scoring.md` carries the measurements: the
+    two rejected rules are averaging (which invents a value no band names) and
+    intersecting the answers (which inverts on `Resume craft`, whose band is a count).
+
+    A judge that did not answer every criterion names no band -- `rubric.band_of`
+    refuses an incomplete set rather than banding one -- and is dropped here rather than
+    guessed at. None when that leaves no judge at all.
     """
-    categories: dict[str, list[float]] = {}
-    for scores in per_provider.values():
-        for name, value in scores.items():
-            categories.setdefault(name, []).append(float(value))
+    ids = [c["id"] for c in spec["criteria"]]
+    complete = [a for a in answer_sets if all(cid in a for cid in ids)]
+    if not complete:
+        return None
 
-    out: dict[str, tuple[float, float, float]] = {}
-    disagreements = []
-    for name, values in categories.items():
-        low, high = min(values), max(values)
-        out[name] = (sum(values) / len(values), low, high)
-        if high - low >= BAND_THRESHOLD:
-            disagreements.append(f"{name}: {low:.0f}-{high:.0f}")
-    return out, {"providers": list(per_provider), "disagreements": disagreements}
+    order = [b["label"] for b in spec["bands"]]
+    banded = [rubric.band_of(a, spec) for a in complete]
+    positions = sorted(order.index(b["label"]) for b in banded)
+    low, high = spec["bands"][positions[0]], spec["bands"][positions[-1]]
+
+    # Every criterion the judges did not answer the same way, whether or not it moved
+    # the band. A split the lookup absorbed is what agreement actually cost, and 04's
+    # claim that criteria are more diagnosable than a label is only checkable if the
+    # absorbed ones are still visible.
+    split = [f"{spec['slug']}/{cid}" for cid in ids
+             if len({a[cid] for a in complete}) > 1]
+
+    return JudgedCategory(
+        category=Category(spec["category"]),
+        value=float(low["value"]), band=low["label"], band_name=low["name"],
+        high_band=high["label"], high_band_name=high["name"],
+        high_value=float(high["value"]),
+        gap=positions[-1] - positions[0],
+        split_criteria=split,
+        judges=len(complete),
+    )
 
 
 # --------------------------------------------------------------------------

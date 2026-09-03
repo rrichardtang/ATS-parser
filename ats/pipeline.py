@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from . import config, human, keywords, passes, rules, slop
 from .extract import ExtractedDoc, ExtractionError, extract
 from .llm import Provider, providers_from
-from .models import Category, Finding, Report
+from .models import JUDGED_CATEGORIES, Category, Finding, JudgedCategory, Report
 from .score import build
 from .sections import Resume, parse
 
@@ -81,13 +81,32 @@ def analyze(run: RunInput) -> Report:
         "deterministic_findings": len(findings),
     }
 
+    # Whether the judged categories can be judged at all is a property of the
+    # *document*, not of whether a key was supplied: a resume whose roles did not
+    # survive extraction has no bullets for a criterion to be about either way. So it
+    # is resolved here, once, and applies to the deterministic-only path as well --
+    # otherwise the composite's worst case (a two-column resume, three judged
+    # categories riding at 100) would be fixed only for runs that reached a provider.
+    reason = passes.withholding_reason(resume)
+    withheld: dict[Category, str] = (
+        {c: "withheld -- " + reason for c in JUDGED_CATEGORIES} if reason else {}
+    )
+    if reason:
+        notes.append(
+            "Judged categories withheld: " + reason + ". "
+            "The parser gate has already charged for that; scoring the content as "
+            "well would charge one fault twice, so they are left out of the composite "
+            "rather than scored at a number nobody measured."
+        )
+
     if not providers or not doc.has_text_layer:
         if not providers:
             notes.append(
                 "No API key supplied. Deterministic checks only -- everything "
                 "mechanically checkable is here; substance and slop judgement are not."
             )
-        return build(findings, partial=True, notes=notes, run_meta=meta)
+        return build(findings, partial=True, notes=notes, run_meta=meta,
+                     withheld=withheld)
 
     caught = [f.evidence for f in findings if f.rule_id.startswith("slop/")]
 
@@ -132,25 +151,14 @@ def analyze(run: RunInput) -> Report:
         meta["pass3"] = rewrite_result.meta
         notes += [f"Rewrite pass degraded: {e}" for e in rewrite_result.errors[:2]]
 
-    # Since 05 the content pass returns criterion answers rather than a number per
-    # category, and turning those into a judged value is ticket 06. Until it lands
-    # there is nothing to blend: the judged categories are scored by their rule
-    # channel alone, and the two with no rule channel (`Agentic systems`,
-    # `AI-assisted coding fluency`) come out unassessed rather than at a silent 100 --
-    # which is what `CategoryScore.assessed` was built to say.
-    llm_scores: dict[Category, tuple[float, float, float]] = {}
-    if content.meta.get("withheld"):
+    # The judged half of every category: the band each judge's criterion answers
+    # bought, with the lower band winning where two judges split (06).
+    llm_scores: dict[Category, JudgedCategory] = content.judged
+    contested = content.meta.get("contested") or []
+    if contested:
         notes.append(
-            "Judged categories withheld: " + content.meta["withheld_reason"] + ". "
-            "The parser gate has already charged for that; scoring the content as "
-            "well would charge one fault twice."
-        )
-    elif content.data or content.meta.get("criteria_answered"):
-        notes.append(
-            "The judge answered the rubric's criteria, but turning criterion answers "
-            "into a category score is not wired yet -- the judged categories below "
-            "show their deterministic channel only, so they read higher than a "
-            "finished run would."
+            "The judges read " + ", ".join(contested) + " differently. Each category "
+            "shows the lower of the two bands, and names the other one."
         )
 
     partial = bool(content.errors or slop_result.errors) or len(providers) < 2
@@ -161,7 +169,8 @@ def analyze(run: RunInput) -> Report:
         )
 
     report = build(
-        findings, llm_categories=llm_scores, partial=partial, notes=notes, run_meta=meta
+        findings, llm_categories=llm_scores, partial=partial, notes=notes,
+        run_meta=meta, withheld=withheld,
     )
     report.rewrites = rewrites
     return report

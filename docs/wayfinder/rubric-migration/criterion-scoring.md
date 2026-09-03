@@ -3,8 +3,8 @@
 Ticket [06](tickets/06-score-from-criterion-answers.md). The measurements the three
 decisions rest on, made against `ats/rubric.py`, `ats/criteria/*.json`,
 `config.category_weights()` and `score.rule_shares()` — the shipped objects, not a model
-of them. The prototype that makes them pressable is
-[`prototype/06-criterion-scoring.html`](../../../prototype/06-criterion-scoring.html).
+of them. The prototype that makes them pressable is `prototype/06-criterion-scoring.html`,
+kept on branch `prototype/06-criterion-scoring`.
 
 ## 1. Every band gap is wider than the threshold that fires on it
 

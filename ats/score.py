@@ -23,6 +23,7 @@ from .models import (
     CategoryScore,
     Finding,
     Gate,
+    JudgedCategory,
     LedgerRow,
     Report,
     Severity,
@@ -96,12 +97,25 @@ def _cost(finding: Finding, weights: dict[Category, float], points: dict[Severit
 
 def build(
     findings: list[Finding],
-    llm_categories: dict[Category, tuple[float, float, float]] | None = None,
+    llm_categories: dict[Category, JudgedCategory] | None = None,
     partial: bool = False,
     notes: list[str] | None = None,
     run_meta: dict | None = None,
+    withheld: dict[Category, str] | None = None,
 ) -> Report:
-    """llm_categories maps a category to (mean, low, high) from the content judge."""
+    """llm_categories maps a category to the band its judges' criterion answers bought.
+
+    `withheld` maps a category to why it could not be judged on this document at all --
+    05's case, where the roles did not survive extraction so no criterion has a subject.
+    A withheld category is **not assessed**: it is printed with its reason and left out
+    of the composite, which renormalises over what was actually checked. Scoring it as
+    a 0 would charge the parse defect twice, the parser gate having already found and
+    deducted for it; scoring it at any other constant would put a number nobody
+    measured on 52.5 of the composite's points. Leaving it in at its rule channel --
+    which is what this function did before it was told about withholding -- floats
+    three judged categories at 100 on a document no parser can read, which is the bug
+    ticket 06 was written around.
+    """
     weights = config.category_weights()
     points = config.severity_points()
     # Only the five judged categories may be blended. `Parseability`, `Structure` and
@@ -110,9 +124,12 @@ def build(
     # and without this line it would be accepted and blended, silently converting a
     # deterministic category into a judged one.
     shares = rule_shares()
+    withheld = {category: reason
+                for category, reason in (withheld or {}).items()
+                if category in JUDGED_CATEGORIES}
     llm_categories = {category: value
                       for category, value in (llm_categories or {}).items()
-                      if category in JUDGED_CATEGORIES}
+                      if category in JUDGED_CATEGORIES and category not in withheld}
 
     # Drop unevidenced findings: a claim with nothing quoted is not checkable.
     findings = [f for f in findings if f.evidence.strip() or f.locator == "document"]
@@ -138,12 +155,16 @@ def build(
     # 100 and carry its full weight, manufacturing a result from a check that never
     # ran. It is printed and left out of the arithmetic instead. The last clause keeps
     # that self-correcting -- if a finding does deduct there, the category is assessed
-    # after all and its deduction counts.
+    # after all and its deduction counts. A *withheld* category is the one case that
+    # clause must not rescue: withholding says the criteria have no subject on this
+    # document, which a stray slop finding does not make untrue, so it is checked
+    # first and a deduction there costs nothing (see `share` below).
     assessed = {
-        category: (category not in JUDGED_CATEGORIES
-                   or category in llm_categories
-                   or shares[category] > 0
-                   or deductions[category] > 0)
+        category: (category not in withheld
+                   and (category not in JUDGED_CATEGORIES
+                        or category in llm_categories
+                        or shares[category] > 0
+                        or deductions[category] > 0))
         for category in weights
     }
 
@@ -157,7 +178,13 @@ def build(
         # A category floors at zero, so deductions past 100 cost nothing. Scaling
         # by that keeps the reported points equal to what was actually lost.
         floor_scale = (min(raw_total, 100.0) / raw_total) if raw_total > 0 else 0.0
-        share = (weights[finding.category] / total_weight) if total_weight else 0.0
+        # A finding in a category the composite excluded moved nothing, so it reports
+        # nothing. Before withholding this could not arise -- `assessed` was false only
+        # where `deductions` was zero -- and quoting a category-weighted cost for a
+        # category outside `total_weight` would put points on a card that the composite
+        # never lost.
+        share = ((weights[finding.category] / total_weight)
+                 if total_weight and assessed[finding.category] else 0.0)
         finding.points = round(finding._raw_cost * share * floor_scale, 2)
 
     unreadable = any(f.rule_id in UNREADABLE_RULES for f in charged)
@@ -171,22 +198,31 @@ def build(
             rule_score = 0.0
         low = high = None
         note = ""
-        if category in llm_categories:
-            mean, band_low, band_high = llm_categories[category]
+        contested = False
+        judged = llm_categories.get(category)
+        if judged is not None:
             # Rules are authoritative on mechanics; the model is better on substance.
+            # What the model contributes is now a band's value rather than a number it
+            # chose, but where that value enters is unchanged.
             rule_share = shares[category]
-            blended = rule_score * rule_share + mean * (1 - rule_share)
-            if band_high - band_low >= 12:
-                low = round(rule_score * rule_share + band_low * (1 - rule_share), 1)
-                high = round(rule_score * rule_share + band_high * (1 - rule_share), 1)
-                note = "providers disagreed; shown as a range"
+            blended = rule_score * rule_share + judged.value * (1 - rule_share)
+            if judged.contested:
+                # The score is the lower band; the higher one is shown beside it, in
+                # words, because two band names say what two numbers cannot.
+                contested = True
+                note = judged.reads_as()
+                low = round(blended, 1)
+                high = round(
+                    rule_score * rule_share + judged.high_value * (1 - rule_share), 1)
             rule_score = blended
         if not assessed[category]:
-            rule_score, low, high = 0.0, None, None
-            note = "not assessed -- no judge answered it and no rule reaches it"
+            rule_score, low, high, contested = 0.0, None, None, False
+            note = withheld.get(category) or (
+                "not assessed -- no judge answered it and no rule reaches it")
         categories.append(CategoryScore(
             category=category, score=round(rule_score, 1), weight=weight,
             low=low, high=high, note=note, assessed=assessed[category],
+            contested=contested,
         ))
 
     scored = [c for c in categories if c.assessed]

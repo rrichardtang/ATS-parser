@@ -48,7 +48,7 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 | the spec says | where it lives now | what the program uses |
 |---|---|---|
 | five judged categories, three carried over | `ats/criteria/*.json` (01) + `04`'s table | **`models.Category`, the new eight (03)** |
-| criteria → band → value | `ats/rubric.py:band_of` (01) | **the model answers criteria (05)**; the band is not yet read (06) |
+| criteria → band → value | `ats/rubric.py:band_of` (01) | **the model answers criteria (05) and the band is what a category scores (06)** |
 | `rule_share` per category | `07`'s table in `rule-mapping.md` | **`score.rule_shares()`, read from each spec (03)** |
 | weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`; budget 50 (02) | **`config.category_weights()`: four authored, four derived (03)** |
 | findings keyed on criterion ids | `findings-identity.md` | **`<slug>/<criterion id>`, from the specs (05)** |
@@ -131,6 +131,20 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   judged number for `two_column`, `hidden_text` or `scanned` — all three of which
   parse to zero roles. What a withheld category does to the *composite* is untouched
   here and is 06's third item.
+- **The lower band wins, and a withheld category is not assessed** (06). Each judge is
+  banded from its own answers and the category takes the lower band where two judges
+  split; `ensemble.combine_bands` replaces `combine_scores`, and `BAND_THRESHOLD` and
+  `score.py`'s duplicate `>= 12` are both gone — all five specs share one value ladder,
+  so the narrowest disagreement expressible is 17 points and a 12-point test fires on
+  every split there is. Adjacency in bands replaces it. The two rejected rules were
+  rejected on measurements ([criterion-scoring.md](criterion-scoring.md)): averaging puts
+  back the model-authored number 04 removed, and intersecting the *answers* inverts on
+  `Resume craft`, whose band is a count rather than a ladder — 100 of the 115 pairs where
+  its judges agree get marked down for a disagreement neither reported. A contested
+  category names its two readings rather than printing a range. A **withheld** category
+  is excluded from the composite, which renormalises over what was checked, and
+  withholding is resolved from the *document* so the deterministic-only path is fixed
+  too. Side effect: `two_column` no longer outranks `buried_evidence`.
 - **`content/bullet-invariants` is `content/no-outcome`** (04, implementing 12). It
   deducts on one predicate. The other three are priced elsewhere or nowhere —
   ownership in `Production ownership`, measurability nowhere now that
@@ -155,10 +169,17 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   gets a deducting rule — `jd_dimensions.py` now has an `agentic` dimension it did not
   have when 07 wrote §5, though a dimension is not a rule — or 09 measures the exposure
   and rules on whether it is real. See [weight-budget.md](weight-budget.md) §3.
-- **`two_column` outranks `buried_evidence`** (observed by 02, inherited not caused): a
-  resume no parser can read scores above one that parses cleanly and buries its
-  evidence, under both rubrics. `parse/multi-column` costs 12 points for a
-  document-wide defect. Nobody has decided what it should cost.
+- **What `parse/multi-column` should cost.** 12 points for a document-wide defect, still
+  nobody's decision. The *inversion* 02 observed — a resume no parser can read scoring
+  above one that parses cleanly and buries its evidence — is closed by 06: `two_column`
+  now lands at 86.6 against `buried_evidence`'s 90.1, because the composite stopped
+  scoring five categories it never assessed. The price of the rule itself is untouched.
+- **A subscore can renormalise down to one category.** With the judged five withheld,
+  `score._subscore` prints *human gate 100* off `Title & seniority alignment` alone — 5
+  of the human gate's 45 points, and not wrong so much as unrepresentative. The
+  `unreadable` path already special-cases this by zeroing the subscore outright;
+  withholding wants something less blunt, and what floor a subscore needs before it is
+  a number worth printing has never been decided. Surfaced by 06.
 - **What the report does with an unmet criterion.** 05 produces them — one per
   criterion per resume, carrying the absence the candidate most needs to hear — and
   stops there, because nothing in the report renders a non-finding today. They ride
@@ -168,11 +189,10 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   ledger of what each finding cost. Advice-only findings cost nothing and still need
   printing, and the old map's `07` says they need a gate and no category. Whether that
   is a new section, an existing one, or a flag on a row is undecided.
-- **A word for a contested score.** Inherited open question from `03`: `score.py:127`
-  currently widens a category to a range when providers disagree by 12 or more, and
-  calls it *"providers disagreed; shown as a range"*. Under criteria the disagreement is
-  a criterion split, not a spread of numbers, so both the mechanism and the word need
-  revisiting. *Contested* is still the placeholder.
+- **A word for a contested score.** Inherited open question from `03`. The *mechanism*
+  is settled by 06 — band adjacency, the lower band scoring, both readings named — so
+  what is left is only the word, and it is the other map's to choose. *Contested* is
+  still the placeholder, now in `/CONTEXT.md` and in the report.
 - **What happens to the rewrite pass.** Pass 3 reads findings and rewrites bullets.
   Findings keyed on criterion ids change what it is handed. Not looked at yet.
 - **Whether the acceptance test's bar survives contact.** *Two providers within 5 points
