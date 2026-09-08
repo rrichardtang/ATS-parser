@@ -1,6 +1,6 @@
 type: grilling (HITL)
 status: open
-claimed:
+claimed: claude
 blocked-by: —
 
 # Where the real resumes come from
