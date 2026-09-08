@@ -1,0 +1,28 @@
+Wen Hsiao
+wen.hsiao@example.com | (408) 555-0182 | San Jose, CA
+
+EXPERIENCE
+
+Senior Engineer, Corran University Grid Research    Jun 2023 - Present
+• Built ML and LLM systems inside the operations team.
+• Forecast build timelines and flagged schedule risk on 30 projects.
+• Extracted structure from vendor documents; roughly half now parse cleanly.
+• Partnered on API and backend design with the platform group.
+• Wrote the Airflow pipelines behind all of it.
+• The forecasting service has run since without an outage.
+
+Consulting Engineer, Larkfield Data Partners    Feb 2019 - May 2023
+• Monitoring for drift, hallucination rate, cost per request and token usage was built
+  into the Grafana boards.
+• Prompt work used JSON schema and function calling throughout.
+• Async orchestration was architected for a payments client, 220 requests per second.
+• A silent prompt regression was shipped and went unnoticed for 3 weeks.
+
+Engineer, Bright Ferry Regional Bank    Dec 2016 - Jan 2019
+• Enterprise customers were worked with directly to prototype and ship 4 solutions.
+• A production LLM system was built with several layers of decisions behind it.
+• One of the four never reached its users and was written off.
+
+PROJECTS
+
+• A small serving benchmark I run each release, published as a repo.

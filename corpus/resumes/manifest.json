@@ -1,0 +1,248 @@
+{
+  "frozen": "2026-09-08",
+  "seed": 20260908,
+  "work_pool_digest": "db77db76cc820f81",
+  "documents": [
+    {
+      "id": "01-lab-to-industry-agents",
+      "brief": "01",
+      "sha256": "19d1f564ce1eb2136696346c90963ad12b1b6ea42d4cb6e6031ccf64ebcc175f",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "02-analyst-toward-ml",
+      "brief": "02",
+      "sha256": "3f45c18bc7a100140bbcf19fc30819592b84f9e02a791a5634da13edc44bf5e1",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "03-generalist-contract-startup",
+      "brief": "03",
+      "sha256": "de8bfb1374ce48360d2ce310cbdbdcd24a4ad90789d6e7bb286bd3f933f17769",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "04-fullstack-senior-inconsistent",
+      "brief": "04",
+      "sha256": "19481c73332d27773b7f793029f6ec3a07f8488097500ec2633050766cefc003",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "05-career-changer-eval",
+      "brief": "05",
+      "sha256": "f4074defa285e760c1abca6f3f1177435b9657148910cab77647edaf40a83877",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "06-data-platform-senior",
+      "brief": "06",
+      "sha256": "b88ffa28141a2279769d57fdf29ce8a79f720816d77bb4941c783c74bf36941f",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "07-junior-data-engineer-bank",
+      "brief": "07",
+      "sha256": "44a45ddefd2a0594754f060eb47d76bcd8dcf7f26399a1c8b44981b7dad80e44",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "08-junior-mixed-quality",
+      "brief": "08",
+      "sha256": "9bb2621f35a468518c6564610ce49817f31cd302a6d22a6691e8131befceca60",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "09-llm-platform-career-change",
+      "brief": "09",
+      "sha256": "eec9977112bc2b81f2e28a7adc4884637c7e404f313e12ebad43fa80bb2c7654",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "10-new-grad-agentic",
+      "brief": "10",
+      "sha256": "f1cf349b504c289f72fb92a56f7d9ae6a9274f29881358e71a995cf372a35250",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "11-promoted-junior-agentic",
+      "brief": "11",
+      "sha256": "d075be3f4b502d7f15153eabd361c80f81b57a7198497c66e5b253c6eaee4b24",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "12-returning-rag",
+      "brief": "12",
+      "sha256": "ea99eba2ef3d9e15db50275836df55e19f0692effd35da2ae4471fe581396eca",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "13-eval-quality-promoted",
+      "brief": "13",
+      "sha256": "2017f89f2f407992921003005ffca9305cfed9dcd97e565e45959178f53cfdd3",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "14-applied-ml-mid",
+      "brief": "14",
+      "sha256": "21ce503f0a6ea83b65acb3bc87877c698a718ce740f7b1a0e31aed6debf6b397",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "15-backend-junior-no-ai",
+      "brief": "15",
+      "sha256": "8cf05f195f5bf5bd42e15a1db02cc96c0e230e458480a12915b4afeace6d827a",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "16-returning-data-engineer",
+      "brief": "16",
+      "sha256": "375e6d5b14a34e4db8c3db837196e37878c29e1fbdd410815070df728466b7b1",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "17-staff-applied-ml-narrative",
+      "brief": "17",
+      "sha256": "249a1406be2903a592fbc204d9eb87a0f06f085c34ced7f0d83ce89a3ed34ac8",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "18-terse-data-senior",
+      "brief": "18",
+      "sha256": "d4f6ba5487247b62a05dc73e3457f46cfba64f09a5496057e440823675a7f8de",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "19-academic-terse-mid",
+      "brief": "19",
+      "sha256": "54e000301d429af5c36c40d389c44213d5d49bfa6799ed61acfe62a68a6ea4e8",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "20-genai-product-senior",
+      "brief": "20",
+      "sha256": "67b6f2f267257b104046a308132d887489b6ecc78316cf3d6602557daeaa60f4",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "21-returning-fullstack",
+      "brief": "21",
+      "sha256": "a36d7327dd2b1a8e5fe1f5f44f2da81a9e82cd1b2bf0cedab69c65683e8c7cc4",
+      "provenance": "synthetic-from-brief",
+      "on_track": false,
+      "committed": true
+    },
+    {
+      "id": "22-career-changer-ml-infra",
+      "brief": "22",
+      "sha256": "98200cff7664c7d63c4315d2abeda3ff81f41b9f603ad21a7b7f580fb4c8e5bb",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "23-returning-genai-product",
+      "brief": "23",
+      "sha256": "7bb426b693ea878ec30d27e47dc76a8899e0f5a48d6bd6c3c7e353712c48ead5",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "24-forward-deployed-senior",
+      "brief": "24",
+      "sha256": "f551e28a66bc9211f114b7d61be78d555570142cdb40c59e2e9a9898fffc7974",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "25-staff-forward-deployed",
+      "brief": "25",
+      "sha256": "a6282e7fe441da5ad60df031b7e0e3917a99349a757b3b9ab339a03d03ca7511",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "26-returning-llm-platform",
+      "brief": "26",
+      "sha256": "ad9c9ed173e2d7e3a4bbc3a323d1fdd0e787861aee73966a4dcd39482f8e1ff4",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "27-staff-eval-quality",
+      "brief": "27",
+      "sha256": "2c6f908d65fdec6c891dbabe524f4bbb8895a2e85b9f1499aca7e809e1fe2553",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "28-forward-deployed-senior-thin",
+      "brief": "28",
+      "sha256": "166804355738b56380a09528950933affb6f0f0715e8180a8ab78c06ca60face",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "29-returning-agentic-corporate",
+      "brief": "29",
+      "sha256": "a68a91b8cd01cec3bdf625fe622beaba2fa3cddacecea320dc8c05efd7dcd2f6",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    },
+    {
+      "id": "30-junior-genai-product",
+      "brief": "30",
+      "sha256": "8ff44a19d9ce908726a66d0adeda1cd60208b298eb3541be2a2475f598db48df",
+      "provenance": "synthetic-from-brief",
+      "on_track": true,
+      "committed": true
+    }
+  ],
+  "note": "Every document here is invented: no real person, employer, address or contact detail, and no text taken from a real resume. Real resumes are tier 2 and are never committed -- see corpus/resumes/README.md."
+}

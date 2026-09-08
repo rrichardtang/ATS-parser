@@ -1,0 +1,32 @@
+Rowan Baptiste
+rowan.baptiste@example.com | Bristol
+
+Engineer. Data platforms, some product work.
+
+EXPERIENCE
+
+Platform Engineer, Bright Ferry Regional Bank    Jul 2022 - Present
+• I owned the client-side state and rendering for data-heavy, real-time surfaces where
+  an agent writes into the same views the user is editing.
+• I worked on the event-driven side too, mostly Kafka topics and the consumers behind them.
+• I like open-ended problems where the answer isn't written down anywhere yet.
+• I got the consumer group configuration wrong and we replayed three days of events.
+
+Software Engineer, Ministry of Culture Digital    Jan 2021 - Jun 2022
+• Hands-on technical workshops and code reviews were led with 4 partner teams.
+• Product and design partners were worked with closely to translate needs into designs.
+• Prompt engineering with structured outputs and function calling was used to build a
+  metadata-tagging feature, shipped to 2 public sites.
+• A customer-facing AI experience was shipped end to end, React through to the APIs.
+
+Junior Developer, Wexcombe Education Insurance    Feb 2017 - Dec 2020
+• Evals were developed and run with the research team to measure agent performance,
+  regressions and failure modes.
+• Latency percentiles were measured and improved.
+• Cost management was considered: token spend, caching, model selection by task.
+• The eval suite went stale after the team reorganised and stopped being run.
+• It was picked up again a year later and is still in use.
+
+INTERESTS
+
+Bouldering, bread, and a podcast about failed infrastructure projects.

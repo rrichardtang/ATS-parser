@@ -1,0 +1,35 @@
+Priyanka Raval
+p.raval@example.com | (503) 555-0173 | Beaverton, OR
+
+OBJECTIVE
+
+Applied ML engineer, five years, looking for production model work with real ownership.
+
+EXPERIENCE
+
+Senior ML Engineer, Wexcombe Recruiting Technology    Nov 2023 - Present
+• We shaped 3 user-facing agent surfaces with product and the interfaces behind them.
+• We gated releases on eval metrics in CI; 4 regressions caught before release.
+• We kept the gate running for 18 months; it fires about once a quarter.
+• We tuned the thresholds twice after false alarms in the first month.
+• Our first threshold was so tight that it blocked 9 clean releases.
+
+ML Engineer, Wren Valley Publishing Trust    Dec 2022 - Oct 2023
+• Contributed to 6 LLM-powered product features.
+• Integrated third-party model APIs and 2 self-hosted open-weight models.
+• Ran the annotation set: 3,000 items, agreement measured at 0.78.
+• The self-hosted path was never fast enough and was dropped.
+
+SKILLS
+
+Modelling: PyTorch, HuggingFace, LoRA
+Serving: Triton, Ray, model registries
+Data: Spark, SQL, Airflow
+
+EDUCATION
+
+M.S. Statistics, Corran University, 2021
+
+PUBLICATIONS
+
+Raval, P. "Eval gates in continuous integration." Workshop paper, 2025.

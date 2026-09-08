@@ -1,0 +1,31 @@
+Georgina Achebe
+g.achebe@example.com | (917) 555-0180 | Newark, NJ
+
+Staff forward-deployed engineer.
+
+EXPERIENCE
+
+Staff Engineer (contract), Wexcombe Insurance Technology    Aug 2025 - Present
+• Predictions were put into the tools the claims handlers already use, with the data
+  engineering pod.
+• Agent behaviours were designed and iterated on for real coding tasks in the internal
+  developer tooling.
+• Prompting used structured outputs and function calling.
+• The tooling has been in use since and the behaviours have been revised twice.
+
+Principal Engineer, Thameside Recruiting    Mar 2021 - Jul 2025
+• I built the ML and LLM systems that run inside our own operations: forecasting
+  timelines, flagging schedule risk, extracting structure from vendor documents.
+• I care about this being useful and safe rather than impressive.
+• I did applied ML in production settings for four years here.
+• I kept the forecasting service after launch; it ran through 3 pricing changes.
+• My first extraction model was wrong often enough that ops stopped trusting it, and
+  it took a rebuild to get that back.
+
+SKILLS
+
+Python, SQL, forecasting, structured outputs, function calling, FastAPI, React
+
+CERTIFICATIONS
+
+FINRA SIE, 2019

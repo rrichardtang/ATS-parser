@@ -1,0 +1,39 @@
+Hakim Belhadj
+h.belhadj@example.com | (646) 555-0170 | Jersey City, NJ
+
+EDUCATION
+
+M.Eng. Computer Science, Corran University, 2013
+
+EXPERIENCE
+
+Forward Deployed Engineer, Meridian National Retail    Apr 2025 - Present
+• Evals were developed and run with the research team against the merchandising agent,
+  covering performance, regressions, failure modes and edge cases, on 2,200 tasks.
+• Infrastructure was run on GKE and Terraform across 3 regions.
+• The eval suite has been run on every release since, 40 releases.
+• 6 regressions were caught by it before release.
+
+Solutions Engineer (contract), Thameside Marketplace    Feb 2024 - Mar 2025
+• We owned client-side state and rendering on the agent-driven seller dashboard.
+• We built it in TypeScript and React with our own state library.
+• We extended the agentic workflows so they reason over listing context, call our
+  pricing and inventory tools, and take the action under a senior review step.
+• We shipped the Python backend behind it.
+• Our first review step was too slow and sellers stopped using it for a month.
+
+Engineer, Corran University Education Lab    Apr 2022 - Jan 2024
+• Designed and implemented an LLM-powered marking workflow and its agentic steps,
+  concept through to production.
+• Led workshops and code reviews with the two partner departments.
+• Used AI-assisted development tools for implementation and refactoring throughout.
+• Tracked experiments in Weights & Biases.
+
+SKILLS
+
+TypeScript — expert. React — expert. Python — advanced. Terraform — advanced.
+GKE — advanced. Weights & Biases — working. Claude Code — daily.
+
+CERTIFICATIONS
+
+Certified Kubernetes Administrator, 2020

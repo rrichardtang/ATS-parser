@@ -1,0 +1,3286 @@
+{
+  "seed": 20260908,
+  "count": 30,
+  "work_pool": {
+    "lines": 154,
+    "duties": 33,
+    "subject_matter": 89,
+    "ordinary": 65,
+    "skills": 121,
+    "sources": [
+      "corpus/jds/01-llm-platform-eng.txt",
+      "corpus/jds/02-rag-systems-eng.txt",
+      "corpus/jds/03-applied-ml-eng.txt",
+      "corpus/jds/04-genai-product-eng.txt",
+      "corpus/jds/05-ml-infra-eng.txt",
+      "corpus/jds/06-nlp-eng.txt",
+      "corpus/jds/07-evaluation-eng.txt",
+      "corpus/jds/08-ai-eng-startup.txt",
+      "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json",
+      "corpus/jds/user/anthropic-applied-ai-engineer.json",
+      "corpus/jds/user/edra-forward-deployed-ai-engineer.json",
+      "corpus/jds/user/fluidstack-machine-learning-engineer.json",
+      "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json",
+      "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+    ],
+    "digest": "db77db76cc820f81"
+  },
+  "note": "Drawn by scripts/draw_briefs.py before any document was written. Nothing here names a category, a criterion or a band. Bands are observed after the fact and never targeted; see docs/wayfinder/rubric-migration/acceptance-set.md.",
+  "briefs": [
+    {
+      "id": "01",
+      "on_track": false,
+      "track": "Academic researcher leaving the lab",
+      "seniority": "junior, ~1 year",
+      "register": "dense noun phrases, stack-forward",
+      "bullet_length": "short (under 12 words)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "no summary",
+        "skills": "no skills section",
+        "education": "no education section",
+        "extras": "an interests section",
+        "pages": "two pages"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "big tech",
+          "domain": "e-commerce search",
+          "months": 31,
+          "work": [
+            {
+              "line": "Design and iterate on agent behaviors across real-world coding tasks and long-horizon workflows.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "3+ years of software engineering, strong Python.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "You bring customer empathy and commercial judgment, and remain effective when requirements, data, or expectations are unclear.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names nothing specifically",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "Series B startup (~90 people)",
+          "domain": "HR and recruiting",
+          "months": 22,
+          "work": [
+            {
+              "line": "Maintain strong knowledge of the latest developments in LLM capabilities, implementation patterns, and AI product development stacks",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Solid engineering fundamentals in at least one backend language (Python, Go, or TypeScript).",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Strong programming skills with proficiency in Python or TypeScript and experience building production applications",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "You've shipped something meaningful to production and can explain how it evolved",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Experience with FastAPI or similar for wrapping inference behind an API.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names some things, hand-waves others",
+            "voice": "we / the team",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "a contract / freelance stint",
+          "domain": "security operations",
+          "months": 22,
+          "work": [
+            {
+              "line": "Design and ship customer-facing AI experiences end to end, from React UI through to the APIs and data contracts behind them",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "SQL and data pipeline experience; Airflow, Dagster or similar.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            },
+            {
+              "line": "Hands-on experience serving transformer models: vLLM, TGI, Triton or equivalent.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            },
+            {
+              "line": "Schema validation and structured data handling",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "You have experience with (or strong interest in) how systems learn and improve over time: human-in-the-loop feedback, prompt optimization and context engineering",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "02",
+      "on_track": false,
+      "track": "Data analyst moving toward ML",
+      "seniority": "junior, ~2 years",
+      "register": "first-person narrative, chatty",
+      "bullet_length": "short (under 12 words)",
+      "texture": "a role cut short by a layoff",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "a flat skills list",
+        "education": "education at the bottom",
+        "extras": "a projects section",
+        "pages": "two pages"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a contract / freelance stint",
+          "domain": "media and publishing",
+          "months": 52,
+          "work": [
+            {
+              "line": "Build and extend agentic AI workflows that reason over context, call tools, and perform actions under guidance from senior engineers.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Familiarity with APIs, basic cloud concepts, and modern development practices.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Partner on API and backend design so the full stack serves the product, not the other way around",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "RAG pipelines end to end: ingestion, chunking, embeddings, retrieval, reranking.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a university lab",
+          "domain": "adtech",
+          "months": 11,
+          "work": [
+            {
+              "line": "Build agentic features for knowledge management-think agents that can edit, update, and maintain large knowledge bases autonomously",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Bonus: experience with BI tools, data visualization, or financial/analytics products",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "3+ years shipping production software; Python and TypeScript.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            },
+            {
+              "line": "FastAPI, Postgres, Docker, and one cloud provider.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Storage and data formats for ML: Parquet, object storage, dataset versioning.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "seed-stage startup (12 people)",
+          "domain": "payments",
+          "months": 14,
+          "work": [
+            {
+              "line": "Build ML and LLM systems that run inside the company's operations: forecasting build timelines, flagging schedule risk, and extracting structure from vendor documents.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Experiment tracking with Weights & Biases or MLflow.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "GPU scheduling and utilization; multi-node training, distributed data parallel.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "03",
+      "on_track": true,
+      "track": "AI engineering at a startup, no specialism",
+      "seniority": "senior, ~8 years",
+      "register": "full sentences, plain",
+      "bullet_length": "short (under 12 words)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "a two-line summary",
+        "skills": "no skills section",
+        "education": "no education section",
+        "extras": "an interests section",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a contract / freelance stint",
+          "domain": "local government services",
+          "months": 18,
+          "work": [
+            {
+              "line": "Own complex client-side state and rendering challenges across data-heavy, real-time, agent-driven surfaces",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Nice to have: Ray, Slurm, NCCL tuning, Triton inference server, model registries,",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            },
+            {
+              "line": "Have experience building or shipping machine learning or LLM-powered products.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Experience with FastAPI or similar for wrapping inference behind an API.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "We don\u2019t hire to a narrow checklist, but candidates should be excited to grow in a modern, enterprise-scale engineering environment with a focus on agentic AI.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "an insurer",
+          "domain": "telecoms",
+          "months": 18,
+          "work": [
+            {
+              "line": "Contribute to the design and implementation of LLM-powered and agentic product features.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "All systems are built to meet high standards for reliability, security, and auditability, reflecting the responsibility of deploying autonomous AI in a financial services environment.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Nice to have: fine-tuning, vLLM, agent frameworks, observability tooling,",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            },
+            {
+              "line": "Experience designing offline evaluation: golden datasets, regression suites, LLM-as-judge pipelines, and human review workflows.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "04",
+      "on_track": false,
+      "track": "Full-stack product engineer",
+      "seniority": "senior, ~11 years",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "medium (one line)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "an objective statement",
+        "skills": "no skills section",
+        "education": "education at the bottom",
+        "extras": "publications",
+        "pages": "one page"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "an insurer",
+          "domain": "telecoms",
+          "months": 22,
+          "work": [
+            {
+              "line": "Partner with account executives and solutions architects to translate customer business requirements into technical solutions",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Statistical literacy: sample size, confidence intervals, significance, variance between runs.",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            },
+            {
+              "line": "Annotation and dataset construction; inter-annotator agreement; active learning.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Model deployment, versioning and rollback; CI/CD for model artifacts.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a government agency",
+          "domain": "media and publishing",
+          "months": 44,
+          "work": [
+            {
+              "line": "Partner with account executives and solutions architects to translate customer business requirements into technical solutions",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Improve performance through prompting, tool-use strategies, context construction, and model-facing experimentation.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "You bring customer empathy and commercial judgment, and remain effective when requirements, data, or expectations are unclear.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Nice to have: Ray, Slurm, NCCL tuning, Triton inference server, model registries,",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "05",
+      "on_track": true,
+      "track": "Evaluation and model quality",
+      "seniority": "career changer, 2 years in tech after another field",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "medium (one line)",
+      "texture": "two short contract stints",
+      "shape": {
+        "summary": "an objective statement",
+        "skills": "a skills table with proficiency levels",
+        "education": "education at the top",
+        "extras": "certifications",
+        "pages": "one page"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "Series B startup (~90 people)",
+          "domain": "a two-sided marketplace",
+          "months": 7,
+          "work": [
+            {
+              "line": "Build agentic features for knowledge management-think agents that can edit, update, and maintain large knowledge bases autonomously",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Use the latest coding models and agentic workflows as a core part of how you ship every day",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "You bring customer empathy and commercial judgment, and remain effective when requirements, data, or expectations are unclear.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "seed-stage startup (12 people)",
+          "domain": "security operations",
+          "months": 38,
+          "work": [
+            {
+              "line": "Create scalable public and internal assets, documenting the latest LLM prompting, evaling, agentic, and architecture techniques",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Bonus: experience with BI tools, data visualization, or financial/analytics products",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "You reach for the simplest model that works and can defend the choice.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "scale-up (~600 people)",
+          "domain": "adtech",
+          "months": 22,
+          "work": [
+            {
+              "line": "Build agentic features for knowledge management-think agents that can edit, update, and maintain large knowledge bases autonomously",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Comfort working across the stack, including API design and backend systems, even with frontend as your center of gravity",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "You have measured p50/p95/p99 latency and throughput and improved them.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            },
+            {
+              "line": "You write production-quality code and work fluently with AI coding tools.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "06",
+      "on_track": false,
+      "track": "Data engineer / analytics platform",
+      "seniority": "senior, ~11 years",
+      "register": "corporate boilerplate, heavy on nouns",
+      "bullet_length": "medium (one line)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "no summary",
+        "skills": "a skills table with proficiency levels",
+        "education": "no education section",
+        "extras": "volunteering",
+        "pages": "one page"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a university lab",
+          "domain": "adtech",
+          "months": 18,
+          "work": [
+            {
+              "line": "Own customer engagements from discovery and solution design through production, adoption, and expansion.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Prompt engineering, structured outputs, function calling and tool use.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            },
+            {
+              "line": "CI/CD, observability, Prometheus and Grafana, incident response and on-call.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Fine-tuning for classification and extraction; LoRA and parameter-efficient methods.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "passive, no subject named",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a consultancy billing to clients",
+          "domain": "e-commerce search",
+          "months": 7,
+          "work": [
+            {
+              "line": "Partner on API and backend design so the full stack serves the product, not the other way around",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Comfort with ambiguity, and evidence of shipping to real users.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            },
+            {
+              "line": "Comfort working across the stack, including API design and backend systems, even with frontend as your center of gravity",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "SQL and Spark for corpus-scale processing.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "we / the team",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "an agency doing client work",
+          "domain": "logistics and routing",
+          "months": 22,
+          "work": [
+            {
+              "line": "Own customer engagements from discovery and solution design through production, adoption, and expansion.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Travel occasionally to customer sites for workshops, implementation support, and building relationships",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "07",
+      "on_track": false,
+      "track": "Data engineer / analytics platform",
+      "seniority": "junior, ~2 years",
+      "register": "corporate boilerplate, heavy on nouns",
+      "bullet_length": "long (runs to two lines)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "a flat skills list",
+        "education": "education at the bottom",
+        "extras": "certifications",
+        "pages": "two pages"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "an enterprise bank",
+          "domain": "energy grid data",
+          "months": 44,
+          "work": [
+            {
+              "line": "Build BI-tool-quality interfaces for agentic analysis, FP&A, and book-close workflows: fast, dense, interactive, and trustworthy",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Python, PyTorch, and the HuggingFace transformers ecosystem.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a non-profit",
+          "domain": "telecoms",
+          "months": 38,
+          "work": [
+            {
+              "line": "Own customer engagements from discovery and solution design through production, adoption, and expansion.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Enjoy debugging messy, real-world failures and turning them into improvements.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Travel occasionally to customer sites for workshops, implementation support, and building relationships",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Comfort working in collaborative, cross-functional teams.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "seed-stage startup (12 people)",
+          "domain": "healthcare notes",
+          "months": 44,
+          "work": [
+            {
+              "line": "Maintain strong knowledge of the latest developments in LLM capabilities, implementation patterns, and AI product development stacks",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "CI/CD, observability, Prometheus and Grafana, incident response and on-call.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            },
+            {
+              "line": "FastAPI, Postgres, pgvector, Redis, Docker; deploying on AWS or GCP.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Prompt engineering and structured output: function calling, JSON schema, tool use.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "08",
+      "on_track": false,
+      "track": "Data engineer / analytics platform",
+      "seniority": "junior, ~1 year",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "long (runs to two lines)",
+      "texture": "a role cut short by a layoff",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "no skills section",
+        "education": "no education section",
+        "extras": "an interests section",
+        "pages": "two pages"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "an enterprise bank",
+          "domain": "local government services",
+          "months": 44,
+          "work": [
+            {
+              "line": "Own complex client-side state and rendering challenges across data-heavy, real-time, agent-driven surfaces",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Distributed systems: event-driven architectures, including Kafka",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "You're excited by open-ended problems where the solution might not exist yet",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Storage and data formats for ML: Parquet, object storage, dataset versioning.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            },
+            {
+              "line": "Solid engineering fundamentals in at least one backend language (Python, Go, or TypeScript).",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a government agency",
+          "domain": "media and publishing",
+          "months": 18,
+          "work": [
+            {
+              "line": "Lead hands-on technical workshops and code reviews with customer engineering teams",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Collaborate closely with product and design partners, learning to translate customer needs into technical solutions.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Prompt engineering, structured outputs, function calling and tool use.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            },
+            {
+              "line": "Design and ship customer-facing AI experiences end to end, from React UI through to the APIs and data contracts behind them",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Want to work in the layer that turns research and model potential into systems that actually work for users.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "passive, no subject named",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "an insurer",
+          "domain": "education",
+          "months": 44,
+          "work": [
+            {
+              "line": "Work closely with research to develop and run evals to measure agent performance, regressions, failure modes, and edge cases.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "You have measured p50/p95/p99 latency and throughput and improved them.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            },
+            {
+              "line": "Familiarity with APIs, basic cloud concepts, and modern development practices.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Travel occasionally to customer sites for workshops, implementation support, and building relationships",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Prompt engineering, structured outputs, function calling and tool use.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            },
+            {
+              "line": "Cost management: token spend, caching, model selection by task.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "09",
+      "on_track": true,
+      "track": "LLM platform and serving",
+      "seniority": "senior, ~11 years",
+      "register": "full sentences, plain",
+      "bullet_length": "short (under 12 words)",
+      "texture": "a career change mid-document",
+      "shape": {
+        "summary": "no summary",
+        "skills": "no skills section",
+        "education": "no education section",
+        "extras": "a projects section",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a university lab",
+          "domain": "energy grid data",
+          "months": 38,
+          "work": [
+            {
+              "line": "Build ML and LLM systems that run inside the company's operations: forecasting build timelines, flagging schedule risk, and extracting structure from vendor documents.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Partner on API and backend design so the full stack serves the product, not the other way around",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "SQL and data pipeline experience; Airflow, Dagster or similar.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            },
+            {
+              "line": "You can navigate between research papers and production code with equal comfort",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "2-5 years building production software in Python.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a consultancy billing to clients",
+          "domain": "payments",
+          "months": 52,
+          "work": [
+            {
+              "line": "Monitoring and observability for model behaviour: drift, hallucination rate, cost per request, token usage.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            },
+            {
+              "line": "Maintain strong knowledge of the latest developments in LLM capabilities, implementation patterns, and AI product development stacks",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Prompt engineering and structured output: function calling, JSON schema, tool use.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            },
+            {
+              "line": "Architect async, scalable systems that handle complex AI orchestration",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "passive, no subject named",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "an enterprise bank",
+          "domain": "a two-sided marketplace",
+          "months": 26,
+          "work": [
+            {
+              "line": "Work directly with enterprise customers to identify new problems, prototype solutions, and ship them to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "You've built complex, production LLM-based systems with real depth-something with multiple layers of engineering decisions you can walk through in detail",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "on_track": true,
+      "track": "Agentic AI",
+      "seniority": "new graduate",
+      "register": "full sentences, plain",
+      "bullet_length": "long (runs to two lines)",
+      "texture": "a career change mid-document",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "skills grouped by kind",
+        "education": "education at the top",
+        "extras": "publications",
+        "pages": "two pages"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "an insurer",
+          "domain": "e-commerce search",
+          "months": 7,
+          "work": [
+            {
+              "line": "Influence technical architecture decisions and customer product strategy by developing customized pilots, prototypes, and evaluation suites",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "RAG pipelines end to end: ingestion, chunking, embeddings, retrieval, reranking.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "2-4 years applied machine learning in production settings.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "seed-stage startup (12 people)",
+          "domain": "a two-sided marketplace",
+          "months": 22,
+          "work": [
+            {
+              "line": "Build reliability and confidence systems-evaluation frameworks, confidence scoring, and logic for when to automate vs. when to escalate to a human",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Have worked on model evaluation, fine-tuning, or prompt design.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Fluency with the latest AI coding models and agentic development workflows. This is how the team works, and we expect you to be excellent at it",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Some hands-on experience building or contributing to AI-powered features, LLM-based applications, or applied ML systems (professional or project-based).",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Docker and Kubernetes for deployment; familiarity with AWS, GCP or Azure.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "a non-profit",
+          "domain": "energy grid data",
+          "months": 22,
+          "work": [
+            {
+              "line": "Improve performance through prompting, tool-use strategies, context construction, and model-facing experimentation.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Comfort working across the stack, including API design and backend systems, even with frontend as your center of gravity",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Use and extend our core context-learning library to solve customer problems, contributing reusable capabilities and lessons back into the platform.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Statistical literacy: sample size, confidence intervals, significance, variance between runs.",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 3,
+          "org": "a government agency",
+          "domain": "fraud and risk",
+          "months": 44,
+          "work": [
+            {
+              "line": "Work closely with research to develop and run evals to measure agent performance, regressions, failure modes, and edge cases.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Contribute to the design and implementation of LLM-powered and agentic product features.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Experience with FastAPI or similar for wrapping inference behind an API.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "You're a strong communicator who can clearly explain your work to teammates and customers",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "on_track": true,
+      "track": "Agentic AI",
+      "seniority": "junior, ~1 year",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "short (under 12 words)",
+      "texture": "an internal promotion inside one employer",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "a flat skills list",
+        "education": "no education section",
+        "extras": "an interests section",
+        "pages": "two pages"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "an enterprise bank",
+          "domain": "media and publishing",
+          "months": 7,
+          "work": [
+            {
+              "line": "Work directly with enterprise customers to identify new problems, prototype solutions, and ship them to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "You reach for the simplest model that works and can defend the choice.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Nice to have: RAGAS, LangSmith, Braintrust, Inspect, red-teaming, adversarial",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a national retailer",
+          "domain": "logistics and routing",
+          "months": 44,
+          "work": [
+            {
+              "line": "Own customer engagements from discovery and solution design through production, adoption, and expansion.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Cloud and infrastructure: AWS and/or GCP, Kubernetes",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Use and extend our core context-learning library to solve customer problems, contributing reusable capabilities and lessons back into the platform.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "big tech",
+          "domain": "payments",
+          "months": 7,
+          "work": [
+            {
+              "line": "Work with product teams to shape user-facing agent experiences and the interfaces the agent depends on.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Cost and latency awareness: caching, streaming, model routing, token budgets.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            },
+            {
+              "line": "Are strong in Python and comfortable with modern ML tooling.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "3-5 years infrastructure or backend engineering.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "3+ years engineering with strong Python.",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 3,
+          "org": "a consultancy billing to clients",
+          "domain": "fraud and risk",
+          "months": 7,
+          "work": [
+            {
+              "line": "Own models end to end, from problem framing and data through deployment, evaluation, and iteration in production.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "You have built an evaluation set for a generative feature and used it to make a ship/no-ship call.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "SQL and Spark for corpus-scale processing.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            },
+            {
+              "line": "2-4 years applied machine learning in production settings.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "on_track": true,
+      "track": "RAG systems",
+      "seniority": "returning after a two-year break",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "medium (one line)",
+      "texture": "a role cut short by a layoff",
+      "shape": {
+        "summary": "a two-line summary",
+        "skills": "no skills section",
+        "education": "no education section",
+        "extras": "publications",
+        "pages": "two pages"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a government agency",
+          "domain": "energy grid data",
+          "months": 14,
+          "work": [
+            {
+              "line": "Help define what \u201cgood\u201d looks like for agents completing complex tasks end-to-end.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "You have built an evaluation set for a generative feature and used it to make a ship/no-ship call.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Experience reducing training or inference cost measurably.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            },
+            {
+              "line": "Direct experience calling LLM APIs in production: OpenAI, Anthropic, Gemini, or self-hosted open-weight models.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "scale-up (~600 people)",
+          "domain": "insurance claims",
+          "months": 26,
+          "work": [
+            {
+              "line": "Improve performance through prompting, tool-use strategies, context construction, and model-facing experimentation.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Work directly with enterprise customers to identify new problems, prototype solutions, and ship them to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Direct experience calling LLM APIs in production: OpenAI, Anthropic, Gemini, or self-hosted open-weight models.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            },
+            {
+              "line": "Have worked on model evaluation, fine-tuning, or prompt design.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "13",
+      "on_track": true,
+      "track": "Evaluation and model quality",
+      "seniority": "returning after a two-year break",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "medium (one line)",
+      "texture": "an internal promotion inside one employer",
+      "shape": {
+        "summary": "no summary",
+        "skills": "a flat skills list",
+        "education": "no education section",
+        "extras": "volunteering",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a consultancy billing to clients",
+          "domain": "security operations",
+          "months": 31,
+          "work": [
+            {
+              "line": "Own models end to end, from problem framing and data through deployment, evaluation, and iteration in production.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Monitoring and observability for model behaviour: drift, hallucination rate, cost per request, token usage.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            },
+            {
+              "line": "Help implement and maintain retrieval-augmented generation (RAG) pipelines over financial data, with an emphasis on correctness and safety.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Measuring groundedness, faithfulness, hallucination rate, refusal behaviour, and toxicity or safety metrics.",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            },
+            {
+              "line": "Experience with agent frameworks or tool-using LLM systems.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "an insurer",
+          "domain": "insurance claims",
+          "months": 44,
+          "work": [
+            {
+              "line": "Contribute to the design and implementation of LLM-powered and agentic product features.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Nice to have: RAGAS, LangSmith, Braintrust, Inspect, red-teaming, adversarial",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            },
+            {
+              "line": "Production experience with LLMs including advanced prompt engineering, agent development and frameworks, evaluation frameworks, transcript analysis, MCP, and deployment at scale",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Feature engineering and data pipelines at scale: Spark, SQL, dbt or Airflow.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            },
+            {
+              "line": "GPU scheduling and utilization; multi-node training, distributed data parallel.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "a non-profit",
+          "domain": "media and publishing",
+          "months": 38,
+          "work": [
+            {
+              "line": "Build reliability and confidence systems-evaluation frameworks, confidence scoring, and logic for when to automate vs. when to escalate to a human",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Cloud and infrastructure: AWS and/or GCP, Kubernetes",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Build feedback loops and data systems that get better real-task data into evaluation and research.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Have experience building or shipping machine learning or LLM-powered products.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Cloud and infrastructure: AWS and/or GCP, Kubernetes",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names the specific systems and tools",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "14",
+      "on_track": true,
+      "track": "Applied ML, models in production",
+      "seniority": "mid, ~5 years",
+      "register": "dense noun phrases, stack-forward",
+      "bullet_length": "short (under 12 words)",
+      "texture": "an internal promotion inside one employer",
+      "shape": {
+        "summary": "an objective statement",
+        "skills": "skills grouped by kind",
+        "education": "education at the bottom",
+        "extras": "publications",
+        "pages": "one page"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a non-profit",
+          "domain": "media and publishing",
+          "months": 11,
+          "work": [
+            {
+              "line": "Contribute to the design and implementation of LLM-powered and agentic product features.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Experience integrating LLM APIs and self-hosted open-weight models.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            },
+            {
+              "line": "Nice to have: Ray, Slurm, NCCL tuning, Triton inference server, model registries,",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Annotation and dataset construction; inter-annotator agreement; active learning.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            },
+            {
+              "line": "Nice to have: Ray, Slurm, NCCL tuning, Triton inference server, model registries,",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "an insurer",
+          "domain": "HR and recruiting",
+          "months": 38,
+          "work": [
+            {
+              "line": "Work with product teams to shape user-facing agent experiences and the interfaces the agent depends on.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Experience catching regressions before release; CI gating on eval metrics.",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "we / the team",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "15",
+      "on_track": false,
+      "track": "Backend engineer, no AI work",
+      "seniority": "junior, ~1 year",
+      "register": "first-person narrative, chatty",
+      "bullet_length": "short (under 12 words)",
+      "texture": "a role cut short by a layoff",
+      "shape": {
+        "summary": "a two-line summary",
+        "skills": "a flat skills list",
+        "education": "no education section",
+        "extras": "a projects section",
+        "pages": "one page"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a university lab",
+          "domain": "telecoms",
+          "months": 14,
+          "work": [
+            {
+              "line": "Own customer engagements from discovery and solution design through production, adoption, and expansion.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "You have 3+ years of professional experience",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Travel occasionally to customer sites for workshops, implementation support, and building relationships",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Architect async, scalable systems that handle complex AI orchestration",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a consultancy billing to clients",
+          "domain": "media and publishing",
+          "months": 11,
+          "work": [
+            {
+              "line": "Partner with account executives and solutions architects to translate customer business requirements into technical solutions",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Annotation and dataset construction; inter-annotator agreement; active learning.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "3-5 years infrastructure or backend engineering.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "16",
+      "on_track": false,
+      "track": "Data engineer / analytics platform",
+      "seniority": "returning after a two-year break",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "short (under 12 words)",
+      "texture": "part-time study alongside work",
+      "shape": {
+        "summary": "no summary",
+        "skills": "a skills table with proficiency levels",
+        "education": "education at the bottom",
+        "extras": "a projects section",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a non-profit",
+          "domain": "logistics and routing",
+          "months": 26,
+          "work": [
+            {
+              "line": "Partner with data engineering and product pods to put predictions in the tools people already use.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Distributed systems: event-driven architectures, including Kafka",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Comfort with ambiguity, and evidence of shipping to real users.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            },
+            {
+              "line": "4+ years of experience in technical roles such as Forward Deployed Engineer, Software Engineer or Technical Product Manager with a desire to work closely with customers. Former technical founders are also encouraged to apply.",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a contract / freelance stint",
+          "domain": "e-commerce search",
+          "months": 38,
+          "work": [
+            {
+              "line": "Partner with account executives and solutions architects to translate customer business requirements into technical solutions",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Comfort with GPU memory, batching strategy, quantization and KV cache behaviour.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "we / the team",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "scale-up (~600 people)",
+          "domain": "insurance claims",
+          "months": 38,
+          "work": [
+            {
+              "line": "Design and implement LLM-powered systems and agentic workflows from concept to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Deep frontend expertise: TypeScript, React, and sophisticated state management in complex, data-intensive applications",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Internship or early-career experience in fintech or other regulated environments.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "You have 3+ years of professional experience",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "You have experience with (or strong interest in) how systems learn and improve over time: human-in-the-loop feedback, prompt optimization and context engineering",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Exceptional communication skills to convey technical concepts to diverse stakeholders while maintaining a low ego and collaborative approach",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "17",
+      "on_track": true,
+      "track": "Applied ML, models in production",
+      "seniority": "staff, ~14 years",
+      "register": "first-person narrative, chatty",
+      "bullet_length": "long (runs to two lines)",
+      "texture": "an internal promotion inside one employer",
+      "shape": {
+        "summary": "a two-line summary",
+        "skills": "skills grouped by kind",
+        "education": "no education section",
+        "extras": "a projects section",
+        "pages": "two pages, second half-empty"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "Series B startup (~90 people)",
+          "domain": "media and publishing",
+          "months": 7,
+          "work": [
+            {
+              "line": "Design and iterate on agent behaviors across real-world coding tasks and long-horizon workflows.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Partner with account executives and solutions architects to translate customer business requirements into technical solutions",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Ship agentic systems with real guardrails, authorization, audit, and evals, so agents act on company systems instead of just advising.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Nice to have: RAGAS, LangSmith, Braintrust, Inspect, red-teaming, adversarial",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "an agency doing client work",
+          "domain": "media and publishing",
+          "months": 44,
+          "work": [
+            {
+              "line": "Partner with data engineering and product pods to put predictions in the tools people already use.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Build reliability and confidence systems-evaluation frameworks, confidence scoring, and logic for when to automate vs. when to escalate to a human",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "You have experience with (or strong interest in) how systems learn and improve over time: human-in-the-loop feedback, prompt optimization and context engineering",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "3+ years shipping production software; Python and TypeScript.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            },
+            {
+              "line": "Distributed systems: event-driven architectures, including Kafka",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "scale-up (~600 people)",
+          "domain": "security operations",
+          "months": 44,
+          "work": [
+            {
+              "line": "Lead hands-on technical workshops and code reviews with customer engineering teams",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Build ML and LLM systems that run inside the company's operations: forecasting build timelines, flagging schedule risk, and extracting structure from vendor documents.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Design and iterate on agent behaviors across real-world coding tasks and long-horizon workflows.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Comfortable with A/B testing and offline/online metric correlation.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "18",
+      "on_track": false,
+      "track": "Data engineer / analytics platform",
+      "seniority": "senior, ~8 years",
+      "register": "terse fragments, no articles",
+      "bullet_length": "long (runs to two lines)",
+      "texture": "a parental leave noted in the dates",
+      "shape": {
+        "summary": "a two-line summary",
+        "skills": "no skills section",
+        "education": "education at the top",
+        "extras": "nothing extra",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "an insurer",
+          "domain": "security operations",
+          "months": 52,
+          "work": [
+            {
+              "line": "Own customer engagements from discovery and solution design through production, adoption, and expansion.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "SQL and data pipeline experience; Airflow, Dagster or similar.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            },
+            {
+              "line": "Experience versioning embedding models and planning re-embeds.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            },
+            {
+              "line": "You're a strong communicator who can clearly explain your work to teammates and customers",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "an enterprise bank",
+          "domain": "media and publishing",
+          "months": 31,
+          "work": [
+            {
+              "line": "Ship agentic systems with real guardrails, authorization, audit, and evals, so agents act on company systems instead of just advising.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Bonus: experience with BI tools, data visualization, or financial/analytics products",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Work directly with enterprise customers to identify new problems, prototype solutions, and ship them to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "a national retailer",
+          "domain": "healthcare notes",
+          "months": 52,
+          "work": [
+            {
+              "line": "Maintain strong knowledge of the latest developments in LLM capabilities, implementation patterns, and AI product development stacks",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "3 years of full-stack or backend engineering with Python.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Use of AI-assisted and agentic development tools for design, implementation, testing, debugging, and refactoring",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "19",
+      "on_track": false,
+      "track": "Academic researcher leaving the lab",
+      "seniority": "mid, ~4 years",
+      "register": "terse fragments, no articles",
+      "bullet_length": "short (under 12 words)",
+      "texture": "a role cut short by a layoff",
+      "shape": {
+        "summary": "no summary",
+        "skills": "skills grouped by kind",
+        "education": "education at the bottom",
+        "extras": "volunteering",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a contract / freelance stint",
+          "domain": "education",
+          "months": 31,
+          "work": [
+            {
+              "line": "Work directly with enterprise customers to identify new problems, prototype solutions, and ship them to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Deep frontend expertise: TypeScript, React, and sophisticated state management in complex, data-intensive applications",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Willingness to learn, take feedback, and grow technical ownership over time.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "SQL and data pipeline experience; Airflow, Dagster or similar.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            },
+            {
+              "line": "Nice to have: recommender systems, ranking models, XGBoost, ONNX, Triton,",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "seed-stage startup (12 people)",
+          "domain": "e-commerce search",
+          "months": 52,
+          "work": [
+            {
+              "line": "Build feedback loops and data systems that get better real-task data into evaluation and research.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "FastAPI, Postgres, Docker, and one cloud provider.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "3+ years of software engineering, strong Python.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "an agency doing client work",
+          "domain": "telecoms",
+          "months": 18,
+          "work": [
+            {
+              "line": "Lead hands-on technical workshops and code reviews with customer engineering teams",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Own customer engagements from discovery and solution design through production, adoption, and expansion.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "2-5 years building production software in Python.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "20",
+      "on_track": true,
+      "track": "GenAI product engineering",
+      "seniority": "senior, ~8 years",
+      "register": "corporate boilerplate, heavy on nouns",
+      "bullet_length": "long (runs to two lines)",
+      "texture": "a parental leave noted in the dates",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "a flat skills list",
+        "education": "no education section",
+        "extras": "an interests section",
+        "pages": "two pages, second half-empty"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a non-profit",
+          "domain": "education",
+          "months": 31,
+          "work": [
+            {
+              "line": "Work closely with research to develop and run evals to measure agent performance, regressions, failure modes, and edge cases.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "RAG pipelines end to end: ingestion, chunking, embeddings, retrieval, reranking.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            },
+            {
+              "line": "Direct experience calling LLM APIs in production: OpenAI, Anthropic, Gemini, or self-hosted open-weight models.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Interest in agentic AI systems, autonomy, and AI-assisted development workflows.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a national retailer",
+          "domain": "legal document review",
+          "months": 22,
+          "work": [
+            {
+              "line": "Work directly with enterprise customers to identify new problems, prototype solutions, and ship them to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Deep frontend expertise: TypeScript, React, and sophisticated state management in complex, data-intensive applications",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Experience reducing training or inference cost measurably.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Direct experience calling LLM APIs in production: OpenAI, Anthropic, Gemini, or self-hosted open-weight models.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names the specific systems and tools",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "big tech",
+          "domain": "media and publishing",
+          "months": 52,
+          "work": [
+            {
+              "line": "Influence technical architecture decisions and customer product strategy by developing customized pilots, prototypes, and evaluation suites",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Evaluation: precision, recall, F1, confusion analysis and error taxonomies.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            },
+            {
+              "line": "Use and extend our core context-learning library to solve customer problems, contributing reusable capabilities and lessons back into the platform.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "RAG pipelines end to end: ingestion, chunking, embeddings, retrieval, reranking.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 3,
+          "org": "a non-profit",
+          "domain": "logistics and routing",
+          "months": 44,
+          "work": [
+            {
+              "line": "Design and ship customer-facing AI experiences end to end, from React UI through to the APIs and data contracts behind them",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Feature engineering and data pipelines at scale: Spark, SQL, dbt or Airflow.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            },
+            {
+              "line": "Design and implement LLM-powered systems and agentic workflows from concept to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "21",
+      "on_track": false,
+      "track": "Full-stack product engineer",
+      "seniority": "returning after a two-year break",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "short (under 12 words)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "an objective statement",
+        "skills": "a skills table with proficiency levels",
+        "education": "education at the bottom",
+        "extras": "certifications",
+        "pages": "two pages"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a contract / freelance stint",
+          "domain": "adtech",
+          "months": 11,
+          "work": [
+            {
+              "line": "Own customer engagements from discovery and solution design through production, adoption, and expansion.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Experience with FastAPI or similar for wrapping inference behind an API.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "we / the team",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "an enterprise bank",
+          "domain": "a two-sided marketplace",
+          "months": 38,
+          "work": [
+            {
+              "line": "Build agentic features for knowledge management-think agents that can edit, update, and maintain large knowledge bases autonomously",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Work directly with enterprise customers to identify new problems, prototype solutions, and ship them to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "22",
+      "on_track": true,
+      "track": "ML infrastructure",
+      "seniority": "career changer, 2 years in tech after another field",
+      "register": "corporate boilerplate, heavy on nouns",
+      "bullet_length": "short (under 12 words)",
+      "texture": "a parental leave noted in the dates",
+      "shape": {
+        "summary": "an objective statement",
+        "skills": "a flat skills list",
+        "education": "education at the top",
+        "extras": "a projects section",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a consultancy billing to clients",
+          "domain": "agriculture sensing",
+          "months": 7,
+          "work": [
+            {
+              "line": "Contribute to shared AI infrastructure such as LLM services, orchestration components, and evaluation or monitoring tooling.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Experience versioning embedding models and planning re-embeds.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            },
+            {
+              "line": "Think in terms of systems and user outcomes, not just model metrics.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Have experience building or shipping machine learning or LLM-powered products.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Prompt engineering and structured output: function calling, JSON schema, tool use.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            },
+            {
+              "line": "Contributions to open-source projects, hackathons, or side projects related to AI or developer tooling.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "scale-up (~600 people)",
+          "domain": "HR and recruiting",
+          "months": 7,
+          "work": [
+            {
+              "line": "Designing evaluation harnesses for generative systems: golden datasets, rubrics, LLM-as-judge with calibration against human labels.",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            },
+            {
+              "line": "Build feedback loops and data systems that get better real-task data into evaluation and research.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Help define what \u201cgood\u201d looks like for agents completing complex tasks end-to-end.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "We don\u2019t hire to a narrow checklist, but candidates should be excited to grow in a modern, enterprise-scale engineering environment with a focus on agentic AI.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "we / the team",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "23",
+      "on_track": true,
+      "track": "GenAI product engineering",
+      "seniority": "returning after a two-year break",
+      "register": "dense noun phrases, stack-forward",
+      "bullet_length": "short (under 12 words)",
+      "texture": "a parental leave noted in the dates",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "a flat skills list",
+        "education": "education at the bottom",
+        "extras": "certifications",
+        "pages": "two pages, second half-empty"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "an agency doing client work",
+          "domain": "games",
+          "months": 11,
+          "work": [
+            {
+              "line": "Help define what \u201cgood\u201d looks like for agents completing complex tasks end-to-end.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Own complex client-side state and rendering challenges across data-heavy, real-time, agent-driven surfaces",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "You have 3+ years of professional experience",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Help implement and maintain retrieval-augmented generation (RAG) pipelines over financial data, with an emphasis on correctness and safety.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "2-4 years applied machine learning in production settings.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a non-profit",
+          "domain": "education",
+          "months": 7,
+          "work": [
+            {
+              "line": "Monitoring and observability for model behaviour: drift, hallucination rate, cost per request, token usage.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            },
+            {
+              "line": "Comfort working in collaborative, cross-functional teams.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "24",
+      "on_track": true,
+      "track": "Forward-deployed / solutions engineering",
+      "seniority": "senior, ~11 years",
+      "register": "corporate boilerplate, heavy on nouns",
+      "bullet_length": "short (under 12 words)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "no summary",
+        "skills": "a skills table with proficiency levels",
+        "education": "education at the top",
+        "extras": "certifications",
+        "pages": "two pages, second half-empty"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a national retailer",
+          "domain": "media and publishing",
+          "months": 18,
+          "work": [
+            {
+              "line": "Work closely with research to develop and run evals to measure agent performance, regressions, failure modes, and edge cases.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Cloud and infrastructure: AWS and/or GCP, Kubernetes",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Ability to navigate ambiguity and execute across domains with intellectual openness, finding simple solutions to complex problems",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a contract / freelance stint",
+          "domain": "a two-sided marketplace",
+          "months": 14,
+          "work": [
+            {
+              "line": "Own complex client-side state and rendering challenges across data-heavy, real-time, agent-driven surfaces",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Deep frontend expertise: TypeScript, React, and sophisticated state management in complex, data-intensive applications",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Build and extend agentic AI workflows that reason over context, call tools, and perform actions under guidance from senior engineers.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "3 years of full-stack or backend engineering with Python.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Fluency with the latest AI coding models and agentic development workflows. This is how the team works, and we expect you to be excellent at it",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Contributions to open-source projects, hackathons, or side projects related to AI or developer tooling.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names the specific systems and tools",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "a university lab",
+          "domain": "education",
+          "months": 22,
+          "work": [
+            {
+              "line": "Design and implement LLM-powered systems and agentic workflows from concept to production",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Lead hands-on technical workshops and code reviews with customer engineering teams",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Use of AI-assisted and agentic development tools for design, implementation, testing, debugging, and refactoring",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Experiment tracking with Weights & Biases or MLflow.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "25",
+      "on_track": true,
+      "track": "Forward-deployed / solutions engineering",
+      "seniority": "staff, ~14 years",
+      "register": "corporate boilerplate, heavy on nouns",
+      "bullet_length": "medium (one line)",
+      "texture": "two short contract stints",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "a flat skills list",
+        "education": "no education section",
+        "extras": "certifications",
+        "pages": "two pages, second half-empty"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "an insurer",
+          "domain": "media and publishing",
+          "months": 14,
+          "work": [
+            {
+              "line": "Partner with data engineering and product pods to put predictions in the tools people already use.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Design and iterate on agent behaviors across real-world coding tasks and long-horizon workflows.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Prompt engineering, structured outputs, function calling and tool use.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "Series B startup (~90 people)",
+          "domain": "HR and recruiting",
+          "months": 52,
+          "work": [
+            {
+              "line": "Build ML and LLM systems that run inside the company's operations: forecasting build timelines, flagging schedule risk, and extracting structure from vendor documents.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Passion for advancing safe, beneficial AI systems through creative technical applications",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "2-4 years applied machine learning in production settings.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Comfort working across the stack, including API design and backend systems, even with frontend as your center of gravity",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "first person, singular",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "26",
+      "on_track": true,
+      "track": "LLM platform and serving",
+      "seniority": "returning after a two-year break",
+      "register": "full sentences, plain",
+      "bullet_length": "medium (one line)",
+      "texture": "a career change mid-document",
+      "shape": {
+        "summary": "an objective statement",
+        "skills": "a skills table with proficiency levels",
+        "education": "education at the bottom",
+        "extras": "a projects section",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a non-profit",
+          "domain": "fraud and risk",
+          "months": 11,
+          "work": [
+            {
+              "line": "Analyze failures in production and systematically improve robustness and reliability.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "You have experience building agents and autonomous systems",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a non-profit",
+          "domain": "HR and recruiting",
+          "months": 44,
+          "work": [
+            {
+              "line": "Create scalable public and internal assets, documenting the latest LLM prompting, evaling, agentic, and architecture techniques",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Want to work in the layer that turns research and model potential into systems that actually work for users.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "3+ years engineering with strong Python.",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "We don\u2019t hire to a narrow checklist, but candidates should be excited to grow in a modern, enterprise-scale engineering environment with a focus on agentic AI.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Strong programming skills with proficiency in Python or TypeScript and experience building production applications",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "an insurer",
+          "domain": "logistics and routing",
+          "months": 52,
+          "work": [
+            {
+              "line": "Build and extend agentic AI workflows that reason over context, call tools, and perform actions under guidance from senior engineers.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Think in terms of systems and user outcomes, not just model metrics.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Storage and data formats for ML: Parquet, object storage, dataset versioning.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names the specific systems and tools",
+            "voice": "we / the team",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "27",
+      "on_track": true,
+      "track": "Evaluation and model quality",
+      "seniority": "staff, ~14 years",
+      "register": "full sentences, plain",
+      "bullet_length": "medium (one line)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "a two-line summary",
+        "skills": "a flat skills list",
+        "education": "education at the top",
+        "extras": "nothing extra",
+        "pages": "two pages, second half-empty"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a non-profit",
+          "domain": "telecoms",
+          "months": 31,
+          "work": [
+            {
+              "line": "Monitoring and observability for model behaviour: drift, hallucination rate, cost per request, token usage.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            },
+            {
+              "line": "Participate in operating AI systems in production, including monitoring, debugging, and improving reliability and performance.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Research experience with code generation models or developer tooling.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Prompt engineering and structured output: function calling, JSON schema, tool use.",
+              "source": "corpus/jds/02-rag-systems-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "an insurer",
+          "domain": "fraud and risk",
+          "months": 18,
+          "work": [
+            {
+              "line": "Build and extend agentic AI workflows that reason over context, call tools, and perform actions under guidance from senior engineers.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Interest in agentic AI systems, autonomy, and AI-assisted development workflows.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Design and iterate on agent behaviors across real-world coding tasks and long-horizon workflows.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Fine-tuning for classification and extraction; LoRA and parameter-efficient methods.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            },
+            {
+              "line": "Experience integrating LLM APIs and self-hosted open-weight models.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "28",
+      "on_track": true,
+      "track": "Forward-deployed / solutions engineering",
+      "seniority": "senior, ~11 years",
+      "register": "inconsistent -- some roles edited, some not",
+      "bullet_length": "medium (one line)",
+      "texture": "a parental leave noted in the dates",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "no skills section",
+        "education": "no education section",
+        "extras": "volunteering",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "big tech",
+          "domain": "logistics and routing",
+          "months": 18,
+          "work": [
+            {
+              "line": "Build ML and LLM systems that run inside the company's operations: forecasting build timelines, flagging schedule risk, and extracting structure from vendor documents.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Help define what \u201cgood\u201d looks like for agents completing complex tasks end-to-end.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "mentions what happened afterwards",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "a national retailer",
+          "domain": "energy grid data",
+          "months": 38,
+          "work": [
+            {
+              "line": "Monitoring and observability for model behaviour: drift, hallucination rate, cost per request, token usage.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            },
+            {
+              "line": "3+ years engineering with strong Python.",
+              "source": "corpus/jds/07-evaluation-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Use and extend our core context-learning library to solve customer problems, contributing reusable capabilities and lessons back into the platform.",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Docker and Kubernetes for deployment; familiarity with AWS, GCP or Azure.",
+              "source": "corpus/jds/01-llm-platform-eng.txt"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "29",
+      "on_track": true,
+      "track": "Agentic AI",
+      "seniority": "returning after a two-year break",
+      "register": "corporate boilerplate, heavy on nouns",
+      "bullet_length": "short (under 12 words)",
+      "texture": "nothing unusual",
+      "shape": {
+        "summary": "a two-line summary",
+        "skills": "skills grouped by kind",
+        "education": "no education section",
+        "extras": "certifications",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "a non-profit",
+          "domain": "media and publishing",
+          "months": 38,
+          "work": [
+            {
+              "line": "Monitoring for data drift, model drift and performance regression.",
+              "source": "corpus/jds/03-applied-ml-eng.txt"
+            },
+            {
+              "line": "Own complex client-side state and rendering challenges across data-heavy, real-time, agent-driven surfaces",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Have worked on model evaluation, fine-tuning, or prompt design.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "detail": {
+            "numbers": "no numbers anywhere",
+            "naming": "names some things, hand-waves others",
+            "voice": "we / the team",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "an insurer",
+          "domain": "insurance claims",
+          "months": 38,
+          "work": [
+            {
+              "line": "Own models end to end, from problem framing and data through deployment, evaluation, and iteration in production.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "SQL and Spark for corpus-scale processing.",
+              "source": "corpus/jds/06-nlp-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "You've shipped ML or LLM features to production and owned them after launch.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "a university lab",
+          "domain": "fraud and risk",
+          "months": 52,
+          "work": [
+            {
+              "line": "Contribute to shared AI infrastructure such as LLM services, orchestration components, and evaluation or monitoring tooling.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "Create scalable public and internal assets, documenting the latest LLM prompting, evaling, agentic, and architecture techniques",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Help define what \u201cgood\u201d looks like for agents completing complex tasks end-to-end.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "Improve performance through prompting, tool-use strategies, context construction, and model-facing experimentation.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "background": [
+            {
+              "line": "Kubernetes, Docker, Terraform; AWS, GCP or Azure at production scale.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            },
+            {
+              "line": "All systems are built to meet high standards for reliability, security, and auditability, reflecting the responsibility of deploying autonomous AI in a financial services environment.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names the specific systems and tools",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 3,
+          "org": "a government agency",
+          "domain": "logistics and routing",
+          "months": 7,
+          "work": [
+            {
+              "line": "Design and ship customer-facing AI experiences end to end, from React UI through to the APIs and data contracts behind them",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "You have built an evaluation set for a generative feature and used it to make a ship/no-ship call.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            },
+            {
+              "line": "GPU scheduling and utilization; multi-node training, distributed data parallel.",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Strong programming skills with proficiency in Python or TypeScript and experience building production applications",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in nearly every bullet",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    },
+    {
+      "id": "30",
+      "on_track": true,
+      "track": "GenAI product engineering",
+      "seniority": "junior, ~2 years",
+      "register": "dense noun phrases, stack-forward",
+      "bullet_length": "long (runs to two lines)",
+      "texture": "part-time study alongside work",
+      "shape": {
+        "summary": "a headline only",
+        "skills": "no skills section",
+        "education": "no education section",
+        "extras": "certifications",
+        "pages": "one page, crowded"
+      },
+      "roles": [
+        {
+          "index": 0,
+          "org": "big tech",
+          "domain": "insurance claims",
+          "months": 14,
+          "work": [
+            {
+              "line": "Build BI-tool-quality interfaces for agentic analysis, FP&A, and book-close workflows: fast, dense, interactive, and trustworthy",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Some hands-on experience building or contributing to AI-powered features, LLM-based applications, or applied ML systems (professional or project-based).",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            },
+            {
+              "line": "FastAPI, Postgres, pgvector, Redis, Docker; deploying on AWS or GCP.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "You've shipped ML or LLM features to production and owned them after launch.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Research experience with code generation models or developer tooling.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "first person, singular",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 1,
+          "org": "scale-up (~600 people)",
+          "domain": "fraud and risk",
+          "months": 11,
+          "work": [
+            {
+              "line": "Build agentic features for knowledge management-think agents that can edit, update, and maintain large knowledge bases autonomously",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "3 years of full-stack or backend engineering with Python.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "You can navigate between research papers and production code with equal comfort",
+              "source": "corpus/jds/user/edra-forward-deployed-ai-engineer.json"
+            },
+            {
+              "line": "Production experience with LLMs including advanced prompt engineering, agent development and frameworks, evaluation frameworks, transcript analysis, MCP, and deployment at scale",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "passive, no subject named",
+            "aftermath": "describes the afterwards in detail",
+            "setbacks": "admits something that went wrong"
+          }
+        },
+        {
+          "index": 2,
+          "org": "an enterprise bank",
+          "domain": "HR and recruiting",
+          "months": 44,
+          "work": [
+            {
+              "line": "Own complex client-side state and rendering challenges across data-heavy, real-time, agent-driven surfaces",
+              "source": "corpus/jds/user/ramp-applied-ai-engineer-fullstack.json"
+            },
+            {
+              "line": "Agent design: planning loops, tool selection, retry and fallback behaviour.",
+              "source": "corpus/jds/04-genai-product-eng.txt"
+            }
+          ],
+          "background": [],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names some things, hand-waves others",
+            "voice": "we / the team",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        },
+        {
+          "index": 3,
+          "org": "Series B startup (~90 people)",
+          "domain": "telecoms",
+          "months": 22,
+          "work": [
+            {
+              "line": "Partner with account executives and solutions architects to translate customer business requirements into technical solutions",
+              "source": "corpus/jds/user/anthropic-applied-ai-engineer.json"
+            },
+            {
+              "line": "Nice to have: Ray, Slurm, NCCL tuning, Triton inference server, model registries,",
+              "source": "corpus/jds/05-ml-infra-eng.txt"
+            },
+            {
+              "line": "You write production-quality code and work fluently with AI coding tools.",
+              "source": "corpus/jds/user/fluidstack-machine-learning-engineer.json"
+            },
+            {
+              "line": "Cost management: token spend, caching, model selection by task.",
+              "source": "corpus/jds/08-ai-eng-startup.txt"
+            }
+          ],
+          "background": [
+            {
+              "line": "Are strong in Python and comfortable with modern ML tooling.",
+              "source": "corpus/jds/user/openai-applied-ai-engineer-codex-core-agent.json"
+            },
+            {
+              "line": "All systems are built to meet high standards for reliability, security, and auditability, reflecting the responsibility of deploying autonomous AI in a financial services environment.",
+              "source": "corpus/jds/user/amex-ai-engineer-iii-agentic-ai.json"
+            }
+          ],
+          "detail": {
+            "numbers": "a number in about half the bullets",
+            "naming": "names nothing specifically",
+            "voice": "passive, no subject named",
+            "aftermath": "stops at the build",
+            "setbacks": "admits nothing that went wrong"
+          }
+        }
+      ]
+    }
+  ]
+}

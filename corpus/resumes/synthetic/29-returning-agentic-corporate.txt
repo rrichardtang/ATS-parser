@@ -1,0 +1,46 @@
+Isolde Farrow
+i.farrow@example.com | (503) 555-0169 | Eugene, OR
+
+SUMMARY
+
+Agentic AI engineer, twelve years across publishing, insurance and public research.
+Returning after two years out.
+
+EXPERIENCE
+
+Engineering Lead, Wren Valley Publishing Trust    Aug 2023 - Present
+• We monitor data drift, model drift and performance regression.
+• We own the client-side state on our agent-driven editing surfaces.
+• We stayed with both after launch and revised the drift thresholds twice.
+• Our first threshold set was so noisy the team muted the alerts for a month.
+
+Lead Engineer, Wexcombe Claims    Mar 2020 - Jul 2023
+• We owned models end to end: framing, data, deployment, evaluation, iteration.
+• We processed 3TB of claim history through Spark and SQL.
+• We shipped 4 models and owned them after launch.
+
+Senior Engineer, Corran University Fraud Analytics    Jun 2015 - Feb 2020
+• I contributed to the shared AI infrastructure: our model gateway, the orchestration
+  components and the monitoring, used by 6 groups.
+• I wrote up our prompting, evaluation and agent architecture practice, 24 pages.
+• I defined what "good" looks like for an agent completing a fraud review end to end,
+  in 9 criteria we still use.
+• I improved performance through prompting, tool-use strategy and context construction,
+  19% fewer failed reviews.
+• I stayed with the gateway for five years and it now fronts 30,000 calls a day.
+
+Engineer, Ministry of Transport Logistics    Nov 2014 - May 2015
+• A customer-facing routing experience was shipped end to end, React through the APIs.
+• An evaluation set of 800 routes was built and used to make the ship call.
+• Multi-node training was scheduled across 8 GPUs.
+• It was operated afterwards for the remainder of the contract, 4 months.
+
+SKILLS
+
+Languages: Python, TypeScript, SQL
+Systems: Spark, Kubernetes, Terraform, model gateways
+Practice: evaluation sets, drift monitoring, prompt optimisation
+
+CERTIFICATIONS
+
+Certified Information Systems Auditor, 2018

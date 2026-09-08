@@ -1,0 +1,42 @@
+Solveig Lindqvist
+s.lindqvist@example.com | (612) 555-0126 | Minneapolis, MN
+
+OBJECTIVE
+
+Back after two years out. LLM platform and serving work, ideally somewhere the serving
+path is the product rather than an afterthought.
+
+EDUCATION
+
+B.S. Physics, Corran University, 2010
+
+EXPERIENCE
+
+Platform Engineer, Wren Valley Fraud Analytics    Oct 2025 - Present
+• Production failures were analysed and the reliability work that followed was
+  prioritised from them; 12 of 30 incidents came from one component.
+• Agents and autonomous systems have been built here before.
+• A rollout was made without a fallback and the queue backed up for a day.
+
+Senior Engineer, Wren Valley Recruiting Trust    Jan 2019 - Aug 2022
+• I wrote up our prompting, evaluation and agent architecture practice as internal
+  documentation, 30-odd pages, plus 4 public posts.
+• I wanted to be in the layer that turns model capability into something that works,
+  and this was that.
+• I had six years of Python behind me by then and it showed in the tooling.
+
+Engineer, Wexcombe Logistics    Aug 2014 - Dec 2018
+• We built and extended the agentic routing workflows: they read the depot context,
+  call our dispatch and inventory APIs, and reassign a run under a supervisor's rules.
+• We thought about outcomes for dispatchers rather than model metrics.
+• We stored the training corpora as Parquet in object storage with dataset versioning.
+• We kept the workflows running through two winters, which is when routing gets hard.
+
+PROJECTS
+
+• A KV-cache sizing calculator I wrote and still use.
+
+SKILLS
+
+Python — advanced. vLLM — working. Parquet — advanced. Kubernetes — working.
+Prometheus — working. Agent frameworks — working.

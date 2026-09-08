@@ -1,0 +1,28 @@
+Dmitri Ilyich Sorokin
+d.sorokin@example.com | (206) 555-0128
+
+SUMMARY
+
+Backend engineer. Python and Go, APIs and the boring parts of delivery.
+
+EXPERIENCE
+
+Backend Engineer, Corran University Telecoms Lab    Aug 2024 - Oct 2025
+• Customer engagements were owned from discovery through to production and adoption.
+• Async services were architected for the orchestration layer.
+• Travel to partner sites was part of the role.
+• A migration was run badly and the lab's booking service was down for a morning.
+• It was kept running afterwards and the runbook came out of that.
+
+Associate Engineer, Larkfield Media Partners    Sep 2023 - Jul 2024
+• Worked with account executives to turn customer requirements into designs.
+• Built the annotation tooling; 12 annotators used it, agreement was measured.
+
+PROJECTS
+
+• Pond — a tiny job queue in Go. I use it for everything.
+
+SKILLS
+
+Python, Go, Postgres, Redis, Docker, gRPC
+

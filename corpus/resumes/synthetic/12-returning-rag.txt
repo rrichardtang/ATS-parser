@@ -1,0 +1,28 @@
+Yelena Marchetti
+y.marchetti@example.com | (206) 555-0191 | Seattle, WA
+
+SUMMARY
+
+RAG and retrieval systems. Two years out of the industry for family reasons; back since
+early 2025 and current on where the tooling has gone.
+
+EXPERIENCE
+
+Senior Engineer, Ministry of Energy Data Service    Jul 2025 - Present
+• What "good" looks like for an agent completing a task end to end was defined with
+  the policy team, in 7 written criteria.
+• An evaluation set was built for the generative summary feature and used to make the
+  ship call; it failed the first time and the launch was held.
+• Inference cost was reduced measurably after launch.
+• Third-party model APIs are called in production for this.
+
+Staff Engineer, Thameside Claims    Jan 2021 - Nov 2023
+• I improved our claims assistant through prompting, tool-use strategy and context
+  construction; 31% fewer handoffs to a person over the next two quarters.
+• I worked directly with 4 enterprise customers to prototype and ship.
+• I called the provider APIs in production and owned the fallbacks.
+• I stayed with it through two model migrations.
+
+PUBLICATIONS
+
+Marchetti, Y. "Holding a launch on an eval result." Conference talk, 2026.

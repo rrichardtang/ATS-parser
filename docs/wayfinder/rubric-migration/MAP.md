@@ -51,6 +51,7 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 | criteria → band → value | `ats/rubric.py:band_of` (01) | **the model answers criteria (05) and the band is what a category scores (06)** |
 | `rule_share` per category | `07`'s table in `rule-mapping.md` | **`score.rule_shares()`, read from each spec (03)** |
 | weights, four of them derived from the corpus | `derived_weights()` in `ats/jd_dimensions.py`; budget 50 (02) | **`config.category_weights()`: four authored, four derived (03)** |
+| a test set worth measuring on | seven fixtures + 36 self-written probes | **30 drawn documents in `corpus/resumes/`, probes kept as a control arm (08)** |
 | findings keyed on criterion ids | `findings-identity.md` | **`<slug>/<criterion id>`, from the specs (05)** |
 | advice-only findings that deduct nothing | `rule-mapping.md` §2 | **`Finding.advice_only`, fourteen rules (04)** |
 
@@ -66,11 +67,12 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` from the environment; neither is set. The
   30 August baseline run had them, so they exist somewhere reachable. Tickets 01–06 and
   08 need none. 07 and 09 do.
-- **The test set is thin and nobody has said so before now.** Seven fixtures, four of
-  which carry identical bullets; twenty-nine band probes written by the sessions that
-  were also judging them; one real resume. A rubric validated on documents written by
-  its validators is weakly validated, and that gap will not close by thinking harder —
-  it is ticket 08, and it is unblocked from the start for that reason.
+- **The test set was thin and nobody had said so before 08.** Seven fixtures, four of
+  which carry identical bullets; thirty-six band probes (the ticket's *twenty-nine*
+  omits `resume-craft/`'s seven) written by the sessions that were also judging them;
+  one real resume. 08 built the replacement: 30 documents drawn from the posting corpus,
+  the probes kept as a control arm, real resumes specified and never committed. See
+  [acceptance-set.md](acceptance-set.md).
 
 ## Decisions so far
 
@@ -150,6 +152,18 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   ownership in `Production ownership`, measurability nowhere now that
   `content/quantification` is advice — and they survive in the fix text, which costs
   nothing to give.
+- **The rubric is measured on a drawn set, and bands are observed rather than
+  targeted** (08). Three tiers: 30 invented documents in `corpus/resumes/synthetic/`,
+  written from briefs a seeded sampler draws out of `corpus/jds/` before any prose
+  exists; real resumes, consented, **never committed** and handled like
+  `baseline/run-summary.json`; and the 36 band probes kept as a control arm, because the
+  gap between agreement there and agreement on the drawn set measures what a self-written
+  test set was buying. Nothing in the sampler names a category, criterion or band, and
+  the set freezes on a hash manifest — a document that changes after a judge has read it
+  invalidates its numbers silently. The fixtures' defect is closed: all 19
+  rule-answerable criteria in the four behaviour categories now vary. What the
+  deterministic floor cannot certify is band spread, and that is 09's.
+  [acceptance-set.md](acceptance-set.md).
 
 ## Inherited, and not to be re-opened here
 
@@ -161,6 +175,15 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 - `Resume craft` is `Gate.RECRUITER`, and the choice moves no number — `12`.
 
 ## Not yet specified
+
+- **`Resume craft` C4 and C5 stop discriminating on full-length documents** (found by
+  08). C5 fails a document if *any* bullet is portable and C2 needs an outcome in
+  *every* role, so both get strictly harder with length: across all 66 documents that
+  exist, C5 is `yes` on 5 of the 36 probes with six bullets or fewer and on 0 of the 30
+  with seven or more. The category was calibrated on two-role, four-bullet probes. This
+  is evidence for 12's open item that C4 and C5 are not independent, and the repair is
+  the other map's. 09 must not fold the two constants into a tolerance verdict without
+  saying so.
 
 - **`Agentic systems` can fail the composite tolerance on its own** (raised by 02). At
   `rule_share` 0 (07 §5 — no deducting rule, so no channel to average a disagreement

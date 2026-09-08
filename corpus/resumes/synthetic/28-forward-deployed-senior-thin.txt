@@ -1,0 +1,28 @@
+Beatriz Salgado
+b.salgado@example.com | (415) 555-0111 | Redwood City, CA
+
+Forward deployed engineer.
+
+EXPERIENCE
+
+Senior Engineer, Kestrel Logistics    Apr 2025 - Present
+    (parental leave Sep 2024 - Mar 2025)
+• ML and LLM systems were built inside the operations team.
+• Timelines were forecast and schedule risk was flagged.
+• Structure was extracted from vendor documents.
+• What "good" means for an agent completing a task end to end was defined with the team.
+• The definitions were never written down anywhere the team could find them.
+• The systems have been kept running since.
+
+Engineer, Meridian Energy Retail    Jan 2022 - Mar 2025
+• Drift, hallucination rate, cost per request and token usage were monitored in
+  Grafana, 14 dashboards.
+• Python services were written and maintained, 8 of them.
+• The context-learning library was extended for 3 customer problems.
+• Docker and Kubernetes were used on AWS.
+• The monitoring has run for 3 years; 6 quality incidents were caught by it.
+• One dashboard was wrong for a year and nobody noticed.
+
+VOLUNTEERING
+
+Coach, junior robotics league.

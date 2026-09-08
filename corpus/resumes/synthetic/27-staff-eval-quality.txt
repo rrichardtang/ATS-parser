@@ -1,0 +1,34 @@
+Emeka Nwosu
+e.nwosu@example.com | (773) 555-0154 | Oak Park, IL
+
+SUMMARY
+
+Fourteen years in engineering, the last six on model quality: evaluation, monitoring,
+and the arguments about what a number means.
+
+EDUCATION
+
+M.S. Computer Science, Corran University, 2012
+
+EXPERIENCE
+
+Staff Engineer, Wren Valley Telecoms Trust    Mar 2024 - Present
+• I built the monitoring for drift, hallucination rate, cost per request and token
+  usage on our own support assistant.
+• I take part in operating it: the debugging, the reliability work, the reviews.
+• I have worked on code-generation models and developer tooling before this.
+• I have been on the rotation for it since launch, and the monitoring is what catches
+  the quality problems now rather than a customer complaint.
+• I rewrote the hallucination check twice after it disagreed with our reviewers.
+
+Principal Engineer, Wexcombe Fraud    Sep 2022 - Feb 2024
+• We built and extended agentic workflows that reason over case context, call our
+  screening tools and act under a senior reviewer.
+• We were interested in autonomy and in AI-assisted development, and used both.
+• We designed the agent behaviours across long-horizon investigation tasks, 40 of them.
+• We fine-tuned a classifier with LoRA for the first triage step, 4 points of F1.
+• We shipped an agent that closed 200 cases it should have escalated.
+
+SKILLS
+
+Python, PyTorch, LoRA, RAGAS, Grafana, Prometheus, agent frameworks, prompt tooling

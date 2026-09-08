@@ -1,0 +1,34 @@
+Nikolai Brandt
+n.brandt@example.com | (608) 555-0121 | Madison, WI
+
+EXPERIENCE
+
+Research Engineer (contract), Corran University Education Lab    Mar 2023 - Sep 2025
+• We prototyped and shipped 3 solutions with enterprise partners.
+• We built the TypeScript and React front ends. 40 screens.
+• We took feedback and grew ownership over 2 years.
+
+Research Engineer, Thameside Search    Aug 2018 - Feb 2023
+• We built feedback loops getting 12,000 real tasks a month into evaluation.
+• We ran FastAPI, Postgres, Docker on one cloud provider.
+• We kept the loops running after the grant ended.
+
+Engineer, Marrow Hill Telecoms Agency    Jan 2017 - Jun 2018
+• We led workshops and code reviews with 4 customer teams.
+• We owned engagements from discovery through production and expansion.
+• We wrote the Python services. 6 of them.
+• Our second engagement was cancelled after the pilot failed.
+
+SKILLS
+
+Languages: Python, TypeScript, SQL
+Data: Airflow, Postgres, Spark
+Modelling: XGBoost, ONNX, ranking models
+
+EDUCATION
+
+Ph.D. Computational Linguistics, Corran University, 2017
+
+VOLUNTEERING
+
+Judge, state high-school science fair.

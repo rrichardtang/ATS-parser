@@ -1,0 +1,34 @@
+Casimir Nowak
+c.nowak@example.com | (718) 555-0139 | Queens, NY
+
+Agentic AI engineer.
+
+EXPERIENCE
+
+Engineer II, Bright Ferry Regional Bank    Mar 2026 - Present
+• I worked with 6 enterprise customers to prototype and ship the media-rights agent.
+• I reached for the simplest model that worked and can defend the choice.
+• I kept it in front of 900 requests a day after launch.
+
+Engineer I, Meridian National Retail    Jul 2022 - Feb 2026
+• We owned 4 client engagements from discovery to production and expansion.
+• We ran the whole thing on our own GKE cluster, 12 nodes.
+• We built the routing agent that reassigns 3,000 deliveries a night.
+
+Associate Engineer, Kestrel Payments    Dec 2021 - Jun 2022
+• I shaped the user-facing agent surfaces with 2 product teams.
+• I set token budgets and a cache that cut spend 38%.
+• I got the model routing wrong and the fallback path ran for 5 days unnoticed.
+
+Associate Engineer, Larkfield Data Partners    May 2021 - Nov 2021
+• Models were owned end to end for a fraud client, from framing through deployment.
+• An evaluation set of 600 cases was built and used for a ship decision.
+• The client kept 2 of the 3 models in production afterwards.
+
+SKILLS
+
+Python, Spark, SQL, Kubernetes, GKE, LangGraph, Redis, model routing, caching
+
+INTERESTS
+
+Chess, and a very slow motorcycle rebuild.
