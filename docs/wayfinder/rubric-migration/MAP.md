@@ -152,6 +152,14 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   ownership in `Production ownership`, measurability nowhere now that
   `content/quantification` is advice — and they survive in the fix text, which costs
   nothing to give.
+- **The old rubric is run from git, not kept alive in the package** (07). 03 replaced
+  `models.Category` outright, so `scripts/side_by_side.py` materialises the tree at
+  **`1418f0a`** — the commit that recorded baseline-agreement.md — and runs it in a
+  subprocess. The pin is load-bearing: 02 reads as a documentation ticket and removed
+  four `RULE_DIMENSION` entries, so a later commit would have moved the *before*
+  picture silently. Three judge channels: recorded (the fixtures), rules-only (any
+  document), live (**never run** — no credentials on this map).
+  [both-rubrics.md](both-rubrics.md).
 - **The rubric is measured on a drawn set, and bands are observed rather than
   targeted** (08). Three tiers: 30 invented documents in `corpus/resumes/synthetic/`,
   written from briefs a seeded sampler draws out of `corpus/jds/` before any prose
@@ -176,6 +184,16 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 
 ## Not yet specified
 
+- **`Resume craft`'s rule channel is a constant 0 on realistic documents** (found by
+  07). Its deterministic deductions run 120–436 (median 242) over 08's thirty documents
+  against a category that floors at 0, so it is floored on 30 of 30 — the same value for
+  a good resume and a bad one — and `rule_share` 0.7 then caps the category at **28.5**
+  whatever a judge answers, on the heaviest authored weight in the rubric. Inherited
+  rather than caused: the old rubric floored `Impact & quantification` on 28 of 30 with
+  the same blend. What the migration changed is that the mass is concentrated in one
+  category and that category is the heaviest. Either per-occurrence costs need a cap, or
+  `rule_share` needs to mean something other than a fixed share when the rule channel
+  saturates. The other map's, raised from here.
 - **`Resume craft` C4 and C5 stop discriminating on full-length documents** (found by
   08). C5 fails a document if *any* bullet is portable and C2 needs an outcome in
   *every* role, so both get strictly harder with length: across all 66 documents that
@@ -184,7 +202,6 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   is evidence for 12's open item that C4 and C5 are not independent, and the repair is
   the other map's. 09 must not fold the two constants into a tolerance verdict without
   saying so.
-
 - **`Agentic systems` can fail the composite tolerance on its own** (raised by 02). At
   `rule_share` 0 (07 §5 — no deducting rule, so no channel to average a disagreement
   down) and weight 15, one C1 split costs 12.8 composite points against a bar of 8. No
@@ -199,7 +216,10 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   scoring five categories it never assessed. The price of the rule itself is untouched.
 - **A subscore can renormalise down to one category.** With the judged five withheld,
   `score._subscore` prints *human gate 100* off `Title & seniority alignment` alone — 5
-  of the human gate's 45 points, and not wrong so much as unrepresentative. The
+  of the human gate's 45 points, and not wrong so much as unrepresentative. **07
+  observed it on `two_column`**, where it comes with a composite 9.6 points *above* what
+  the old rubric gave the same document: the old one judged the visible text of a resume
+  no parser can read, and withholding removes those numbers. The
   `unreadable` path already special-cases this by zeroing the subscore outright;
   withholding wants something less blunt, and what floor a subscore needs before it is
   a number worth printing has never been decided. Surfaced by 06.
