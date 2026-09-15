@@ -1,6 +1,6 @@
 type: prototype (HITL)
 status: open
-claimed:
+claimed: claude
 blocked-by: 06
 
 # Run both rubrics on the same resume
