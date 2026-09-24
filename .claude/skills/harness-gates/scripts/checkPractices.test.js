@@ -40,13 +40,16 @@ test('reports every occurrence with its line number', () => {
   assert.deepEqual(found.map((v) => v.line), [2, 4]);
 });
 
-test('the repo it guards currently passes it', () => {
-  // 'src' doesn't exist yet on a fresh project — only scan source dirs that are actually there.
-  const sources = ['src', 'scripts']
-    .map((d) => path.join(__dirname, '..', d))
-    .filter((d) => fs.existsSync(d))
-    .flatMap((d) => fs.readdirSync(d).map((f) => path.join(d, f)))
-    .filter((f) => f.endsWith('.js'));
+test('checks the languages a project is likely to be written in', () => {
+  for (const ext of ['py', 'ts', 'tsx', 'sh']) {
+    assert.equal(violations(write(`m.${ext}`, '# TODO: finish\n')).length, 1, ext);
+  }
+});
+
+test('the plugin it ships in currently passes it', () => {
+  const sources = fs.readdirSync(__dirname)
+    .map((f) => path.join(__dirname, f))
+    .filter((f) => /\.(js|sh)$/.test(f));
   const offenders = sources.flatMap((f) => violations(f).map((v) => `${path.basename(f)}:${v.line}`));
   assert.deepEqual(offenders, []);
 });
