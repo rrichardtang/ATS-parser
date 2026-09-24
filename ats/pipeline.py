@@ -154,7 +154,7 @@ def analyze(run: RunInput) -> Report:
     # The judged half of every category: the band each judge's criterion answers
     # bought, with the lower band winning where two judges split (06).
     llm_scores: dict[Category, JudgedCategory] = content.judged
-    contested = content.meta.get("contested") or []
+    contested = sorted(c.value for c in llm_scores if llm_scores[c].contested)
     if contested:
         notes.append(
             "The judges read " + ", ".join(contested) + " differently. Each category "

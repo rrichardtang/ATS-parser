@@ -336,6 +336,10 @@ def returned(old: dict, new: dict) -> float:
     return sum(was[rule_id] for rule_id in advice_rules(new))
 
 
+def _gate(value: float | None) -> str:
+    return "n/a" if value is None else f"{value:.1f}"
+
+
 def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
     lines = [f"=== {name} ===", f"    judge channel: {channel}"]
     lines.append("")
@@ -344,10 +348,13 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
                  f"{new['composite']:>10.1f}"
                  f"{new['composite'] - old['composite']:>+10.1f}"
                  f"   {old['grade']} -> {new['grade']}")
+    # A gate holding a withheld category reports no score (score._subscore), so either
+    # side can be None, and a move to or from n/a is not a number either.
     for label, key in (("parser gate", "parser_subscore"),
                        ("human gate", "human_subscore")):
-        lines.append(f"{label:<34}{old[key]:>10.1f}{new[key]:>10.1f}"
-                     f"{new[key] - old[key]:>+10.1f}")
+        was, now = old[key], new[key]
+        moved = "n/a" if was is None or now is None else f"{now - was:+.1f}"
+        lines.append(f"{label:<34}{_gate(was):>10}{_gate(now):>10}{moved:>10}")
 
     old_cats = {c["category"]: c for c in old["categories"]}
     new_cats = {c["category"]: c for c in new["categories"]}

@@ -79,6 +79,17 @@ def test_a_withheld_document_is_not_given_a_band(two_column):
     assert all(not c["assessed"] for c in judged_rows)
 
 
+def test_a_gate_with_no_score_prints_n_a(two_column):
+    """A gate holding a withheld category reports None, not a number (score._subscore);
+    the comparison has to print that rather than fail formatting it."""
+    old = sbs.run_old(two_column, None)
+    new = sbs.run_new(two_column, None)
+    assert new["human_subscore"] is None
+    human = next(line for line in sbs.render("two_column", old, new, "rules-only")
+                 if line.startswith("human gate"))
+    assert human.split()[-2:] == ["n/a", "n/a"]
+
+
 def test_the_rename_and_the_retirement_are_still_true(strong, two_column, tmp_path):
     """A raw rule-id diff reads a rename as a disappearance. Both entries are claims
     about the two trees, so they are checked against the two trees -- on documents

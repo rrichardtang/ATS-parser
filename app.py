@@ -180,9 +180,10 @@ def _error(request: Request, message: str) -> HTMLResponse:
 
 @app.get("/report/{token}.md")
 async def export_markdown(token: str):
-    report = _cache_get(token)
-    if not report:
+    cached = _cache_get(token)
+    if not cached:
         return PlainTextResponse("This report has expired. Run the analysis again.", 404)
+    report, _resume = cached
     return PlainTextResponse(
         to_markdown(report),
         headers={"Content-Disposition": 'attachment; filename="resume-diagnostics.md"'},
@@ -191,9 +192,10 @@ async def export_markdown(token: str):
 
 @app.get("/report/{token}.pdf")
 async def export_pdf(token: str):
-    report = _cache_get(token)
-    if not report:
+    cached = _cache_get(token)
+    if not cached:
         return PlainTextResponse("This report has expired. Run the analysis again.", 404)
+    report, _resume = cached
     return Response(
         to_pdf(report),
         media_type="application/pdf",

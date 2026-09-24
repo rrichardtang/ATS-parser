@@ -38,6 +38,7 @@ GATE_TITLES = {
     Gate.MANAGER: ("Hiring manager read", "Whether the work described actually happened."),
 }
 
+
 CAVEAT = (
     "A diagnostic over named defects — not a portable “ATS score”, not a pass/fail "
     "prediction, and not comparable to another tool’s number. Each tool invents its "
@@ -59,7 +60,8 @@ def to_markdown(report: Report) -> str:
         "# Resume diagnostics",
         "",
         f"**{report.composite:.0f}** / 100 (grade {report.grade}) — "
-        f"parser gate {report.parser_subscore:.0f}, human gate {report.human_subscore:.0f}",
+        f"parser gate {report.parser_gate_text}, "
+        f"human gate {report.human_gate_text}",
         "",
         f"> {CAVEAT}",
         "",
@@ -164,8 +166,9 @@ def to_pdf(report: Report) -> bytes:
     story += [Paragraph("SCORE DERIVATION", diag), Spacer(1, 4), table, Spacer(1, 8)]
 
     summary = Table(
-        [[Paragraph(f"grade {report.grade} &nbsp; parser gate {report.parser_subscore:.0f} "
-                    f"&nbsp; human gate {report.human_subscore:.0f}", soft),
+        [[Paragraph(f"grade {report.grade} &nbsp; parser gate "
+                    f"{report.parser_gate_text} &nbsp; human gate "
+                    f"{report.human_gate_text}", soft),
           Paragraph(f"{report.composite:.0f}", big)]],
         colWidths=[4.2 * inch, 1.5 * inch], hAlign="LEFT",
     )

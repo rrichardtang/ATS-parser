@@ -1,0 +1,7 @@
+{
+  "name": "ats-parser",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  }
+}

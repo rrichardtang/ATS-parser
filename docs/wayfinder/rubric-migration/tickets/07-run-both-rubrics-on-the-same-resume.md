@@ -80,7 +80,8 @@ fraud cap pins it at 40 on both sides. **`two_column` rises 9.6**, because its r
 not parse, all five judged categories are withheld (05), and the composite renormalises
 over what was checked (06) — where the old rubric judged the visible text anyway and
 scored it in the 60s. Its **human gate prints 100.0 off `Title & seniority alignment`
-alone**, which is 06's open item observed on a document rather than predicted.
+alone**, which is 06's open item observed on a document rather than predicted. (Since
+fixed on `main`, 5657d91: that gate now reports no score and prints `n/a`.)
 
 **`Resume craft`'s rule channel is a constant 0 on realistic documents.** Over 08's
 thirty drawn resumes its deterministic deductions run 120 to 436 (median 242) against a

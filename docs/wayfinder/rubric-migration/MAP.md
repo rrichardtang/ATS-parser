@@ -32,16 +32,29 @@ Nothing has run. The specification exists as five JSON files and eight prose doc
 in a docs folder; `app.py`, `score.py` and `prompts.py` still score with the five
 categories 04 retired. This map is the gap.
 
-## The approach: run both, replace last
+## The approach: run both, replace last — and what actually happened
 
-The new rubric is added **beside** the old one, not in place of it. Same resume, both
-scored, both printed, until the new one has been looked at on real documents.
+The plan was that the new rubric would be added **beside** the old one, not in place of
+it: same resume, both scored, both printed, until the new one had been looked at on real
+documents. The reason was the ordering problem the other map ran into — the new rubric
+cannot be judged until it runs, and replacing outright makes the first run the moment
+the comparison is lost.
 
-The reason is the ordering problem the other map ran into: the new rubric cannot be
-judged until it runs, and replacing outright makes the first run the moment the
-comparison is lost. [baseline-agreement.md](../rubric-grounding/baseline-agreement.md)
-is a recorded *before* picture; a side-by-side is the *after*, on the same documents,
-with nothing to reconstruct. Retiring the old path is the last ticket, not the first.
+**It was not followed, and the map records that rather than quietly restating it.** 03
+swapped `models.Category` in place; 04, 05 and 06 built on the swapped enum. The five
+retired categories appear nowhere in `ats/`, `scripts/` or `app.py`, so there is no old
+path left in the package to run beside the new one. Nobody decided to abandon the approach; each ticket
+took the shortest path through its own question and the approach expired underneath
+them.
+
+The *before* picture was briefly re-scoped to a **recording** —
+[`baseline/run-summary.json`](../rubric-grounding/baseline/run-summary.json), 30 August,
+redacted — because the recording no longer loads (`Finding.message` was redacted away
+and is required; the old category names no longer resolve) and a recording eight weeks
+old cannot tell a rubric effect from a parser change. 07 then took the third way out that
+re-scope listed: it runs the old rubric from git history rather than keeping it alive in
+the package (see *Decided*, below), so both sides read today's parse of each document
+and the drift problem does not arise.
 
 ## What exists to migrate
 
@@ -182,6 +195,21 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
 - That document frequency sets four weights, and the derivation — `04`, `09`.
 - `Resume craft` is `Gate.RECRUITER`, and the choice moves no number — `12`.
 
+- **A gate holding a withheld category reports no score** (06, after the fixtures made
+  it visible). `score._subscore` returns `None` rather than a number, and the report
+  prints `n/a`. Measured on the fixtures before the fix: `two_column` printed **human
+  gate 100** at composite 86.6, and `hidden_text` printed **human gate 100** at
+  composite 40.0 and grade F — in both cases off `Title & seniority alignment` alone,
+  5 of the human gate's 80 points, undeducted, standing in for five withheld
+  categories. (An earlier note here said 45 points; the human gate is 80 — 5 + 25 +
+  15 + 15 + 12.5 + 7.5 — and the wrong figure understated the problem.) The rule is
+  deliberately narrower than *any unassessed category*: a judged category with no judge
+  answer is a degraded run, already flagged partial, and declining there would take the
+  gate away on every deterministic-only run. The `unreadable` path still zeroes both
+  subscores outright rather than declining — a prior decision with its own rationale,
+  left alone here, though zero is also a claim and `n/a` is arguably the honest answer
+  there too.
+
 ## Not yet specified
 
 - **`Resume craft`'s rule channel is a constant 0 on realistic documents** (found by
@@ -214,15 +242,6 @@ with nothing to reconstruct. Retiring the old path is the last ticket, not the f
   above one that parses cleanly and buries its evidence — is closed by 06: `two_column`
   now lands at 86.6 against `buried_evidence`'s 90.1, because the composite stopped
   scoring five categories it never assessed. The price of the rule itself is untouched.
-- **A subscore can renormalise down to one category.** With the judged five withheld,
-  `score._subscore` prints *human gate 100* off `Title & seniority alignment` alone — 5
-  of the human gate's 45 points, and not wrong so much as unrepresentative. **07
-  observed it on `two_column`**, where it comes with a composite 9.6 points *above* what
-  the old rubric gave the same document: the old one judged the visible text of a resume
-  no parser can read, and withholding removes those numbers. The
-  `unreadable` path already special-cases this by zeroing the subscore outright;
-  withholding wants something less blunt, and what floor a subscore needs before it is
-  a number worth printing has never been decided. Surfaced by 06.
 - **What the report does with an unmet criterion.** 05 produces them — one per
   criterion per resume, carrying the absence the candidate most needs to hear — and
   stops there, because nothing in the report renders a non-finding today. They ride

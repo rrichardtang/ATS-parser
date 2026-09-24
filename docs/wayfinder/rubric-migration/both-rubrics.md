@@ -74,6 +74,8 @@ plainly:
 - Its **human gate reads 100.0**, off `Title & seniority alignment` alone — 06's open
   item *"a subscore can renormalise down to one category"*, observed on a real document
   rather than predicted. The composite is defensible; the printed subscore is not.
+  *Since fixed on `main` (5657d91): a gate holding a withheld category reports no
+  score, and the comparison now prints `n/a` there.*
 
 `hidden_text` does not move at all: the fraud cap pins it at 40 on both sides, as 02
 found under every candidate weight set.
