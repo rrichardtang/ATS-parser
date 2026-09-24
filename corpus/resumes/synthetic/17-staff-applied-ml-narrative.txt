@@ -1,0 +1,47 @@
+Theodora Lambert
+theo.lambert@example.com | (917) 555-0112 | Brooklyn, NY
+
+SUMMARY
+
+Fourteen years, most recently on agent behaviour and the systems around it. I like the
+part of the job where you find out the thing you shipped is wrong.
+
+EXPERIENCE
+
+Staff Engineer, Kestrel Publishing    Apr 2026 - Present
+• Agent behaviours were designed and iterated on across real coding tasks and
+  long-horizon workflows, in the internal developer platform.
+• Requirements were translated into technical solutions with the account team.
+• Agentic systems were shipped with guardrails, authorisation and an audit trail, so
+  the agents act on our own systems rather than only advising.
+• They have been operated since: an authorisation policy review each quarter, and the
+  audit log is read when a run looks wrong.
+
+Principal Engineer, Marrow Hill Media Agency    Jul 2022 - Mar 2026
+• We put our predictions into the tools the newsroom already used, rather than a new
+  dashboard nobody would open.
+• We built the confidence scoring and the escalation logic that decides when a person
+  looks at a piece before it goes out.
+• We worked on the human-in-the-loop feedback and the prompt optimisation that came
+  out of it, and about 30% of our improvements came from that loop.
+• We kept it going for the rest of my time there.
+
+Senior Engineer, Steadfast Security Operations    Oct 2018 - Jun 2022
+• Hands-on workshops and code reviews were led with 8 customer engineering teams.
+• ML and LLM systems were built inside the operations team, forecasting timelines and
+  extracting structure from 60,000 vendor documents, using our own extraction service.
+• Agent behaviours were designed for long-horizon triage tasks, and the offline and
+  online metrics were correlated across 4 A/B tests.
+• A prompt change was shipped that quietly halved recall on one document type; it was
+  found six weeks later in an A/B readout.
+• It was fixed, and the readout became a weekly check afterwards.
+
+PROJECTS
+
+• Ledger — a small audit-log reader for agent runs. Open source, 400 stars.
+
+SKILLS
+
+Modelling: PyTorch, HuggingFace
+Systems: Kafka, Kubernetes, Postgres
+Practice: A/B testing, offline/online correlation, RAGAS, Inspect

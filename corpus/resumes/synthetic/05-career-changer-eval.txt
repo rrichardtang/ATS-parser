@@ -1,0 +1,40 @@
+Sunny Okonjo
+sunny.okonjo@example.com | (415) 555-0176 | Oakland, CA
+
+OBJECTIVE
+
+Two years into engineering after eight in clinical research. Looking for evaluation and
+model-quality work.
+
+EDUCATION
+
+B.Sc. Biomedical Science, Corran University, 2014
+Certificate, Applied Machine Learning, Larkfield Institute, 2024
+
+EXPERIENCE
+
+AI Engineer (contract), Thameside Marketplace    Mar 2026 - Present
+• Built agentic features for our knowledge base: 3 agents that edit and retire pages.
+• Used Claude Code and Cursor daily; my own review turnaround went from 2 days to 4 hours.
+• Shipped 14 of them and kept ownership of the pages they touch.
+• Watched the edit queue for 6 months after launch; 2% of edits still need a human.
+
+Junior Engineer (contract), Steadfast Security Operations    Jan 2023 - Feb 2026
+• Documentation of prompting and evaluation technique was written up for the team.
+• Some of it was published to the company blog.
+• The material was kept current afterwards and is still in use.
+
+Analytics Associate, Marrow Hill Advertising    Mar 2021 - Dec 2022
+• Built 2 knowledge-base agents that maintained our campaign library.
+• Worked across the API and the front end, roughly 60/40.
+• Our first agent overwrote 90 pages before anyone checked; we restored from backup.
+• Stayed on it for a year afterwards and added a dry-run mode.
+
+SKILLS
+
+Python — advanced. SQL — advanced. PyTorch — working. FastAPI — working.
+React — basic. Kubernetes — basic.
+
+CERTIFICATIONS
+
+AWS Certified Machine Learning – Specialty, 2025

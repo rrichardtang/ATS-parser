@@ -1,0 +1,32 @@
+Alina Voss
+alina.voss@example.com | (646) 555-0144 | New York, NY | github.com/alinavoss
+
+OBJECTIVE
+
+Seeking a senior full-stack role with room to work closer to the model layer.
+
+EXPERIENCE
+
+Staff Engineer, Wexcombe Insurance Technology    Nov 2024 - Present
+• We translated customer requirements into technical designs with the solutions team.
+• We ran the significance testing on two launches, both underpowered at n=300.
+• We built the annotation set and measured agreement between the annotators.
+• Deployment, versioning and rollback for the model artifacts sat with us.
+
+Senior Software Engineer, Ministry of Transport Digital Service    Feb 2021 - Oct 2024
+• Worked with account executives to turn what customers asked for into a design that
+  our four-person team could actually build in a quarter.
+• Improved a summarisation feature through prompt changes, tool-use strategy and
+  context construction; 22% fewer escalations over the following two months.
+• The first rollout regressed formatting badly on Welsh-language documents and I had
+  to roll it back the same week.
+• Stayed with the feature afterwards and it now runs across 11 services.
+
+EDUCATION
+
+M.Eng. Software Engineering, Corran University, 2014
+
+PUBLICATIONS
+
+Voss, A. "Practical rollback for shared model artifacts." Internal engineering
+journal, 2023.

@@ -8,6 +8,7 @@ past each provider twice with the samples kept apart, so sampling noise shows up
 as its own column rather than as the disagreement it is easily mistaken for.
 
     .venv/bin/python scripts/agreement_harness.py --dry-run
+    .venv/bin/python scripts/agreement_harness.py --acceptance-set --only ""
     .venv/bin/python scripts/agreement_harness.py --resume ~/resume.pdf
     .venv/bin/python scripts/agreement_harness.py --from runs/agreement-....json
 
@@ -44,13 +45,29 @@ def fixture_targets(only: list[str]) -> list[tuple[str, Path]]:
 
     Call this once per run: it regenerates every fixture PDF.
     """
-    made = __import__("tests.make_fixtures", fromlist=["build_all"]).build_all()
+    from tests.make_fixtures import build_all
+
+    made = build_all()
     if only:
         missing = [name for name in only if name not in made]
         if missing:
             raise SystemExit(f"unknown fixture(s): {', '.join(missing)}")
         return [(name, made[name]) for name in only]
     return sorted(made.items())
+
+
+def acceptance_targets() -> list[tuple[str, Path]]:
+    """08's set, rendered on demand for the same reason the fixtures are.
+
+    The seven fixtures are deliberately extreme and were written by the sessions
+    validating the rubric; these were written from briefs drawn out of the posting
+    corpus, with no document aimed at a band. Which tier a number came from has to
+    reach the write-up, so they stay separately addressable rather than being merged
+    into `fixture_targets`. See docs/wayfinder/rubric-migration/acceptance-set.md.
+    """
+    from scripts.make_acceptance_set import build_all
+
+    return sorted(build_all().items())
 
 
 def run_notes(
@@ -94,6 +111,8 @@ def main() -> None:
     parser.add_argument("--resume", help="the real resume PDF, the 8th input")
     parser.add_argument("--only", default="",
                         help="comma-separated fixture names, instead of all seven")
+    parser.add_argument("--acceptance-set", action="store_true",
+                        help="also judge 08's 30 drawn documents (corpus/resumes/)")
     parser.add_argument("--temperature", type=float,
                         help="default: weights.toml's [ensemble] temperature")
     parser.add_argument("--bands", default="",
@@ -122,6 +141,8 @@ def main() -> None:
         known = {n for n, _ in all_fixtures}
         raise SystemExit(f"unknown fixture(s): {', '.join(sorted(set(only) - known))}")
     targets: list[tuple[str, str]] = [(name, str(path)) for name, path in fixtures]
+    if args.acceptance_set:
+        targets += [(name, str(path)) for name, path in acceptance_targets()]
     if args.resume:
         resume_path = Path(args.resume).expanduser()
         if not resume_path.exists():
@@ -151,6 +172,11 @@ def main() -> None:
         providers, len(fixtures), len(all_fixtures), args.samples,
         temperature, bool(args.resume),
     )
+    if not args.acceptance_set:
+        notes.append(
+            "08's acceptance set was not run (--acceptance-set): every document here "
+            "was written by a session that was also validating the rubric."
+        )
     print()
     run = agreement.collect(providers, targets, args.samples, temperature, notes)
 

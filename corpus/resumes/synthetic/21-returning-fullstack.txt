@@ -1,0 +1,35 @@
+Marisol Aguirre
+m.aguirre@example.com | (505) 555-0193 | Albuquerque, NM
+
+OBJECTIVE
+
+Full-stack engineer returning to work after two years away. Interested in product teams
+that ship AI features rather than research groups.
+
+EXPERIENCE
+
+Contract Engineer, Marrow Hill Advertising Agency    Oct 2025 - Present
+• We owned 3 client engagements from discovery through production and expansion.
+• We wrapped the inference behind FastAPI, about 60 requests a second.
+• We stayed on all three afterwards; two renewed and one doubled its scope.
+• We rewrote the caching layer twice in the process.
+
+Senior Engineer, Bright Ferry Regional Bank    Apr 2019 - Aug 2022
+• I built agentic features for our knowledge base, using LangGraph and our own
+  page-locking service, so agents can edit and retire pages on their own.
+• I worked directly with enterprise customers to prototype and ship two of them.
+• One agent kept rewriting the same page in a loop until I added the lock.
+• I stayed with the feature through the handover to the platform team.
+
+SKILLS
+
+TypeScript — expert. React — expert. Python — advanced. FastAPI — advanced.
+LangGraph — working. Postgres — working.
+
+EDUCATION
+
+B.A. Design, Corran University, 2012
+
+CERTIFICATIONS
+
+Certified Kubernetes Application Developer, 2021

@@ -1,0 +1,25 @@
+Tobias Renner
+t.renner@example.com | (503) 555-0117 | Portland, OR
+
+SUMMARY
+
+AI engineer, eight years, most of it at small companies where the job is whatever the
+product needs that quarter. Contract and permanent both.
+
+EXPERIENCE
+
+AI Engineer (contract), Larkfield Civic Digital    Mar 2025 - Present
+• Client-side state was rebuilt for a real-time case dashboard, 12 live surfaces.
+• An LLM-powered triage feature was wrapped behind FastAPI, p95 340ms.
+• The service has been carried since launch and handles 8,000 cases a day.
+• Two rounds of profiling took cost per case from $0.04 to $0.011.
+
+Senior Engineer, Wexcombe Insurance Technology    Aug 2023 - Feb 2025
+• We contributed the design for several LLM-powered product features.
+• We built the offline evaluation: golden datasets, regression suites, a judge pipeline.
+• We held the whole thing to the audit standard the business needed.
+• We watched it for 9 months after release and tuned the retrieval twice.
+
+INTERESTS
+
+Sea kayaking. Restoring a 1970s lathe.

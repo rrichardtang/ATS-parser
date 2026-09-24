@@ -1,0 +1,33 @@
+Gregor Halloway
+g.halloway@example.com | (773) 555-0129 | Evanston, IL
+
+EXPERIENCE
+
+Data Platform Lead, Corran University Advertising Research Unit    Apr 2025 - Present
+• Customer engagements were owned from discovery through production adoption for
+  3 industry partners.
+• Prompt engineering with structured outputs and function calling was standardised
+  across the unit's tooling.
+• CI/CD, Prometheus and Grafana observability and an on-call rotation were established.
+• A misconfigured Grafana alert silenced the ingestion pager for 9 days.
+
+Principal Consultant, Larkfield Data Partners    Sep 2024 - Mar 2025
+• We partnered on API and backend design so the full stack served the product.
+• We shipped to 11,000 real users inside the engagement window.
+• We worked across the stack with the front end as our centre of gravity.
+• We processed 40TB of corpus data through Spark and SQL.
+• We remained engaged for two quarters afterwards, tuning the query layer twice.
+
+Delivery Engineer, Meridian Logistics Agency    Nov 2022 - Aug 2024
+• Owned 6 client engagements from discovery through production and expansion.
+• Travelled to 9 customer sites for workshops and implementation support.
+• Kept 4 of those accounts through renewal the following year.
+
+SKILLS
+
+Spark — expert. SQL — expert. Airflow — advanced. Python — advanced.
+Prometheus — advanced. Grafana — advanced. LoRA fine-tuning — familiar.
+
+VOLUNTEERING
+
+Data lead, Evanston Community Food Network, since 2019.

@@ -1,0 +1,39 @@
+Tomasz Wieczorek
+t.wieczorek@example.com | (312) 555-0146 | Chicago, IL
+
+GenAI product engineer, two years.
+
+EXPERIENCE
+
+Product Engineer, Kestrel Claims    Jul 2025 - Present
+• I built the BI-quality interface for our agentic book-close analysis, dense enough
+  that the finance team stopped exporting to spreadsheets; 9 of 11 now work in it.
+• I have shipped LLM features here and owned them after launch, including the
+  reconciliation assistant that runs against the close every month.
+• I run it on FastAPI, Postgres, pgvector and Redis in Docker on AWS.
+• I shipped a version that double-counted intercompany entries for two closes.
+• I have owned it since and the month-end run has not needed a person in it since March.
+
+Associate Engineer, Thameside Fraud    Aug 2024 - Jun 2025
+• Agentic features were built for the knowledge base, using our own page service, so
+  agents can edit and retire the fraud playbooks on their own.
+• Full-stack Python work sat alongside it.
+• The agents were watched for six months afterwards, and roughly 8% of their edits
+  were reverted by a person.
+• An early version rewrote a playbook the compliance team had frozen.
+
+Engineer, Bright Ferry Regional Bank    Sep 2020 - Jul 2024
+• We owned the client-side state on data-heavy recruiting surfaces, 20-odd screens.
+• We designed the agent's planning loop, its tool selection, and its retry and
+  fallback behaviour.
+• About 30% of the retries were on one flaky downstream API.
+
+Junior Engineer, Wren Valley Telecoms    Nov 2018 - Aug 2020
+• Customer requirements were translated into technical designs with the account team.
+• Serving ran on Triton with a model registry behind it.
+• Production-quality code was written with AI coding tools as part of the workflow.
+• Token spend was managed with caching and per-task model selection; about 20% saved.
+
+CERTIFICATIONS
+
+AWS Certified Developer – Associate, 2023

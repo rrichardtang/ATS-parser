@@ -1,0 +1,38 @@
+Halima Farouk
+h.farouk@example.com | (612) 555-0186 | Saint Paul, MN
+
+EXPERIENCE
+
+Data Engineer, Wren Valley Logistics Trust    Jul 2024 - Present
+• We partnered with product to put predictions in the tools people already use.
+• We ran the event-driven side, Kafka mostly.
+• Our first topic layout was wrong and we rebuilt it.
+• The predictions are still in the dispatch tool.
+
+Contract Data Engineer, Thameside Search    Mar 2021 - Apr 2024
+• We turned customer requirements into designs with the account team, 5 engagements.
+• We got batching and quantization wrong on the first GPU deployment and it cost us
+  6 weeks.
+• We stayed on afterwards, and the second attempt held 400 requests per minute.
+
+Analytics Engineer, Wexcombe Claims    Jan 2017 - Feb 2021
+• Designed and implemented an LLM-powered claims workflow and the agentic steps in it,
+  from concept through to production.
+• Built the TypeScript and React front end over it, with the state management that
+  data-heavy screens need.
+• Shipped it into a regulated environment and passed the internal audit at the second
+  attempt, having failed the first.
+
+PROJECTS
+
+• A Kafka topic linter I wrote after the rebuild above.
+
+SKILLS
+
+Kafka — expert. SQL — expert. Python — advanced. React — advanced.
+TypeScript — advanced. Terraform — working.
+
+EDUCATION
+
+B.S. Mathematics, Corran University, 2015
+Part-time M.S. Data Engineering, in progress since 2024

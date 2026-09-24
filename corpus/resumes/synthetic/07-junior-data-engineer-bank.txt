@@ -1,0 +1,39 @@
+Delphine Ruiz
+d.ruiz@example.com | (617) 555-0155 | Boston, MA
+
+Data engineer, analytics platform.
+
+EXPERIENCE
+
+Data Engineering Associate, Bright Ferry Regional Bank    Jan 2023 - Present
+• Interfaces of business-intelligence quality were built for analysis and book-close
+  workflows, covering approximately 40% of the finance team's recurring reporting needs.
+• The transformer ecosystem was used for a document-classification component, with the
+  model layer maintained by another team.
+
+Platform Engineer, Wren Valley Telecoms Trust    Oct 2019 - Dec 2022
+• I owned 5 customer engagements from discovery and solution design through to
+  production, adoption and the expansion conversation that followed each of them.
+• I enjoyed debugging the messy failures, and turned 3 of the worst ones into
+  monitoring that has caught them since.
+• I travelled to 7 customer sites for workshops and implementation support.
+
+Junior Engineer, Aldertree Health Notes    Feb 2016 - Sep 2019
+• I kept current on LLM capability changes and implementation patterns, writing 12
+  internal briefs on what had changed and what it meant for our roadmap.
+• I built the CI/CD and the Prometheus observability that 4 services still run on,
+  and carried the pager for them.
+• I ran FastAPI, Postgres, pgvector, Redis and Docker on AWS for the note-search product.
+• I shipped a pgvector migration that broke search for 2 days before I caught it.
+
+SKILLS
+
+Python, SQL, Airflow, dbt, FastAPI, Postgres, pgvector, Redis, Docker, AWS, Prometheus
+
+EDUCATION
+
+B.S. Information Systems, Corran University, 2015
+
+CERTIFICATIONS
+
+Google Professional Data Engineer, 2024

@@ -4,6 +4,8 @@ __pycache__/
 .pytest_cache/
 tests/fixtures/*.pdf
 runs/
+corpus/resumes/rendered/
+corpus/resumes/real/
 node_modules/
 
 # AI agent config: allowlist what's meant to be shared, ignore the rest

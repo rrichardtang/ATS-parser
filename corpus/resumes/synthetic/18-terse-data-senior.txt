@@ -1,0 +1,36 @@
+Anneke de Vries
+a.devries@example.com | (503) 555-0102 | Salem, OR
+
+SUMMARY
+
+Data platform engineer, eight years. Security, publishing, health. Parental leave 2023.
+
+EDUCATION
+
+B.S. Computer Science, Corran University, 2016
+
+EXPERIENCE
+
+Lead Engineer, Steadfast Security Operations    Feb 2022 - Present
+• Owned 7 client engagements, discovery to production, adoption, expansion.
+• Built ingestion on Airflow and Postgres. 4TB a day.
+• Versioned the embedding models; planned and ran 3 re-embeds.
+• Explained the re-embed plan to 5 customer teams; two rejected it first time.
+• Carried the pager since 2022. Two incidents, both retrieval-side, both written up.
+• First re-embed corrupted a shard. Rebuilt over a weekend.
+
+Senior Engineer, Bright Ferry Regional Bank    Jun 2018 - Jan 2022
+    (parental leave Mar 2023 - Feb 2024, taken during the following role)
+• Agentic systems were shipped with guardrails, authorisation and audit.
+• BI and analytics products were part of the surface.
+• Enterprise customers were worked with directly, prototypes through to production.
+• The audit trail was incomplete for the first release and had to be backfilled.
+• It was operated afterwards and the backfill became part of the deploy.
+
+Engineer, Meridian National Retail    Aug 2013 - May 2018
+• Kept current on LLM capability changes, implementation patterns, AI product stacks.
+  Wrote 20 internal briefs.
+• Full-stack and backend Python, 3 services.
+• Used AI-assisted and agentic development tools for implementation, testing and
+  refactoring. Cut my own review cycle from 3 days to 1.
+• Stayed on all 3 services through handover.

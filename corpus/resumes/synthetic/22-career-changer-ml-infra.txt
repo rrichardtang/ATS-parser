@@ -1,0 +1,36 @@
+Ravi Chandrasekaran
+r.chandrasekaran@example.com | (206) 555-0135 | Bellevue, WA
+
+OBJECTIVE
+
+ML infrastructure. Two years in engineering after eleven as a field agronomist.
+
+EDUCATION
+
+B.Sc. Agricultural Science, Corran University, 2011
+Certificate, Cloud Infrastructure, Larkfield Institute, 2024
+
+EXPERIENCE
+
+Infrastructure Engineer, Larkfield Data Partners    Mar 2026 - Present
+• Shared AI infrastructure was contributed to: an internal model service, orchestration
+  components and the monitoring around them, serving 9 teams.
+• Embedding models were versioned and 2 re-embeds planned.
+• Systems and user outcomes were reasoned about rather than model metrics alone.
+• 4 ML-powered products were shipped in the period.
+
+Junior Infrastructure Engineer, Wexcombe Recruiting Technology    Jul 2025 - Feb 2026
+    (parental leave Jan 2025 - Jun 2025)
+• We designed the evaluation harness for our generative screening feature: a golden
+  set, written rubrics, and an LLM judge calibrated against 500 human labels.
+• We built the feedback loop that gets real screening tasks back into that set.
+• We helped define what "good" looks like for an agent completing a screen end to end.
+• We watched the judge drift against the human labels and recalibrated it twice.
+
+PROJECTS
+
+• A soil-moisture model I still maintain for two farms. 6 years of data.
+
+SKILLS
+
+Python, Terraform, Kubernetes, Prometheus, pgvector, LLM-as-judge, golden datasets

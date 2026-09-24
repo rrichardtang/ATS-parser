@@ -1,0 +1,45 @@
+Oluwaseun Bakare
+o.bakare@example.com | (312) 555-0148 | Chicago, IL
+
+GenAI product engineer.
+
+EXPERIENCE
+
+Senior Product Engineer, Wren Valley Education Trust    Feb 2024 - Present
+• I developed and ran the evals that measure our tutoring agent's performance,
+  regressions and failure modes, against a 1,400-item set built with two teachers.
+• I built the retrieval end to end over the curriculum corpus: ingestion, chunking,
+  embeddings, retrieval and reranking.
+• I call the provider APIs in production and own the fallback and the cost ceiling.
+• I have operated it for two school years, including one incident where a curriculum
+  update silently invalidated a third of the embeddings.
+• Cost per session went from $0.22 to $0.06 across those two years.
+
+Product Engineer, Meridian National Retail    Mar 2022 - Jan 2024
+    (parental leave Sep 2022 - Mar 2023)
+• We worked directly with enterprise customers to prototype and ship the contract
+  review assistant.
+• We built the React front end and the state management it needed.
+• We measured our own inference cost and brought it down.
+
+Engineer, Kestrel Publishing    Sep 2017 - Feb 2022
+• Architecture decisions were influenced through pilots, prototypes and the evaluation
+  suites built alongside them.
+• Precision, recall and F1 were reported with a confusion analysis and an error taxonomy.
+• A context-learning library was extended and contributed back.
+• The taxonomy was never adopted outside our team, which limited what it was worth.
+• It was maintained afterwards and is still the reference for the tagging service.
+
+Engineer, Wren Valley Logistics Trust    Jan 2014 - Aug 2017
+• I shipped the customer-facing routing assistant end to end, React through to the APIs.
+• I built the Spark and dbt pipelines behind it, roughly 200 tables.
+• I designed the agentic workflow that re-plans a route when a depot goes offline.
+• I stayed with it and it still runs the overnight re-planning.
+
+SKILLS
+
+Python, TypeScript, React, Spark, dbt, FastAPI, pgvector, RAGAS, Airflow
+
+INTERESTS
+
+Long-distance swimming, and teaching a Saturday coding class.

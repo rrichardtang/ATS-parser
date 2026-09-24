@@ -1,0 +1,27 @@
+Ifeoma Adeyemi
+i.adeyemi@example.com | (206) 555-0163 | Tacoma, WA
+
+EXPERIENCE
+
+Research Software Engineer, Kestrel Search    Feb 2024 - Present
+• Design and iterate on agent behaviours for long-horizon coding tasks.
+• Built the harness the team uses to replay those tasks.
+• Rewrote a large part of the internal Python tooling.
+• Handed the work to the platform group and stayed on as reviewer.
+
+Research Associate, Vellum Labs    Apr 2022 - Jan 2024
+• We tracked LLM capability changes across 4 quarterly reviews and wrote them up.
+• Shipped a candidate-matching prototype in Python; 3 teams adopted it.
+• Our first version leaked 200 stale records into results and we pulled it for 5 weeks.
+• Rebuilt it on a typed schema, then ran it for 14 months without a repeat.
+
+Research Assistant, Corran University Security Group    Jun 2020 - Mar 2022
+• Shipped a threat-triage interface, React front end onto our own API.
+• Wrote the ingestion in SQL and a nightly scheduler.
+• Served a small transformer behind an inference server for the group.
+• Missed that the schema was unvalidated; bad rows reached the demo.
+• Stayed on afterwards to add validation and a review step for annotators.
+
+INTERESTS
+
+Trail running, choral singing, and a long-running project transcribing family letters.

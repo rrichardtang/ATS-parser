@@ -1,0 +1,53 @@
+Adaeze Mbeki
+adaeze.mbeki@example.com | (312) 555-0107 | Chicago, IL | github.com/adaezembeki
+
+New graduate, agentic systems.
+
+EDUCATION
+
+B.S. Computer Science, Corran University, 2026
+M.S. coursework in Applied Statistics, part-time, 2024-2025
+
+EXPERIENCE
+
+AI Engineering Intern, Wexcombe Insurance Technology    Mar 2026 - Present
+• Technical architecture decisions were influenced through 3 customer pilots and the
+  evaluation suites built alongside them.
+• A retrieval pipeline was built end to end: ingestion, chunking, embeddings, retrieval
+  and reranking, over 120,000 claim documents.
+• Recall at 10 was measured at 0.71 before a reranker was added and 0.84 afterwards.
+• The pipeline was handed to the claims team and is still running.
+• An embedding version mismatch made results incoherent for a week before it was caught.
+
+Associate Engineer, Thameside Marketplace    May 2024 - Feb 2026
+• I built the confidence system that decides when a request is automated and when it
+  goes to a person, using our own scoring service and the escalation rules behind it.
+• I worked on prompt design and a small classification fine-tune for the router.
+• Claude Code and Codex are how I write most of my code, and how the team works.
+• The router is still in front of the support queue and I still own its rules.
+
+Data Assistant, Wren Valley Energy Trust    Jul 2022 - Apr 2024
+• Performance was improved through prompting and tool-use strategy; a 15% reduction in
+  retries was measured over the following quarter.
+• The stack was worked across, API and backend, with the front end nearby.
+• A context-learning library was extended for two internal problems.
+• Sample sizes were too small on the first experiment to say anything and it was rerun.
+
+Research Assistant, Ministry of Revenue Fraud Analytics    Oct 2018 - Jun 2022
+• I developed and ran evals with the research group to measure agent performance,
+  regressions and failure modes on our own case-triage agent.
+• I contributed to the design of LLM-powered product features.
+• I wrapped the inference behind FastAPI.
+• I kept the eval running after the project closed and it caught two regressions.
+
+SKILLS
+
+Languages: Python, TypeScript, SQL
+Model: PyTorch, HuggingFace, LoRA
+Serving: FastAPI, Docker, Kubernetes
+Tools: Claude Code, Codex, Weights & Biases
+
+PUBLICATIONS
+
+Mbeki, A. and Okorie, T. "Escalation policies for partially automated queues."
+Undergraduate research symposium, 2025.

@@ -1,0 +1,37 @@
+Marcus Delaney
+marcus.delaney@example.com | (312) 555-0198 | linkedin.com/in/marcusdelaney
+
+Analyst turning into an engineer.
+
+EXPERIENCE
+
+Data Analyst (contract), Halcyon Media Group    Aug 2021 - Nov 2025
+• Agentic workflows were extended to draft and file weekly rights reports.
+• Reporting APIs were rebuilt with the backend team; 40% fewer manual exports.
+• Cloud basics picked up on the job: S3, Lambda, a little Terraform.
+• The workflow has been running since and is now owned by the ops team.
+
+Research Data Assistant, Corran University Ad Lab    Aug 2020 - Jun 2021
+• We built agents that maintain a shared knowledge base.
+• We wrote the ingestion in FastAPI and Postgres, on Docker.
+• Our retrieval quality dropped after the second re-index and nobody noticed for weeks.
+• We kept it running for the rest of the grant.
+
+Junior Data Analyst, Bright Ferry Payments    Jun 2019 - Jul 2020
+• Built forecasting for build timelines; cut manual estimation by 6 hours a week.
+• Flagged schedule risk on 30 vendor projects.
+• Extracted structure from 4,000 vendor documents.
+• Tracked every experiment in MLflow, 60 runs.
+• Watched a forecast drift badly in month 3, retrained it, and it held for a year.
+
+PROJECTS
+
+• A small Streamlit tool that charts my cycling data. 200 stars.
+
+SKILLS
+
+SQL, Python, pandas, Tableau, dbt, Airflow, FastAPI, Postgres, Docker, MLflow
+
+EDUCATION
+
+B.A. Economics, Corran University, 2019

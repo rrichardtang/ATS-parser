@@ -1,0 +1,33 @@
+Klara Bergström
+k.bergstrom@example.com | (415) 555-0159 | San Francisco, CA
+
+GenAI product engineer.
+
+EXPERIENCE
+
+Product Engineer, Marrow Hill Games Agency    Nov 2025 - Present
+• Defined what "good" means for our quest-generation agent, 5 written criteria.
+• Owned the client-side state on the agent-driven authoring surface.
+• Built retrieval over the studio's lore corpus, correctness first.
+• Shipped 3 client titles with it.
+• Cut generation cost 40% by caching lore chunks.
+• Shipped a version that leaked one studio's lore into another's suggestions.
+
+Engineer, Wren Valley Education Trust    Feb 2025 - Sep 2025
+    (parental leave Oct 2023 - Jan 2025)
+• Drift, hallucination rate, cost per request and token usage were monitored.
+• Cross-functional work with the curriculum team throughout.
+• The monitoring was kept in place after the pilot ended.
+• Nothing was ever alerted on, so a rate change went unnoticed for a term.
+
+SKILLS
+
+TypeScript, React, Python, pgvector, Postgres, Grafana, prompt caching
+
+EDUCATION
+
+B.S. Computer Science, Corran University, 2016
+
+CERTIFICATIONS
+
+Professional Cloud Architect, 2022

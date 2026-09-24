@@ -1,0 +1,33 @@
+Bruno Ferreira
+bruno.ferreira@example.com | (415) 555-0164 | Daly City, CA
+
+EXPERIENCE
+
+Principal Consultant, Larkfield Data Partners    Mar 2024 - Present
+• I owned models end to end for 2 security clients, from framing through deployment.
+• I built the monitoring for drift, hallucination rate and cost per request.
+• I helped maintain the retrieval pipelines over their financial data.
+• I never got the groundedness measurement past a spot check and it stayed that way.
+
+Senior Engineer, Wexcombe Insurance Technology    Jul 2020 - Feb 2024
+• I contributed the design for our LLM-powered claims features and the agent behind them.
+• I used RAGAS and LangSmith for the eval suite and Inspect for the red-team set.
+• I ran the transcript analysis and the MCP integration in production.
+• I owned it after launch: two prompt regressions found, both traced and fixed.
+• I missed a refusal-rate regression for a month because nothing alerted on it.
+
+Engineer, Wren Valley Publishing Trust    Apr 2017 - Jun 2020
+• Reliability and confidence systems were built: an evaluation framework, confidence
+  scoring, and the rules for when to escalate to a person.
+• Feedback loops were built to get real-task data back into evaluation.
+• It was run on GKE and Terraform.
+• The confidence scores were miscalibrated at launch and over-escalated for months.
+• They were recalibrated against 4,000 labelled cases and it settled.
+
+SKILLS
+
+Python, RAGAS, LangSmith, Inspect, MCP, Spark, Airflow, Kubernetes, Terraform
+
+VOLUNTEERING
+
+Mentor, Bay Area Returners Programme.
