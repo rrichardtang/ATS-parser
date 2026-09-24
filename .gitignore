@@ -13,6 +13,5 @@ node_modules/
 # receipt lives in .git/ and never touches the working tree)
 .claude/*
 !.claude/settings.json
-!.claude/agents/
 !.claude/agent-notes/
-!.claude/skills/
+!.claude/vendor/
