@@ -8,4 +8,4 @@ preferences specific to this repo), appended one terse line at a time by the age
 - `bob.md` — bob-the-builder's log. Created on its first noteworthy entry.
 - `felix.md` — felix-the-fixer's log. Created on its first noteworthy entry.
 
-See the `harness:protocol` skill (vendored under `.claude/skills/harness/`) for the full loop protocol these support.
+See the `harness:protocol` skill from the `harness` plugin for the full loop protocol these support.

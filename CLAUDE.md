@@ -20,21 +20,24 @@ it. `runs/` holds quoted resume text and is gitignored. Never commit what is in 
 
 Multi-session work is a wayfinder map: `docs/wayfinder/<map>/MAP.md` plus
 `docs/wayfinder/<map>/tickets/NN-<slug>.md`. Before working a ticket, set its `claimed:` field
-and commit that alone as `Claim ticket NN: <title>`. Record what a ticket found in the ticket and the map, including
-when the approach changed underneath it. A later session only knows what the map says.
+and commit that alone as `Claim ticket NN: <title>`. Record what a ticket found in the ticket and
+the map, including when the approach changed underneath it. A later session only knows what the map says.
 
 ## The harness
 
-`.claude/skills/harness/` and `.claude/skills/harness-gates/` are pinned copies of the plugins
-from `rrichardtang/claude-config`. They load from the clone as `harness@skills-dir` and
-`harness-gates@skills-dir`. Don't edit them here. Change them in `claude-config`, bump the version,
-then re-run its `vendor.sh` against this repo. `.vendored-from` names the commit each copy came
-from.
+`bob-the-builder`, `felix-the-fixer` and their skills come from the `harness` plugin in
+`rrichardtang/claude-config`, installed per machine (`/plugin install harness@rrichardtang`) or,
+for web sessions, by the cloud environment's setup script. See that repo's `INSTALL.md`.
+
+The push gate is this repo's own: `.claude/settings.json` runs the scripts in
+`.claude/vendor/harness-gates/`, a pinned copy of the `harness-gates` plugin. Don't edit it here.
+Change it in `claude-config`, bump the version, then re-run its `vendor.sh` against this repo.
+`.vendored-from` names the commit the copy came from.
 
 - Before a push, have `harness:felix-the-fixer` review the commits being pushed, then run the
   `--record` command the push gate prints, as its own command. Read `harness:protocol` before
   spawning either subagent.
 - The gate is a nudge. Anyone can record a receipt, and GitHub never sees it. The pull request
   review on GitHub is the actual check.
-- No TODO/FIXME markers or placeholder stubs unless asked for. `harness-gates` flags them as
+- No TODO/FIXME markers or placeholder stubs unless asked for. The practices hook flags them as
   they are written.
