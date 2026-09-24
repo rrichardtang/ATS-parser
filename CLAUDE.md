@@ -19,15 +19,15 @@ it. `runs/` holds quoted resume text and is gitignored. Never commit what is in 
 ## How work is organised
 
 Multi-session work is a wayfinder map: `docs/wayfinder/<map>/MAP.md` plus
-`tickets/NN-<slug>.md`. Before working a ticket, set its `claimed:` field and commit that alone
-as `Claim ticket NN: <title>`. Record what a ticket found in the ticket and the map, including
+`docs/wayfinder/<map>/tickets/NN-<slug>.md`. Before working a ticket, set its `claimed:` field
+and commit that alone as `Claim ticket NN: <title>`. Record what a ticket found in the ticket and the map, including
 when the approach changed underneath it. A later session only knows what the map says.
 
 ## The harness
 
 `.claude/skills/harness/` and `.claude/skills/harness-gates/` are pinned copies of the plugins
-from `rrichardtang/claude-config`. They load as `harness@skills-dir` and `harness-gates@skills-dir`,
-locally and on the web. Don't edit them here. Change them in `claude-config`, bump the version,
+from `rrichardtang/claude-config`. They load from the clone as `harness@skills-dir` and
+`harness-gates@skills-dir`. Don't edit them here. Change them in `claude-config`, bump the version,
 then re-run its `vendor.sh` against this repo. `.vendored-from` names the commit each copy came
 from.
 
