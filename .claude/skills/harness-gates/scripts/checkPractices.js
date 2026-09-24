@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// PostToolUse hook: enforces the one engineering practice in CLAUDE.md that a
-// machine can check without guessing — "no dead code, placeholder stubs, or TODO
-// markers unless explicitly requested". The rest of the rules (comment necessity,
+// PostToolUse hook: enforces the one engineering practice a machine can check
+// without guessing — "no dead code, placeholder stubs, or TODO markers unless
+// explicitly requested". The rest of the rules (comment necessity,
 // readability, function size) are judgement calls; a checker that guesses at them
 // cries wolf and gets switched off, taking this check with it.
 //
@@ -10,7 +10,7 @@
 const fs = require('fs');
 
 const MARKERS = /\b(TODO|FIXME|XXX|HACK)\b|not implemented|placeholder stub/i;
-const CHECKED = /\.(js|mjs|cjs)$/;
+const CHECKED = /\.(js|mjs|cjs|jsx|ts|tsx|py|sh)$/;
 // A marker detector and its test are the two files that must contain the markers.
 // That is the whole exemption list and it should stay that way — a third entry
 // means the rule is being bent rather than the code fixed.
@@ -33,7 +33,7 @@ function main(payload) {
 
   const detail = found.map(({ line, text }) => `  ${filePath}:${line}  ${text.slice(0, 100)}`).join('\n');
   process.stderr.write(
-    `CLAUDE.md engineering practices: no TODO markers or placeholder stubs unless explicitly requested.\n${detail}\n` +
+    `Engineering practice: no TODO markers or placeholder stubs unless explicitly requested.\n${detail}\n` +
     'Finish the work or remove the marker. If the user asked for a stub, say so and proceed.\n'
   );
   return 2;

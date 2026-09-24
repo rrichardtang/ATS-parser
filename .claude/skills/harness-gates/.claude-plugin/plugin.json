@@ -1,0 +1,8 @@
+{
+  "name": "harness-gates",
+  "version": "1.0.0",
+  "description": "Opt-in hooks for projects you ship: hold git push until felix-the-fixer has reviewed HEAD, and flag TODO markers or placeholder stubs as they are written.",
+  "author": { "name": "rrichardtang" },
+  "repository": "https://github.com/rrichardtang/claude-config",
+  "dependencies": ["harness"]
+}

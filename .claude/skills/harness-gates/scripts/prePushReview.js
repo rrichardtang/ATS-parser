@@ -3,13 +3,19 @@
 // code being pushed. The receipt is keyed on HEAD, so a new commit invalidates it automatically —
 // what gets reviewed is a code state, not a session.
 //
+// This is a nudge, not enforcement: anyone can write the receipt without a review, and it never
+// leaves this clone. Enforcement belongs on the server (branch protection, a required PR review).
+//
 // Reads the hook payload on stdin, exits 2 with instructions when the receipt is missing or stale,
 // which feeds the block back into the session. `--record` writes the receipt for the current HEAD.
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const RECEIPT = path.join(__dirname, '..', '.claude', 'pre-push-review.json');
+// The receipt lives inside the repository's git directory, so it is per-clone and can never be
+// committed, whatever the project's .gitignore says. Resolved from the project, not from this
+// script, which ships inside a plugin.
+const RECEIPT_NAME = 'claude-pre-push-review.json';
 
 // Global git flags that consume the token after them, so `git -C /repo push` still resolves to
 // `push` rather than stopping at the path.
@@ -53,14 +59,18 @@ function git(...args) {
   return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
 }
 
+function receiptPath() {
+  return path.resolve(git('rev-parse', '--git-path', RECEIPT_NAME));
+}
+
 function readReceipt() {
-  return fs.existsSync(RECEIPT) ? fs.readFileSync(RECEIPT, 'utf8') : '';
+  const file = receiptPath();
+  return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
 }
 
 function record() {
   const receipt = { sha: git('rev-parse', 'HEAD'), branch: git('rev-parse', '--abbrev-ref', 'HEAD'), reviewedAt: new Date().toISOString() };
-  fs.mkdirSync(path.dirname(RECEIPT), { recursive: true });
-  fs.writeFileSync(RECEIPT, `${JSON.stringify(receipt, null, 2)}\n`);
+  fs.writeFileSync(receiptPath(), `${JSON.stringify(receipt, null, 2)}\n`);
   process.stdout.write(`Recorded pre-push review for ${receipt.sha.slice(0, 8)} on ${receipt.branch}.\n`);
 }
 
@@ -75,12 +85,20 @@ function main(payload) {
   } catch {
     // No upstream yet, or not a git dir — the main..HEAD default already covers the first case.
   }
-  if (reviewIsCurrent(readReceipt(), headSha)) return 0;
+  let receipt = '';
+  try {
+    receipt = readReceipt();
+  } catch {
+    // No git directory to read from: treat as unreviewed. A guard that fails open is no guard.
+  }
+  if (reviewIsCurrent(receipt, headSha)) return 0;
 
   process.stderr.write(
     `Push blocked: ${headSha.slice(0, 8) || 'HEAD'} has not been reviewed.\n` +
-    `Run the felix-the-fixer subagent over ${range}, act on anything it finds, then record it:\n` +
-    '  node scripts/prePushReview.js --record\n' +
+    `Run the felix-the-fixer subagent (harness:felix-the-fixer) over ${range}, act on anything it finds, then record it:\n` +
+    `  node "${__filename}" --record\n` +
+    'Run --record as its own command: this check runs before the whole command line, so a record\n' +
+    'chained in front of the push is not seen until the next attempt.\n' +
     'Record without a review only when the push carries no code (notes, docs) — and say so.\n'
   );
   return 2;

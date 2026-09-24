@@ -1,0 +1,7 @@
+{
+  "name": "harness",
+  "version": "1.0.0",
+  "description": "bob-the-builder and felix-the-fixer subagents, the protocol for running them, and the planning and review skills they use.",
+  "author": { "name": "rrichardtang" },
+  "repository": "https://github.com/rrichardtang/claude-config"
+}
