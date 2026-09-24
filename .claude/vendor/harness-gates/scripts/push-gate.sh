@@ -8,7 +8,7 @@ if command -v node >/dev/null 2>&1; then
 fi
 case "$(cat)" in
   *'"command":'*git*push*)
-    echo "harness-gates: Node is not installed, so the push gate cannot check this command. Install Node, or disable harness-gates for this project." >&2
+    echo "harness-gates: Node is not installed, so the push gate cannot check this command. Install Node, or remove the push-gate hook from this project's .claude/settings.json." >&2
     exit 2
     ;;
 esac
