@@ -32,11 +32,14 @@ document nobody has judged.
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
+from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,20 +50,25 @@ from ats.extract import extract  # noqa: E402
 from ats.llm import providers_from  # noqa: E402
 from ats.models import JUDGED_CATEGORIES, Category  # noqa: E402
 from ats.pipeline import deterministic, resolve_target_title  # noqa: E402
-from ats.rubric import SLUGS, band_of, load_spec, slug_by_category  # noqa: E402
+from ats.rubric import SLUGS, load_spec, slug_by_category  # noqa: E402
 from ats.sections import parse  # noqa: E402
+from scripts.agreement_harness import acceptance_targets, fixture_targets  # noqa: E402
+from scripts.baseline_analysis import load, means  # noqa: E402
+from scripts.criteria_probe import load_recorded  # noqa: E402
 
 # The tree the 30 August baseline was recorded against. See the module docstring.
 BASELINE_COMMIT = "1418f0a"
 
+# Extracted once per machine and reused. Outside the repo on purpose: the old tree
+# carries its own `tests/`, and inside the checkout pytest would collect them and put
+# the old `ats` package on the path ahead of the real one.
+OLD_TREE = Path(tempfile.gettempdir()) / f"ats-old-tree-{BASELINE_COMMIT}"
 BASELINE = ROOT / "docs" / "wayfinder" / "rubric-grounding" / "baseline" / "run-summary.json"
-JUDGMENTS = ROOT / "docs" / "wayfinder" / "rubric-grounding" / "criteria" / "judgments"
-ACCEPTANCE = ROOT / "corpus" / "resumes" / "rendered"
 
 # Runs inside the materialised old tree. Kept here rather than in a file so the old
 # tree stays exactly what git has: nothing is added to it to make it runnable.
 OLD_DRIVER = """
-import json, os, sys
+import json, sys
 sys.path.insert(0, sys.argv[1])
 from ats import config, ensemble, passes, score
 from ats.llm import providers_from
@@ -69,85 +77,99 @@ from ats.models import Category
 from ats.pipeline import deterministic, resolve_target_title
 from ats.sections import parse
 
-request = json.loads(sys.stdin.read())
-doc = extract(request["pdf"])
-resume = parse(doc.text)
-findings = deterministic(doc, resume, "", resolve_target_title(""))
 
-llm = {}
-per_provider = request.get("per_provider") or {}
-if request.get("live"):
-    # The old content pass, called exactly as the old pipeline called it. Never run:
-    # the sessions that built this had no credentials. See ticket 07.
-    providers = providers_from({})
-    settings = config.ensemble_settings()
-    content = passes.content_pass(
-        providers, resume, doc.text, "", findings,
-        int(settings["content_samples"]), float(settings["temperature"]),
-        config.jd_digest(),
-    )
-    findings += content.data
-    per_provider = {}
-    for name, values in (content.meta.get("scores") or {}).items():
+def judged(entries):
+    out = {}
+    for name, values in entries.items():
         try:
-            llm[Category(name)] = values
+            out[Category(name)] = values
         except ValueError:
             continue
-if per_provider:
-    combined, _meta = ensemble.combine_scores(per_provider)
-    for name, values in combined.items():
-        try:
-            llm[Category(name)] = values
-        except ValueError:
-            continue
+    return out
 
-report = score.build(findings, llm_categories=llm, partial=not llm)
-print(json.dumps({
-    "composite": report.composite,
-    "grade": report.grade,
-    "parser_subscore": report.parser_subscore,
-    "human_subscore": report.human_subscore,
-    "categories": [
-        {"category": c.category.value, "score": c.score, "weight": c.weight,
-         "low": c.low, "high": c.high, "note": c.note}
-        for c in report.categories
-    ],
-    "findings": [
-        {"rule_id": f.rule_id, "category": f.category.value if f.category else None,
-         "severity": f.severity.value, "cost": getattr(f, "_raw_cost", 0.0),
-         "locator": f.locator}
-        for f in report.findings
-    ],
-}))
+
+def run(request):
+    doc = extract(request["pdf"])
+    resume = parse(doc.text)
+    findings = deterministic(doc, resume, "", resolve_target_title(""))
+    llm = {}
+    if request.get("live"):
+        # The old content pass, called exactly as the old pipeline called it. Never
+        # run: the sessions that built this had no credentials. See ticket 07.
+        settings = config.ensemble_settings()
+        content = passes.content_pass(
+            providers_from({}), resume, doc.text, "", findings,
+            int(settings["content_samples"]), float(settings["temperature"]),
+            config.jd_digest(),
+        )
+        findings += content.data
+        llm = judged(content.meta.get("scores") or {})
+    elif request.get("per_provider"):
+        llm = judged(ensemble.combine_scores(request["per_provider"])[0])
+
+    report = score.build(findings, llm_categories=llm, partial=not llm)
+    return {
+        "composite": report.composite,
+        "grade": report.grade,
+        "parser_subscore": report.parser_subscore,
+        "human_subscore": report.human_subscore,
+        "categories": [
+            {"category": c.category.value, "score": c.score, "weight": c.weight,
+             "low": c.low, "high": c.high, "note": c.note}
+            for c in report.categories
+        ],
+        "findings": [
+            {"rule_id": f.rule_id, "category": f.category.value if f.category else None,
+             "severity": f.severity.value, "cost": getattr(f, "_raw_cost", 0.0),
+             "locator": f.locator}
+            for f in report.findings
+        ],
+    }
+
+
+print(json.dumps([run(request) for request in json.loads(sys.stdin.read())]))
 """
 
 
+@functools.cache
 def old_tree() -> Path:
-    """The baseline commit, extracted to a temp directory for this process."""
-    global _OLD_TREE
-    if _OLD_TREE is None:
-        _OLD_TREE = Path(tempfile.mkdtemp(prefix="ats-old-"))
+    """The baseline commit, extracted once and reused by every run after.
+
+    Extracted beside its final path and renamed into place, so two runs starting at
+    once cannot leave a half-written tree for a third to trust.
+    """
+    if not OLD_TREE.exists():
+        staging = OLD_TREE.with_name(f"{OLD_TREE.name}.{os.getpid()}")
+        staging.mkdir(parents=True, exist_ok=True)
         archive = subprocess.run(["git", "archive", BASELINE_COMMIT],
                                  cwd=ROOT, capture_output=True, check=True)
-        subprocess.run(["tar", "-x", "-C", str(_OLD_TREE)],
-                       input=archive.stdout, check=True)
-    return _OLD_TREE
+        subprocess.run(["tar", "-x", "-C", str(staging)], input=archive.stdout, check=True)
+        try:
+            staging.rename(OLD_TREE)
+        except OSError:   # another run got there first; its tree is the same commit
+            shutil.rmtree(staging)
+    return OLD_TREE
 
 
-_OLD_TREE: Path | None = None
+def run_old_many(requests: list[dict]) -> list[dict]:
+    """Every document through the old rubric in one interpreter.
+
+    Starting Python and importing the old package is most of what one document costs,
+    so the documents share one start rather than paying it each.
+    """
+    done = subprocess.run(
+        [sys.executable, "-c", OLD_DRIVER, str(old_tree())],
+        input=json.dumps(requests), capture_output=True, text=True, cwd=ROOT,
+    )
+    if done.returncode:
+        raise SystemExit(f"old rubric failed:\n{done.stderr[-2000:]}")
+    return json.loads(done.stdout)
 
 
 def run_old(pdf: Path, per_provider: dict[str, dict[str, float]] | None,
             live: bool = False) -> dict:
-    request = json.dumps({"pdf": str(pdf), "per_provider": per_provider or {},
-                          "live": live})
-    done = subprocess.run(
-        [sys.executable, "-c", OLD_DRIVER, str(old_tree())],
-        input=request, capture_output=True, text=True, cwd=ROOT,
-    )
-    if done.returncode:
-        raise SystemExit(f"old rubric failed on {pdf.name}:\n{done.stderr[-2000:]}")
-    return json.loads(done.stdout)
+    return run_old_many([{"pdf": str(pdf), "per_provider": per_provider or {},
+                          "live": live}])[0]
 
 
 def run_new(pdf: Path, judgments: list[passes.ContentJudgment] | None,
@@ -163,11 +185,25 @@ def run_new(pdf: Path, judgments: list[passes.ContentJudgment] | None,
     resume = parse(doc.text)
     findings = deterministic(doc, resume, "", resolve_target_title(""))
     reason = passes.withholding_reason(resume)
-    live_judged: dict | None = None
-    live_unmet: list[str] = []
-    if live and not reason and doc.has_text_layer:
+    withheld = ({c: "withheld -- " + reason for c in JUDGED_CATEGORIES}
+                if reason else {})
+
+    # The answers behind each band, for the "what moved and why" column.
+    # `judge_categories` returns the band and the split, deliberately not the answer
+    # sets -- naming the criterion that produced a drop is this script's job.
+    answers: dict[Category, dict[str, bool]] = {}
+    judged: dict = {}
+    if reason:
+        # Withholding happens before any call in `content_pass`, so a withheld document
+        # has no judge channel at all -- not one whose answers are computed and then
+        # dropped. Recorded answers for such a document predate 05 and are left unused
+        # on purpose: that is the behaviour, not a limitation of this script.
+        pass
+    elif live:
         # The new content pass, called as `pipeline.analyze` calls it. Never run, for
-        # the same reason as its opposite number in OLD_DRIVER.
+        # the same reason as its opposite number in OLD_DRIVER. `content_pass` folds the
+        # answers away and returns the bands (06), so the live path shows the band and
+        # the criteria nothing in the resume spoke to.
         settings = config.ensemble_settings()
         content = passes.content_pass(
             providers_from({}), resume, doc.text, "", findings,
@@ -175,36 +211,16 @@ def run_new(pdf: Path, judgments: list[passes.ContentJudgment] | None,
             config.jd_digest(),
         )
         findings += content.data
-        # `content_pass` folds the answers away and returns the bands (06), so the
-        # live path shows the band and the criteria nothing in the resume spoke to.
-        # The full yes/no grid stays on the judgements it consumed, which is
-        # `ats/agreement.py`'s business rather than this script's.
-        live_judged = content.judged
-        live_unmet = sorted({c["criterion_id"] for c in content.meta.get("unmet") or []})
-    withheld = ({c: "withheld -- " + reason for c in JUDGED_CATEGORIES}
-                if reason else {})
-    # Withholding happens before any call in `content_pass`, so a withheld document
-    # has no judge channel at all -- not one whose answers are computed and then
-    # dropped. Recorded answers for such a document predate 05 and are deliberately
-    # left unused here, which is the behaviour, not a limitation of this script.
-    withheld_but_recorded = bool(reason and judgments)
-    if reason:
-        judgments = None
-    judged = live_judged if live_judged is not None else (
-        passes.judge_categories(judgments) if judgments else {})
-    # The answers behind each band, for the "what moved and why" column. `judge_categories`
-    # returns the band and the split, deliberately not the answer sets -- naming the
-    # criterion that produced a drop is this script's job, not the scorer's.
-    answers: dict[Category, dict[str, bool]] = {}
-    for judgment in (judgments or []) if live_judged is None else []:
-        for answer in passes.criterion_answers(judgment.categories):
-            answers.setdefault(answer.category, {}).setdefault(
-                answer.criterion_id.split("/", 1)[1], answer.met)
-    for qualified in live_unmet:
-        slug, cid = qualified.split("/", 1)
-        for category, s in slug_by_category().items():
-            if s == slug:
-                answers.setdefault(Category(category), {})[cid] = False
+        judged = content.judged
+        for item in content.meta.get("unmet") or []:
+            slug, cid = item["criterion_id"].split("/", 1)
+            answers.setdefault(Category(load_spec(slug)["category"]), {})[cid] = False
+    elif judgments:
+        judged = passes.judge_categories(judgments)
+        for judgment in judgments:
+            for answer in passes.criterion_answers(judgment.categories):
+                answers.setdefault(answer.category, {}).setdefault(
+                    answer.criterion_id.split("/", 1)[1], answer.met)
     report = score.build(findings, llm_categories=judged, partial=not judged,
                          withheld=withheld)
     return {
@@ -233,7 +249,7 @@ def run_new(pdf: Path, judgments: list[passes.ContentJudgment] | None,
                              "answers": answers.get(c, {})}
                    for c, j in judged.items()},
         "withheld": reason,
-        "withheld_but_recorded": withheld_but_recorded,
+        "withheld_but_recorded": bool(reason and judgments),
     }
 
 
@@ -245,61 +261,52 @@ def run_new(pdf: Path, judgments: list[passes.ContentJudgment] | None,
 def old_recorded() -> dict[str, dict[str, dict[str, float]]]:
     """`{fixture: {provider: {category: score}}}` from the redacted baseline.
 
-    Samples are averaged within a provider before `combine_scores` sees them, which is
-    what `passes.content_pass` did at that commit -- the baseline holds the samples
-    apart and the old scoring path did not.
+    `baseline_analysis.means` averages samples within a provider, which is what
+    `passes.content_pass` did at that commit before `combine_scores` saw them -- the
+    baseline holds the samples apart and the old scoring path did not.
     """
     if not BASELINE.exists():
         return {}
-    data = json.loads(BASELINE.read_text(encoding="utf-8"))
-    out: dict[str, dict[str, dict[str, list[float]]]] = {}
-    for resume in data["resumes"]:
-        per_provider: dict[str, dict[str, list[float]]] = {}
-        for judgment in resume.get("judgments") or []:
-            provider = judgment["provider"]
-            for name, entry in (judgment.get("categories") or {}).items():
-                if "score" in entry:
-                    per_provider.setdefault(provider, {}).setdefault(
-                        name, []).append(float(entry["score"]))
-        out[resume["name"]] = {
-            provider: {name: sum(v) / len(v) for name, v in scores.items()}
-            for provider, scores in per_provider.items()
-        }
+    out: dict[str, dict[str, dict[str, float]]] = {}
+    for (resume, category), by_provider in means(load(BASELINE)).items():
+        for provider, mean in by_provider.items():
+            out.setdefault(resume, {}).setdefault(provider, {})[category] = mean
     return out
 
 
 def new_recorded() -> dict[str, list[passes.ContentJudgment]]:
     """`{document: [ContentJudgment]}` from the recorded criterion answers.
 
-    One judge, `model-claude`, so one judgement per document: the recorded files are
-    one (judge, document) worth of answers, which is the shape 06 emits per sample.
+    One judgement per recorded judge, which is the shape 06 emits per sample, so a
+    second recorded judge is banded against the first rather than overwriting it.
+    `load_recorded` is the probe's own loader and validates every answer set.
     """
-    by_document: dict[str, dict[str, dict]] = {}
+    by_judge: dict[tuple[str, str], dict[str, dict]] = {}
     for slug in SLUGS:
         spec = load_spec(slug)
-        for path in sorted((JUDGMENTS / slug).glob("*.json")):
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            for document, body in payload["fixtures"].items():
-                entry = {"criteria": [
-                    {"id": cid, "answer": "yes" if met else "no",
-                     "evidence": body.get("evidence", {}).get(cid, "")}
-                    for cid, met in body["answers"].items()
-                ]}
-                by_document.setdefault(document, {})[spec["category"]] = entry
-    return {
-        document: [passes.ContentJudgment(
-            provider="recorded:model-claude", sample=0, categories=categories,
-            findings=[],
-        )]
-        for document, categories in by_document.items()
-    }
+        for document, verdicts in load_recorded(spec).items():
+            for judge, verdict in verdicts.items():
+                by_judge.setdefault((document, judge), {})[spec["category"]] = {
+                    "criteria": [
+                        {"id": cid, "answer": "yes" if met else "no",
+                         "evidence": verdict.evidence.get(cid, "")}
+                        for cid, met in verdict.answers.items()
+                    ],
+                }
+    out: dict[str, list[passes.ContentJudgment]] = {}
+    for (document, judge), categories in sorted(by_judge.items()):
+        out.setdefault(document, []).append(passes.ContentJudgment(
+            provider=f"recorded:{judge}", sample=0, categories=categories, findings=[],
+        ))
+    return out
 
 
 # --------------------------------------------------------------------------
 # Printing
 # --------------------------------------------------------------------------
 
-CARRIED = ("Parseability", "Structure & formatting", "Title & seniority alignment")
+# The mechanical categories, which both rubrics have: everything the judge never asks.
+CARRIED = tuple(c.value for c in Category if c not in JUDGED_CATEGORIES)
 
 # A rule that changed name is not a rule that stopped firing, and a raw id diff cannot
 # tell them apart. Both entries are decisions, not bookkeeping: 04 (implementing the
@@ -311,13 +318,31 @@ RENAMED = {"content/bullet-invariants": "content/no-outcome"}
 RETIRED = {"cred/no-named-models": "03 §4: a closed model-name list goes stale"}
 
 
+def costs(findings: list[dict]) -> Counter:
+    """What each rule cost on one side, summed over its occurrences."""
+    total: Counter = Counter()
+    for finding in findings:
+        total[finding["rule_id"]] += finding["cost"]
+    return total
+
+
+def advice_rules(new: dict) -> list[str]:
+    return sorted({f["rule_id"] for f in new["findings"] if f["advice_only"]})
+
+
+def returned(old: dict, new: dict) -> float:
+    """What the rules that are advice-only now used to deduct on this document."""
+    was = costs(old["findings"])
+    return sum(was[rule_id] for rule_id in advice_rules(new))
+
+
 def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
     lines = [f"=== {name} ===", f"    judge channel: {channel}"]
-    move = new["composite"] - old["composite"]
     lines.append("")
     lines.append(f"{'':<34}{'old':>10}{'new':>10}{'moved':>10}")
     lines.append(f"{'composite':<34}{old['composite']:>10.1f}"
-                 f"{new['composite']:>10.1f}{move:>+10.1f}"
+                 f"{new['composite']:>10.1f}"
+                 f"{new['composite'] - old['composite']:>+10.1f}"
                  f"   {old['grade']} -> {new['grade']}")
     for label, key in (("parser gate", "parser_subscore"),
                        ("human gate", "human_subscore")):
@@ -381,34 +406,27 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
                          "not used: withholding happens before the call (05), and the "
                          "old rubric judged it anyway -- which is the difference.")
 
-    old_costs: dict[str, float] = {}
-    for finding in old["findings"]:
-        old_costs[finding["rule_id"]] = old_costs.get(finding["rule_id"], 0.0) + finding["cost"]
-    new_costs: dict[str, float] = {}
-    for finding in new["findings"]:
-        new_costs[finding["rule_id"]] = new_costs.get(finding["rule_id"], 0.0) + finding["cost"]
-    advice = [f for f in new["findings"] if f["advice_only"]]
+    old_costs, new_costs = costs(old["findings"]), costs(new["findings"])
+    old_ids, new_ids = set(old_costs), set(new_costs)
+    advice = advice_rules(new)
     if advice:
+        gates = {f["rule_id"]: f["gate"] for f in new["findings"] if f["advice_only"]}
         lines.append("")
         lines.append("findings that stopped deducting (04)")
-        returned = 0.0
-        for finding in sorted(advice, key=lambda f: f["rule_id"]):
-            was = old_costs.get(finding["rule_id"], 0.0)
-            returned += was
-            lines.append(f"  {finding['rule_id']:<34}was {was:>5.1f}   now 0.0"
-                         f"   gate {finding['gate']}")
-        lines.append(f"  {'points returned':<34}{returned:>9.1f}")
+        for rule_id in advice:
+            lines.append(f"  {rule_id:<34}was {old_costs[rule_id]:>5.1f}   now 0.0"
+                         f"   gate {gates[rule_id]}")
+        lines.append(f"  {'points returned':<34}{returned(old, new):>9.1f}")
 
     renamed = [(was, now) for was, now in RENAMED.items()
-               if was in old_costs or now in new_costs]
-    retired = [r for r in RETIRED if r in old_costs]
+               if was in old_ids or now in new_ids]
+    retired = [r for r in RETIRED if r in old_ids]
     if renamed or retired:
         lines.append("")
         lines.append("rules renamed or retired")
         for was, now in sorted(renamed):
             lines.append(f"  {was} -> {now:<20}"
-                         f"cost {old_costs.get(was, 0.0):>6.1f} -> "
-                         f"{new_costs.get(now, 0.0):.1f}")
+                         f"cost {old_costs[was]:>6.1f} -> {new_costs[now]:.1f}")
         for rule_id in sorted(retired):
             lines.append(f"  {rule_id:<34}cost {old_costs[rule_id]:>6.1f} -> gone"
                          f"   {RETIRED[rule_id]}")
@@ -427,10 +445,8 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
             lines.append(f"  {rule_id:<34}{was} -> {now}")
 
     known = set(RENAMED) | set(RENAMED.values()) | set(RETIRED)
-    gone = sorted({f["rule_id"] for f in old["findings"]}
-                  - {f["rule_id"] for f in new["findings"]} - known)
-    added = sorted({f["rule_id"] for f in new["findings"]}
-                   - {f["rule_id"] for f in old["findings"]} - known)
+    gone = sorted(old_ids - new_ids - known)
+    added = sorted(new_ids - old_ids - known)
     if gone or added:
         lines.append("")
         lines.append("rules that fired on one side only")
@@ -443,15 +459,12 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
 
 def summary_row(name: str, old: dict, new: dict) -> dict:
     """The per-document line of `--summary`: the move, and the three things that make it."""
-    returned = sum(f["cost"] for f in old["findings"]
-                   if any(n["rule_id"] == f["rule_id"] and n["advice_only"]
-                          for n in new["findings"]))
     return {
         "name": name,
         "old": old["composite"],
         "new": new["composite"],
         "moved": new["composite"] - old["composite"],
-        "returned": returned,
+        "returned": returned(old, new),
         "floored": sum(1 for c in new["categories"]
                        if c.get("assessed", True) and c["score"] == 0.0),
         "unassessed": sum(1 for c in new["categories"] if not c.get("assessed", True)),
@@ -486,11 +499,8 @@ def targets(args) -> list[tuple[str, Path]]:
             raise SystemExit(f"no such document: {path}")
         return [(path.stem, path)]
     if args.acceptance_set:
-        made = __import__("scripts.make_acceptance_set",
-                          fromlist=["build_all"]).build_all()
-        return sorted(made.items())
-    made = __import__("tests.make_fixtures", fromlist=["build_all"]).build_all()
-    return sorted(made.items())
+        return acceptance_targets()
+    return fixture_targets([])
 
 
 def main() -> int:
@@ -509,31 +519,35 @@ def main() -> int:
 
     live = (bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY"))
             and not args.rules_only)
-    old_scores = {} if (args.rules_only or live) else old_recorded()
-    new_answers = {} if (args.rules_only or live) else new_recorded()
+    recorded = not (args.rules_only or live)
+    old_scores = old_recorded() if recorded else {}
+    new_answers = new_recorded() if recorded else {}
+
+    documents = targets(args)
+    olds = run_old_many([{"pdf": str(path), "per_provider": old_scores.get(name) or {},
+                          "live": live} for name, path in documents])
 
     blocks: list[str] = []
     rows: list[dict] = []
-    for name, path in targets(args):
-        per_provider = old_scores.get(name)
+    for (name, path), old in zip(documents, olds):
         judgments = new_answers.get(name)
+        new = run_new(path, judgments, live)
+        if args.summary:
+            rows.append(summary_row(name, old, new))
+            continue
         if live:
             channel = "live: each rubric calls its own content pass (never yet run)"
-        elif per_provider and judgments:
-            channel = (f"old: {len(per_provider)} recorded providers, 30 Aug baseline; "
-                       "new: recorded model-claude criterion answers")
+        elif old_scores.get(name) and judgments:
+            channel = (f"old: {len(old_scores[name])} recorded providers, 30 Aug "
+                       "baseline; new: recorded model-claude criterion answers")
         elif args.rules_only:
             channel = "none -- deterministic layer only, both sides"
         else:
             channel = ("none for this document -- no recorded judgement on one or "
                        "both sides, so this is the deterministic layer only")
-        old, new = run_old(path, per_provider, live), run_new(path, judgments, live)
-        if args.summary:
-            rows.append(summary_row(name, old, new))
-            continue
         blocks.append("\n".join(render(name, old, new, channel)))
     print(f"old rubric: {BASELINE_COMMIT} (the tree the baseline was recorded against)")
-    print(f"new rubric: the working tree\n")
+    print("new rubric: the working tree\n")
     print(render_summary(rows) if args.summary else "\n\n".join(blocks))
     return 0
 

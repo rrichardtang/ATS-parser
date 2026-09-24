@@ -17,18 +17,17 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from ats.models import JUDGED_CATEGORIES, Category  # noqa: E402
 from scripts import side_by_side as sbs  # noqa: E402
 
+# The old tree is frozen, so its category set is a literal on purpose.
 OLD_CATEGORIES = {
     "Parseability", "Recruiter scan", "Impact & quantification",
     "AI/ML relevance & depth", "Credibility & verifiability", "Writing quality",
     "Structure & formatting", "Title & seniority alignment",
 }
-NEW_CATEGORIES = {
-    "Parseability", "Structure & formatting", "Title & seniority alignment",
-    "Production ownership", "Agentic systems", "Evaluation rigour",
-    "AI-assisted coding fluency", "Resume craft",
-}
+NEW_CATEGORIES = {c.value for c in Category}
+JUDGED = {c.value for c in JUDGED_CATEGORIES}
 
 
 @pytest.fixture(scope="module")
@@ -37,12 +36,18 @@ def strong(fixtures) -> Path:
 
 
 @pytest.fixture(scope="module")
+def old_strong(strong) -> dict:
+    """The old rubric on `strong` with its recorded judges -- one subprocess, shared."""
+    return sbs.run_old(strong, sbs.old_recorded().get("strong"))
+
+
+@pytest.fixture(scope="module")
 def two_column(fixtures) -> Path:
     return fixtures["two_column"]
 
 
-def test_the_old_rubric_still_runs_from_the_pinned_commit(strong):
-    old = sbs.run_old(strong, sbs.old_recorded().get("strong"))
+def test_the_old_rubric_still_runs_from_the_pinned_commit(old_strong):
+    old = old_strong
     assert {c["category"] for c in old["categories"]} == OLD_CATEGORIES
     assert 0.0 <= old["composite"] <= 100.0
     assert old["findings"], "the old rubric found nothing, which it never did"
@@ -51,8 +56,7 @@ def test_the_old_rubric_still_runs_from_the_pinned_commit(strong):
 def test_the_new_rubric_runs_the_same_document(strong):
     new = sbs.run_new(strong, sbs.new_recorded().get("strong"))
     assert {c["category"] for c in new["categories"]} == NEW_CATEGORIES
-    assert set(new["judged"]) == NEW_CATEGORIES - {
-        "Parseability", "Structure & formatting", "Title & seniority alignment"}
+    assert set(new["judged"]) == JUDGED
 
 
 def test_the_recorded_judgements_cover_the_fixtures_on_both_sides():
@@ -71,8 +75,7 @@ def test_a_withheld_document_is_not_given_a_band(two_column):
     assert new["withheld"]
     assert new["withheld_but_recorded"]
     assert not new["judged"]
-    judged_rows = [c for c in new["categories"] if c["category"] not in
-                   {"Parseability", "Structure & formatting", "Title & seniority alignment"}]
+    judged_rows = [c for c in new["categories"] if c["category"] in JUDGED]
     assert all(not c["assessed"] for c in judged_rows)
 
 
@@ -86,10 +89,10 @@ def test_the_rename_and_the_retirement_are_still_true(strong, two_column, tmp_pa
     wordy = tmp_path / "wordy.pdf"
     render(source.stem, source.read_text(encoding="utf-8"), wordy)
 
-    old_ids, new_ids = set(), set()
-    for path in (strong, two_column, wordy):
-        old_ids |= {f["rule_id"] for f in sbs.run_old(path, None)["findings"]}
-        new_ids |= {f["rule_id"] for f in sbs.run_new(path, None)["findings"]}
+    paths = (strong, two_column, wordy)
+    olds = sbs.run_old_many([{"pdf": str(p), "per_provider": {}} for p in paths])
+    old_ids = {f["rule_id"] for old in olds for f in old["findings"]}
+    new_ids = {f["rule_id"] for p in paths for f in sbs.run_new(p, None)["findings"]}
     for was, now in sbs.RENAMED.items():
         assert was in old_ids and was not in new_ids, f"{was} is not gone from the new tree"
         assert now in new_ids, f"{now} does not fire in the new tree"
@@ -97,9 +100,9 @@ def test_the_rename_and_the_retirement_are_still_true(strong, two_column, tmp_pa
         assert rule_id not in new_ids, f"{rule_id} was retired and still fires"
 
 
-def test_the_comparison_answers_the_four_things_07_asked_for(strong):
+def test_the_comparison_answers_the_four_things_07_asked_for(strong, old_strong):
     text = "\n".join(sbs.render(
-        "strong", sbs.run_old(strong, sbs.old_recorded().get("strong")),
+        "strong", old_strong,
         sbs.run_new(strong, sbs.new_recorded().get("strong")), "recorded"))
     assert "composite" in text                       # composite, old and new
     assert "why each judged category landed there" in text   # what moved and why
@@ -108,12 +111,10 @@ def test_the_comparison_answers_the_four_things_07_asked_for(strong):
     assert "retired, and what replaced them" in text
 
 
-def test_a_document_nobody_judged_still_compares(tmp_path):
+def test_a_document_nobody_judged_still_compares(fixtures):
     """The owner's resume, and every document in 08's set: no recorded judgement on
     either side, so the comparison is the deterministic layer and says so."""
-    from tests.make_fixtures import build_all
-
-    path = build_all()["no_phone"]
+    path = fixtures["no_phone"]
     old, new = sbs.run_old(path, None), sbs.run_new(path, None)
     assert not new["judged"]
     assert old["composite"] > 0 and new["composite"] > 0

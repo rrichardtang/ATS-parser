@@ -71,6 +71,12 @@ HEDGE_RE = re.compile(
 )
 
 
+def owned(bullet: str) -> bool:
+    """`unhedged_in`'s predicate: the candidate is the subject, unhedged and alone."""
+    return not (HEDGE_RE.search(bullet) or TEAM_SUBJECT_RE.search(bullet)
+                or TEAM_ANYWHERE_RE.search(bullet))
+
+
 @dataclass
 class Verdict:
     """One judge's answers for one resume, each with the span that settles it."""
@@ -257,13 +263,7 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
                 yes, evidence = True, f"{match.group(0)!r} names the thing"
                 anchors[cid] = anchor
         elif kind == "unhedged_in":
-            owned = bool(
-                anchor
-                and not HEDGE_RE.search(anchor)
-                and not TEAM_SUBJECT_RE.search(anchor)
-                and not TEAM_ANYWHERE_RE.search(anchor)
-            )
-            if owned:
+            if anchor and owned(anchor):
                 yes, evidence = True, f'subject is the candidate in "{anchor[:70]}"'
                 anchors[cid] = anchor
             elif anchor:

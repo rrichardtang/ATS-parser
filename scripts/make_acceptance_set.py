@@ -36,21 +36,23 @@ from reportlab.pdfgen import canvas
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from ats.sections import _canonical_section  # noqa: E402
+from scripts.draw_briefs import OUT as BRIEFS  # noqa: E402
+
 SET_DIR = ROOT / "corpus" / "resumes" / "synthetic"
 OUT_DIR = ROOT / "corpus" / "resumes" / "rendered"
 MANIFEST = ROOT / "corpus" / "resumes" / "manifest.json"
-BRIEFS = ROOT / "corpus" / "resumes" / "briefs.json"
 
 WIDTH, HEIGHT = LETTER
 FONTS = [("Helvetica", "Helvetica-Bold"), ("Times-Roman", "Times-Bold")]
 SIZES = [9.0, 9.5, 10.0, 10.5]
 MARGINS = [54, 60, 66, 72]
 
-SECTION_WORDS = {
-    "summary", "profile", "objective", "experience", "work experience", "projects",
-    "education", "skills", "publications", "certifications", "interests",
-    "volunteering", "awards",
-}
+
+
+def documents() -> dict[str, Path]:
+    """The set, by document id, in order. The one place that knows how to list it."""
+    return {p.stem: p for p in sorted(SET_DIR.glob("*.txt"))}
 
 
 def digest(path: Path) -> str:
@@ -67,11 +69,6 @@ def layout(name: str) -> dict:
         "size": SIZES[(seed // 7) % len(SIZES)],
         "margin": MARGINS[(seed // 53) % len(MARGINS)],
     }
-
-
-def _is_heading(line: str) -> bool:
-    stripped = line.strip().rstrip(":")
-    return bool(stripped) and stripped.lower() in SECTION_WORDS
 
 
 def render(name: str, text: str, out: Path) -> None:
@@ -95,7 +92,9 @@ def render(name: str, text: str, out: Path) -> None:
             y -= leading * 1.6
             first = False
             continue
-        if _is_heading(stripped):
+        # Styled as a heading exactly when the parser reads it as one, so the PDF
+        # never shows a section the pipeline does not see.
+        if _canonical_section(stripped):
             y -= leading * 0.4
             c.setFont(style["bold"], size + 0.5)
             c.drawString(margin, y, stripped.upper())
@@ -113,7 +112,7 @@ def render(name: str, text: str, out: Path) -> None:
 def build_all() -> dict[str, Path]:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     made: dict[str, Path] = {}
-    for source in sorted(SET_DIR.glob("*.txt")):
+    for source in documents().values():
         out = OUT_DIR / f"{source.stem}.pdf"
         render(source.stem, source.read_text(encoding="utf-8"), out)
         made[source.stem] = out
@@ -124,7 +123,7 @@ def manifest() -> dict:
     briefs = json.loads(BRIEFS.read_text(encoding="utf-8"))
     by_id = {b["id"]: b for b in briefs["briefs"]}
     entries = []
-    for source in sorted(SET_DIR.glob("*.txt")):
+    for source in documents().values():
         brief_id = source.stem.split("-", 1)[0]
         brief = by_id.get(brief_id)
         entries.append({
@@ -154,7 +153,7 @@ def verify() -> int:
         return 1
     recorded = json.loads(MANIFEST.read_text(encoding="utf-8"))
     known = {e["id"]: e["sha256"] for e in recorded["documents"]}
-    seen = {p.stem: digest(p) for p in sorted(SET_DIR.glob("*.txt"))}
+    seen = {name: digest(path) for name, path in documents().items()}
     problems = []
     for name, sha in seen.items():
         if name not in known:
@@ -185,7 +184,7 @@ def main() -> int:
         return verify()
     if args.freeze:
         MANIFEST.write_text(json.dumps(manifest(), indent=2) + "\n", encoding="utf-8")
-        print(f"froze {len(list(SET_DIR.glob('*.txt')))} documents -> "
+        print(f"froze {len(documents())} documents -> "
               f"{MANIFEST.relative_to(ROOT)}")
         return 0
     made = build_all()

@@ -45,7 +45,9 @@ def fixture_targets(only: list[str]) -> list[tuple[str, Path]]:
 
     Call this once per run: it regenerates every fixture PDF.
     """
-    made = __import__("tests.make_fixtures", fromlist=["build_all"]).build_all()
+    from tests.make_fixtures import build_all
+
+    made = build_all()
     if only:
         missing = [name for name in only if name not in made]
         if missing:
@@ -63,9 +65,9 @@ def acceptance_targets() -> list[tuple[str, Path]]:
     reach the write-up, so they stay separately addressable rather than being merged
     into `fixture_targets`. See docs/wayfinder/rubric-migration/acceptance-set.md.
     """
-    build = __import__("scripts.make_acceptance_set",
-                       fromlist=["build_all"]).build_all()
-    return sorted(build.items())
+    from scripts.make_acceptance_set import build_all
+
+    return sorted(build_all().items())
 
 
 def run_notes(

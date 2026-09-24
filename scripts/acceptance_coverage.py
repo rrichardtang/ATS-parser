@@ -30,28 +30,28 @@ from __future__ import annotations
 import argparse
 import sys
 from collections import Counter
+from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from ats.rubric import SLUGS, band_of, load_spec  # noqa: E402
-from ats.invariants import (  # noqa: E402
-    SPECIFIC_TOKEN_RE, TEAM_ANYWHERE_RE, TEAM_SUBJECT_RE,
-)
+from ats.models import DERIVED_CATEGORIES  # noqa: E402
+from ats.invariants import SPECIFIC_TOKEN_RE  # noqa: E402
+from ats.rubric import SLUGS, band_of, load_spec, slug_by_category  # noqa: E402
 from scripts.criteria_probe import (  # noqa: E402
-    HEDGE_RE, NUMBER_RE, _find, _patterns, deterministic_verdict, read_probe,
+    NUMBER_RE, Doc, _find, _patterns, deterministic_verdict, owned, read_probe,
 )
+from scripts.make_acceptance_set import SET_DIR, documents  # noqa: E402
 
-SET_DIR = ROOT / "corpus" / "resumes" / "synthetic"
 MIN_PER_BAND = 3
 MAX_BAND_SHARE = 0.40
-BEHAVIOUR = ("production-ownership", "agentic-systems", "evaluation-rigour",
-             "ai-assisted-coding-fluency")
-ANCHORED = ("alias_in_anchor", "named_in", "number_in", "unhedged_in")
+# The behaviour categories are the corpus-derived ones, so a fifth one derived later
+# is checked here without anybody remembering to add it.
+BEHAVIOUR = tuple(slug_by_category()[c.value] for c in DERIVED_CATEGORIES)
 
 
-def anywhere(doc, criterion) -> bool:
+def anywhere(doc: Doc, criterion: dict) -> bool | None:
     """The same predicate, asked of the whole document instead of one bullet.
 
     An anchored criterion is answered inside the bullet that settled its anchor, which
@@ -59,6 +59,8 @@ def anywhere(doc, criterion) -> bool:
     the next bullet answers `no` here and `yes` from any reader. The gap between the
     two columns is how much of a thin band is the anchor conjunction rather than the
     documents -- the question this set cannot answer for itself, and 09 can.
+
+    None for a criterion that is not anchored, which has no second column.
     """
     bullets = [b for role in doc.resume.roles for b in role.bullets]
     kind = criterion.get("deterministic", {}).get("kind")
@@ -69,13 +71,44 @@ def anywhere(doc, criterion) -> bool:
     if kind == "number_in":
         return any(NUMBER_RE.search(b) for b in bullets)
     if kind == "unhedged_in":
-        return any(not HEDGE_RE.search(b) and not TEAM_SUBJECT_RE.search(b)
-                   and not TEAM_ANYWHERE_RE.search(b) for b in bullets)
-    return False
+        return any(owned(b) for b in bullets)
+    return None
 
 
-def documents() -> dict[str, Path]:
-    return {p.stem: p for p in sorted(SET_DIR.glob("*.txt"))}
+@dataclass
+class Tally:
+    """One category's deterministic answers over the set, counted once."""
+
+    met: Counter = field(default_factory=Counter)
+    answered: Counter = field(default_factory=Counter)
+    anywhere: dict[str, int] = field(default_factory=dict)
+    bands: dict[str, str] = field(default_factory=dict)   # document -> band, or "-"
+
+    def constants(self) -> dict[str, bool]:
+        """Criteria answered the same way on every document, and which way."""
+        return {cid: bool(self.met[cid]) for cid, seen in self.answered.items()
+                if self.met[cid] in (0, seen)}
+
+
+def tally(docs: dict[str, Doc], spec: dict) -> Tally:
+    """Every parsed document through the deterministic judge, for one category."""
+    ids = [c["id"] for c in spec["criteria"]]
+    out = Tally()
+    for name, doc in docs.items():
+        if not doc.answerable:
+            continue
+        verdict = deterministic_verdict(doc, spec)
+        for criterion in spec["criteria"]:
+            cid = criterion["id"]
+            if cid in verdict.answers:
+                out.answered[cid] += 1
+                out.met[cid] += bool(verdict.answers[cid])
+            hit = anywhere(doc, criterion)
+            if hit is not None:
+                out.anywhere[cid] = out.anywhere.get(cid, 0) + hit
+        out.bands[name] = (band_of(verdict.answers, spec)["label"]
+                           if verdict.complete(ids) else "-")
+    return out
 
 
 def main() -> int:
@@ -96,35 +129,13 @@ def main() -> int:
     for name in unparsed:
         print(f"  ! {name}: {docs[name].note}")
 
-    failures: list[str] = list(unparsed and
-                               [f"{n}: {docs[n].note}" for n in unparsed] or [])
+    failures = [f"{n}: {docs[n].note}" for n in unparsed]
     notes: list[str] = []
     for slug in SLUGS:
         spec = load_spec(slug)
-        ids = [c["id"] for c in spec["criteria"]]
         order = [b["label"] for b in spec["bands"]]
-        bands: Counter[str] = Counter()
-        met: Counter[str] = Counter()
-        loose: Counter[str] = Counter()
-        answered: Counter[str] = Counter()
-        per_doc: dict[str, str] = {}
-        for name, doc in docs.items():
-            if not doc.answerable:
-                continue
-            verdict = deterministic_verdict(doc, spec)
-            for criterion in spec["criteria"]:
-                cid = criterion["id"]
-                if cid in verdict.answers:
-                    answered[cid] += 1
-                    met[cid] += bool(verdict.answers[cid])
-                if criterion.get("deterministic", {}).get("kind") in ANCHORED:
-                    loose[cid] += anywhere(doc, criterion)
-            if verdict.complete(ids):
-                label = band_of(verdict.answers, spec)["label"]
-                bands[label] += 1
-                per_doc[name] = label
-            else:
-                per_doc[name] = "-"
+        counts = tally(docs, spec)
+        bands = Counter(label for label in counts.bands.values() if label != "-")
 
         total = sum(bands.values())
         print(f"\n=== {spec['category']} ===")
@@ -132,9 +143,9 @@ def main() -> int:
             print("  no band: the deterministic judge abstains on this category "
                   "(no rule channel), so its spread is 09's to measure")
         else:
-            spread = "  ".join(f"{label} {bands.get(label, 0)}" for label in order)
+            spread = "  ".join(f"{label} {bands[label]}" for label in order)
             print(f"  bands over {total} documents:  {spread}")
-            thin = [label for label in order if bands.get(label, 0) < MIN_PER_BAND]
+            thin = [label for label in order if bands[label] < MIN_PER_BAND]
             if thin:
                 notes.append(f"{spec['category']}: band(s) "
                              f"{', '.join(thin)} under {MIN_PER_BAND} documents "
@@ -144,23 +155,24 @@ def main() -> int:
                 notes.append(f"{spec['category']}: band {top} holds "
                              f"{count}/{total} documents on the floor, over "
                              f"{MAX_BAND_SHARE:.0%}")
+        constants = counts.constants()
         for criterion in spec["criteria"]:
             cid = criterion["id"]
-            seen = answered[cid]
+            seen = counts.answered[cid]
             if not seen:
                 print(f"  {cid} {criterion['name']:<34} unanswerable by rule")
                 continue
-            extra = (f"   anywhere {loose[cid]}/{seen}"
-                     if criterion.get("deterministic", {}).get("kind") in ANCHORED
-                     else "")
-            print(f"  {cid} {criterion['name']:<34} met on {met[cid]}/{seen}{extra}")
-            if met[cid] in (0, seen):
+            extra = (f"   anywhere {counts.anywhere[cid]}/{seen}"
+                     if cid in counts.anywhere else "")
+            print(f"  {cid} {criterion['name']:<34} "
+                  f"met on {counts.met[cid]}/{seen}{extra}")
+            if cid in constants:
                 line = (f"{spec['category']}/{cid}: constant at "
-                        f"{'yes' if met[cid] else 'no'} across all {seen} documents")
+                        f"{'yes' if constants[cid] else 'no'} across all {seen} documents")
                 (failures if slug in BEHAVIOUR else notes).append(line)
         if args.documents:
-            for name in sorted(per_doc):
-                print(f"    {name:<38}{per_doc[name]}")
+            for name in sorted(counts.bands):
+                print(f"    {name:<38}{counts.bands[name]}")
 
     print()
     if notes:

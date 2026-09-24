@@ -17,15 +17,12 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from ats.rubric import SLUGS, load_spec  # noqa: E402
+from ats.rubric import load_spec  # noqa: E402
 from ats.sections import parse  # noqa: E402
 from scripts import acceptance_coverage as coverage  # noqa: E402
 from scripts import draw_briefs, make_acceptance_set  # noqa: E402
-from scripts.criteria_probe import deterministic_verdict, read_probe  # noqa: E402
-
-SET_DIR = ROOT / "corpus" / "resumes" / "synthetic"
-MANIFEST = ROOT / "corpus" / "resumes" / "manifest.json"
-BRIEFS = ROOT / "corpus" / "resumes" / "briefs.json"
+from scripts.criteria_probe import read_probe  # noqa: E402
+from scripts.make_acceptance_set import BRIEFS, MANIFEST  # noqa: E402
 
 # 08's floor: 30 documents give each category 30 paired band judgements and 150 paired
 # criterion judgements per provider, against 29 probes whose judges also wrote them.
@@ -34,7 +31,7 @@ MINIMUM = 30
 
 @pytest.fixture(scope="module")
 def documents() -> dict[str, Path]:
-    return {p.stem: p for p in sorted(SET_DIR.glob("*.txt"))}
+    return make_acceptance_set.documents()
 
 
 @pytest.fixture(scope="module")
@@ -113,18 +110,8 @@ def test_no_behaviour_criterion_is_constant_across_the_set(docs):
     information. A test set that lets that back in is not a test set.
     """
     for slug in coverage.BEHAVIOUR:
-        spec = load_spec(slug)
-        met: Counter[str] = Counter()
-        answered: Counter[str] = Counter()
-        for doc in docs.values():
-            verdict = deterministic_verdict(doc, spec)
-            for cid, value in verdict.answers.items():
-                answered[cid] += 1
-                met[cid] += bool(value)
-        for cid, seen in answered.items():
-            assert 0 < met[cid] < seen, (
-                f"{spec['category']}/{cid} is constant at "
-                f"{'yes' if met[cid] else 'no'} over {seen} documents")
+        constants = coverage.tally(docs, load_spec(slug)).constants()
+        assert not constants, f"{slug}: constant across the set: {constants}"
 
 
 def test_resume_craft_still_has_the_two_constants_08_recorded(docs):
@@ -136,11 +123,12 @@ def test_resume_craft_still_has_the_two_constants_08_recorded(docs):
     role, so a three-role resume is strictly harder than the two-role band probes the
     category was calibrated on. acceptance-set.md section 5 has the measurement. If
     this test fails, the finding it guards has changed -- go and read it.
+
+    Equality rather than two asserts, so a *new* constant fails it as surely as one of
+    these two starting to vary.
     """
-    spec = load_spec("resume-craft")
-    answers = [deterministic_verdict(doc, spec).answers for doc in docs.values()]
-    assert all(a["C4"] for a in answers)
-    assert not any(a["C5"] for a in answers)
+    constants = coverage.tally(docs, load_spec("resume-craft")).constants()
+    assert constants == {"C4": True, "C5": False}
 
 
 def test_every_document_renders_to_a_pdf_the_parser_reads(tmp_path, documents):
@@ -157,9 +145,3 @@ def test_every_document_renders_to_a_pdf_the_parser_reads(tmp_path, documents):
         resume = parse(doc.text)
         assert not withholding_reason(resume), name
 
-
-def test_the_set_covers_every_category_the_rubric_has():
-    assert set(SLUGS) == {
-        "production-ownership", "agentic-systems", "evaluation-rigour",
-        "ai-assisted-coding-fluency", "resume-craft",
-    }

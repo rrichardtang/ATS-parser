@@ -22,8 +22,8 @@ each document is drawn here, from a seeded sampler, before anybody writes a word
     including tracks that are not AI engineering, because a set where every document
     is a strong candidate measures nothing.
 
-The bands the set reaches are therefore **observed afterwards** (`--coverage` on
-`scripts/criteria_probe.py`), never targeted. If a band is thin the fix is more seeds,
+The bands the set reaches are therefore **observed afterwards**
+(`scripts/acceptance_coverage.py`), never targeted. If a band is thin the fix is more seeds,
 never an edit to a document that has already been drawn. See
 `docs/wayfinder/rubric-migration/acceptance-set.md` for the rule and its limits.
 
@@ -38,11 +38,9 @@ import hashlib
 import json
 import random
 import re
-import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
 JDS = ROOT / "corpus" / "jds"
 OUT = ROOT / "corpus" / "resumes" / "briefs.json"
@@ -154,45 +152,47 @@ JUNK_RE = re.compile(
 )
 
 
+MARKER_RE = re.compile(r"^[-*\u2022]\s+")
+
+
 def _bullets(raw: str) -> list[str]:
     """Requirement/responsibility bullets, with wrapped continuation lines rejoined.
 
     The corpus is hard-wrapped, so reading it line by line yields half-sentences. A
     bullet runs from its marker to the next marker, blank line or heading.
+
+    Deliberately not `ats/jd_sections.classify`, which reads the same postings for
+    the taxonomy: the pool is frozen by its digest in briefs.json, and routing it
+    through production code would let a change there silently re-draw the briefs the
+    documents were written from.
     """
     out: list[str] = []
     current: list[str] = []
+
+    def flush() -> None:
+        if current:
+            out.append(" ".join(current))
+
     for line in raw.splitlines():
         stripped = line.strip()
         if stripped.startswith("#"):
             continue
-        marker = bool(re.match(r"^[-*\u2022]\s+", stripped)) or stripped.lower().startswith("nice to have")
-        if marker:
-            if current:
-                out.append(" ".join(current))
-            current = [re.sub(r"^[-*\u2022]\s+", "", stripped)]
-        elif not stripped:
-            if current:
-                out.append(" ".join(current))
-            current = []
-        elif current and line.startswith((" ", "\t")):
+        if MARKER_RE.match(stripped) or stripped.lower().startswith("nice to have"):
+            flush()
+            current = [MARKER_RE.sub("", stripped)]
+        elif stripped and current and line.startswith((" ", "\t")):
             current.append(stripped)
         else:
-            if current:
-                out.append(" ".join(current))
+            flush()
             current = []
-    if current:
-        out.append(" ".join(current))
+    flush()
     return [b for b in (b.strip() for b in out) if 40 <= len(b) <= 260 and not JUNK_RE.search(b)]
 
 
-def _lines_from_txt(path: Path) -> list[str]:
-    return _bullets(path.read_text(encoding="utf-8"))
-
-
-def _lines_from_json(path: Path) -> list[str]:
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return _bullets(data.get("raw_text", ""))
+def _raw(path: Path) -> str:
+    """A posting's text: the `.txt` file itself, or a personal posting's `raw_text`."""
+    text = path.read_text(encoding="utf-8")
+    return text if path.suffix == ".txt" else json.loads(text).get("raw_text", "")
 
 
 def work_pool() -> list[dict]:
@@ -208,8 +208,7 @@ def work_pool() -> list[dict]:
     pool: list[dict] = []
     seen: set[str] = set()
     for path in sorted(JDS.glob("*.txt")) + sorted((JDS / "user").glob("*.json")):
-        lines = _lines_from_txt(path) if path.suffix == ".txt" else _lines_from_json(path)
-        for line in lines:
+        for line in _bullets(_raw(path)):
             key = line.lower()
             if key in seen:
                 continue
