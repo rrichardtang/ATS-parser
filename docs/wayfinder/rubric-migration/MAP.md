@@ -159,7 +159,8 @@ and the drift problem does not arise.
   category names its two readings rather than printing a range. A **withheld** category
   is excluded from the composite, which renormalises over what was checked, and
   withholding is resolved from the *document* so the deterministic-only path is fixed
-  too. Side effect: `two_column` no longer outranks `buried_evidence`.
+  too. Side effect, on the recorded judge only: `two_column` no longer outranked
+  `buried_evidence`. Live, it does again (07).
 - **`content/bullet-invariants` is `content/no-outcome`** (04, implementing 12). It
   deducts on one predicate. The other three are priced elsewhere or nowhere —
   ownership in `Production ownership`, measurability nowhere now that
@@ -171,7 +172,7 @@ and the drift problem does not arise.
   subprocess. The pin is load-bearing: 02 reads as a documentation ticket and removed
   four `RULE_DIMENSION` entries, so a later commit would have moved the *before*
   picture silently. Three judge channels: recorded (the fixtures), rules-only (any
-  document), live (first run 25 September, on the owner's resume; the fixtures are still to go).
+  document), live (run 25 September on the seven fixtures and the owner's resume).
   [both-rubrics.md](both-rubrics.md).
 - **The rubric is measured on a drawn set, and bands are observed rather than
   targeted** (08). Three tiers: 30 invented documents in `corpus/resumes/synthetic/`,
@@ -240,10 +241,20 @@ and the drift problem does not arise.
   have when 07 wrote §5, though a dimension is not a rule — or 09 measures the exposure
   and rules on whether it is real. See [weight-budget.md](weight-budget.md) §3.
 - **What `parse/multi-column` should cost.** 12 points for a document-wide defect, still
-  nobody's decision. The *inversion* 02 observed — a resume no parser can read scoring
-  above one that parses cleanly and buries its evidence — is closed by 06: `two_column`
-  now lands at 86.6 against `buried_evidence`'s 90.1, because the composite stopped
-  scoring five categories it never assessed. The price of the rule itself is untouched.
+  nobody's decision. The price of the rule itself is untouched.
+- **A withheld category costs nothing, so a parse failure outranks a good resume**
+  (found by 07's live run). 06 appeared to close 02's inversion: `two_column` at 86.6
+  against `buried_evidence` at 90.1, but on the recorded judge. Live, `buried_evidence` is
+  65.6 and `strong` 72.4, because both providers mark the behaviour block down on every
+  readable document. `two_column` escapes it: its roles do not parse, all five judged
+  categories are withheld, and the composite renormalises over the three it checked.
+  It ranks first of the seven fixtures, 14.2 above `strong`. Renormalising was 06's
+  answer to *don't score what you never assessed*. What it leaves open is what a
+  document should pay for being unassessable. The other map's, raised from here.
+- **`Production ownership` C4 is where the providers disagree** (found by 07). Six
+  one-band splits in 25 live category readings, four of them `Production ownership`,
+  three of those on C4. 09 should report agreement per criterion, not only per
+  category, or this will read as a category-wide tolerance problem.
 - **What the report does with an unmet criterion.** 05 produces them — one per
   criterion per resume, carrying the absence the candidate most needs to hear — and
   stops there, because nothing in the report renders a non-finding today. They ride
