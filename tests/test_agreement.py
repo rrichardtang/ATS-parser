@@ -395,3 +395,70 @@ def test_a_recording_that_carries_both_shapes_keeps_its_numbers():
     assert mixed.categories["Resume craft"] == pure.categories["Resume craft"] == 82.0
     # and the criteria half still bands rather than falling back
     assert mixed.categories["Production ownership"] == 46.0
+
+
+def _answered(provider, sample, met_ids, category=Category.PRODUCTION_OWNERSHIP):
+    """A post-05 reply: criterion answers and no band, as the model now returns."""
+    from ats.rubric import load_spec, slug_by_category
+    spec = load_spec(slug_by_category()[category.value])
+    criteria = [{"id": c["id"], "answer": "yes" if c["id"] in met_ids else "no"}
+                for c in spec["criteria"]]
+    return passes.ContentJudgment(provider, sample, {category.value: {"criteria": criteria}}, [])
+
+
+def test_criterion_agreement_is_measured_from_the_answers():
+    """09: the primary measurement. Two providers, two samples each, splitting on one
+    criterion and agreeing on the other four."""
+    everything = {"C1", "C2", "C3", "C4", "C5"}
+    judgments = [
+        _answered("anthropic", 0, everything), _answered("anthropic", 1, everything),
+        _answered("openai", 0, everything - {"C4"}), _answered("openai", 1, everything - {"C4"}),
+    ]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    rows = {r.criterion: r for r in agreement.analyse(run).criteria}
+
+    assert rows["production-ownership/C4"].disagree == 1
+    assert all(rows[f"production-ownership/C{i}"].agree == 1 for i in (1, 2, 3, 5))
+    assert "Per-criterion agreement" in render(agreement.analyse(run))
+
+
+def test_a_band_is_derived_from_the_answers_when_the_reply_names_none():
+    """Since 05 the model names no band, so the band table has to look one up. Without
+    this it was empty on every live run, with no note saying why."""
+    everything = {"C1", "C2", "C3", "C4", "C5"}
+    judgments = [_answered("anthropic", 0, everything),
+                 _answered("openai", 0, everything - {"C4"})]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    report = agreement.analyse(run)
+
+    [row] = report.bands
+    assert row.category == Category.PRODUCTION_OWNERSHIP.value
+    assert row.exact == 0 and row.resumes == 1
+    labels = {agreement.band_of(j_cat, entry)
+              for j in judgments for j_cat, entry in j.categories.items()}
+    assert labels == {"A", "C"}, "the fixtures' live split, reproduced from answers"
+
+
+def test_a_provider_that_flips_a_criterion_on_rerun_is_unstable():
+    everything = {"C1", "C2", "C3", "C4", "C5"}
+    judgments = [
+        _answered("anthropic", 0, everything), _answered("anthropic", 1, everything - {"C4"}),
+        _answered("openai", 0, everything), _answered("openai", 1, everything),
+    ]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    rows = {r.criterion: r for r in agreement.analyse(run).criteria}
+    c4 = rows["production-ownership/C4"]
+    assert c4.unstable == 1 and c4.agree == 0 and c4.disagree == 0
+
+
+def test_a_foreign_band_vocabulary_is_not_ranked_on_the_spec_ladder():
+    """A pre-05 recording names bands the specs do not. With no --bands, the ladder
+    E to A must not be applied to them: the old note says adjacency is unknown."""
+    judgments = [
+        passes.ContentJudgment("anthropic", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
+        passes.ContentJudgment("openai", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "solid"}}, []),
+    ]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    report = agreement.analyse(run)
+    assert any("no band order was declared" in note for note in report.notes)
+    assert report.bands[0].far == 1

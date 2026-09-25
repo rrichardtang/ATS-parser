@@ -86,6 +86,24 @@ def render(report: AgreementReport) -> str:
             "",
         ]
 
+    if report.criteria:
+        out += ["Per-criterion agreement: the primary measurement (09)", ""]
+        out += _table(
+            ["criterion", "n", "agree", "disagree", "unstable", "alpha"],
+            [
+                [row.criterion, str(row.resumes), str(row.agree), str(row.disagree),
+                 str(row.unstable), str(row.alpha)]
+                for row in report.criteria
+            ],
+        )
+        out += [
+            "",
+            "  agree/disagree  the providers' yes/no, on resumes where each was consistent",
+            "  unstable        one provider answered both yes and no across its own reruns",
+            "  alpha           Krippendorff, nominal, between providers",
+            "",
+        ]
+
     if report.bands:
         out += ["Per-category band agreement", ""]
         out += _table(
