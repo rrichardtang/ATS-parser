@@ -295,6 +295,22 @@ documents written to exercise the rubric. The real number is
   report's own rounding. Kept because 04 kept the entry deliberately; recorded as the
   case for retiring the mechanism.
 
+- **A withheld category scores as no evidence** (13, the owner's decision). When a
+  resume's roles do not survive extraction, each judged category scores the band its
+  spec gives a document where every criterion is `no`, which is E (10) for all five.
+  Migration 06 had excluded withheld categories and renormalised, so withholding cost
+  nothing and `two_column` ranked first of seven on live judges. It now scores 29.1.
+  The parse defect is charged twice, once by the parser gate and once as missing
+  evidence, and that is accepted: an ATS that stores no work history forwards nothing a
+  reader can use.
+
+- **`Resume craft`'s per-bullet rules charge by share** (14, the owner's decision). The
+  six rules that fire at most once per bullet (`content/no-outcome`, `slop/portable`,
+  `content/passive-voice`, `content/first-person`, `content/long-bullet`,
+  `content/weak-opener`) cost their severity times the share of bullets that fail, so
+  the same proportion of weak bullets costs the same at any length. Rules that fire per
+  match or per pair (`slop/banned-word`, `content/duplicate-bullet`) are unchanged.
+
 ## Not yet specified
 
 - **Whether the acceptance test has ever passed on the rubric being designed.** It has

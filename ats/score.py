@@ -50,6 +50,22 @@ def rule_shares() -> dict[Category, float]:
             for name, slug in rubric.slug_by_category().items()}
 
 
+@functools.lru_cache(maxsize=1)
+def no_evidence_values() -> dict[Category, float]:
+    """The value each judged category's spec gives a document where every criterion is `no`.
+
+    What a withheld category scores (grounding ticket 13). Read through `band_of` rather
+    than written down, so it is the spec's own answer to *no evidence* and moves with
+    the spec.
+    """
+    values = {}
+    for name, slug in rubric.slug_by_category().items():
+        spec = rubric.load_spec(slug)
+        band = rubric.band_of({c["id"]: False for c in spec["criteria"]}, spec)
+        values[Category(name)] = float(band["value"])
+    return values
+
+
 FRAUD_RULES = {"parse/hidden-text"}
 # When there is no text layer, nothing downstream ran -- so every other category
 # sits at its default 100 and the composite comes out near-perfect for a file no
@@ -88,7 +104,8 @@ def _cost(finding: Finding, weights: dict[Category, float], points: dict[Severit
     weight -- amplifying by target-role signal never reopens the hard-gate risk
     this clamp exists to close.
     """
-    raw = points[finding.severity] * config.dimension_multiplier(finding.rule_id)
+    raw = (points[finding.severity] * config.dimension_multiplier(finding.rule_id)
+           * finding.cost_scale)
     if finding.rule_id in FRAUD_RULES:
         return raw
     ceiling = weights[finding.category] * config.scoring()["max_single_finding_share"]
@@ -107,14 +124,13 @@ def build(
 
     `withheld` maps a category to why it could not be judged on this document at all --
     05's case, where the roles did not survive extraction so no criterion has a subject.
-    A withheld category is **not assessed**: it is printed with its reason and left out
-    of the composite, which renormalises over what was actually checked. Scoring it as
-    a 0 would charge the parse defect twice, the parser gate having already found and
-    deducted for it; scoring it at any other constant would put a number nobody
-    measured on 52.5 of the composite's points. Leaving it in at its rule channel --
-    which is what this function did before it was told about withholding -- floats
-    three judged categories at 100 on a document no parser can read, which is the bug
-    ticket 06 was written around.
+    A withheld category scores what its spec gives a document with **no evidence**
+    (`no_evidence_values`), because that is what an ATS holds for a resume whose work
+    history it could not read. Grounding ticket 13 chose this over 06's rule, which left
+    the category out and renormalised: that made withholding free, and on live judges
+    `two_column` then outranked every readable fixture. The parse defect is charged
+    twice, once by the parser gate and once here, and that is deliberate: the second
+    charge is what the defect costs the reader, not a second count of the same defect.
     """
     weights = config.category_weights()
     points = config.severity_points()
@@ -155,16 +171,15 @@ def build(
     # 100 and carry its full weight, manufacturing a result from a check that never
     # ran. It is printed and left out of the arithmetic instead. The last clause keeps
     # that self-correcting -- if a finding does deduct there, the category is assessed
-    # after all and its deduction counts. A *withheld* category is the one case that
-    # clause must not rescue: withholding says the criteria have no subject on this
-    # document, which a stray slop finding does not make untrue, so it is checked
-    # first and a deduction there costs nothing (see `share` below).
+    # after all and its deduction counts. A *withheld* category is always assessed: it
+    # scores as no evidence (see `build`'s docstring), and a deduction there costs
+    # nothing (see `share` below).
     assessed = {
-        category: (category not in withheld
-                   and (category not in JUDGED_CATEGORIES
-                        or category in llm_categories
-                        or shares[category] > 0
-                        or deductions[category] > 0))
+        category: (category in withheld
+                   or category not in JUDGED_CATEGORIES
+                   or category in llm_categories
+                   or shares[category] > 0
+                   or deductions[category] > 0)
         for category in weights
     }
 
@@ -178,13 +193,13 @@ def build(
         # A category floors at zero, so deductions past 100 cost nothing. Scaling
         # by that keeps the reported points equal to what was actually lost.
         floor_scale = (min(raw_total, 100.0) / raw_total) if raw_total > 0 else 0.0
-        # A finding in a category the composite excluded moved nothing, so it reports
-        # nothing. Before withholding this could not arise -- `assessed` was false only
-        # where `deductions` was zero -- and quoting a category-weighted cost for a
-        # category outside `total_weight` would put points on a card that the composite
-        # never lost.
+        # A finding moves nothing, and reports nothing, where its category is out of
+        # the composite or withheld: a withheld category scores its no-evidence value
+        # whatever was deducted there, so quoting a cost would put points on a card
+        # that the composite never lost.
         share = ((weights[finding.category] / total_weight)
-                 if total_weight and assessed[finding.category] else 0.0)
+                 if total_weight and assessed[finding.category]
+                 and finding.category not in withheld else 0.0)
         finding.points = round(finding._raw_cost * share * floor_scale, 2)
 
     unreadable = any(f.rule_id in UNREADABLE_RULES for f in charged)
@@ -215,10 +230,11 @@ def build(
                 high = round(
                     rule_score * rule_share + judged.high_value * (1 - rule_share), 1)
             rule_score = blended
+        if category in withheld and not unreadable:
+            rule_score, note = no_evidence_values()[category], withheld[category]
         if not assessed[category]:
             rule_score, low, high, contested = 0.0, None, None, False
-            note = withheld.get(category) or (
-                "not assessed -- no judge answered it and no rule reaches it")
+            note = "not assessed -- no judge answered it and no rule reaches it"
         categories.append(CategoryScore(
             category=category, score=round(rule_score, 1), weight=weight,
             low=low, high=high, note=note, assessed=assessed[category],
@@ -246,13 +262,19 @@ def build(
     if unreadable:
         caps.append(("Nothing else could be assessed", composite))
 
+    # What the withheld categories cost, as its own ledger row rather than folded into
+    # the reconciliation row, which would call it judgement or rounding.
+    withheld_cost = (sum(c.weight * (100.0 - c.score) for c in categories
+                         if c.category in withheld) / total_weight
+                     if total_weight and not unreadable else 0.0)
+
     ledger = _build_ledger(
         findings, categories, weights, caps, composite,
-        blended=bool(llm_categories),
+        blended=bool(llm_categories), withheld_cost=withheld_cost,
     )
 
-    parser_sub = _subscore(categories, Gate.PARSER, withheld)
-    human_sub = _subscore(categories, {Gate.RECRUITER, Gate.MANAGER}, withheld)
+    parser_sub = _subscore(categories, Gate.PARSER)
+    human_sub = _subscore(categories, {Gate.RECRUITER, Gate.MANAGER})
     if unreadable:
         # Nothing about the content was assessed, so claiming a human-gate score
         # would be inventing a result.
@@ -278,32 +300,16 @@ def build(
     )
 
 
-def _subscore(
-    categories: list[CategoryScore],
-    gate,
-    withheld: dict[Category, str] | None = None,
-) -> float | None:
-    """One gate's score, or None where the gate cannot be spoken for.
+def _subscore(categories: list[CategoryScore], gate) -> float | None:
+    """One gate's score, or None where nothing in the gate was assessed.
 
-    `None` rather than a number, for the same reason `CategoryScore.assessed` exists:
-    the average renormalises over the rows it has, so a gate whose categories were
-    mostly withheld reports the few that survived as though they were the whole gate.
-    Measured on `two_column`, which parses to zero roles: five of the six human-gate
-    categories withheld, `Title & seniority alignment` alone assessed at 100, and the
-    report printed **human gate 100** beside five rows reading `n/a` -- a perfect score
-    for a document no parser can read.
-
-    A withheld category is not a badly-scoring one; it is one nobody looked at. So the
-    gate holding it declines rather than averaging over the remainder. This is narrower
-    than "any unassessed category": a judged category with no judge answer is a degraded
-    run, already flagged partial, and suppressing the gate there would take the number
-    away on every deterministic-only run.
+    A withheld category is in the average at its no-evidence value (ticket 13), so on
+    `two_column` the human gate is Title at 100 and five categories at 10, not the
+    **100** Title alone once printed.
     """
     gates = gate if isinstance(gate, set) else {gate}
     from .models import CATEGORY_GATE
     in_gate = [c for c in categories if CATEGORY_GATE[c.category] in gates]
-    if withheld and any(c.category in withheld for c in in_gate):
-        return None
     rows = [c for c in in_gate if c.assessed]
     total = sum(c.weight for c in rows)
     if not total:
@@ -320,6 +326,7 @@ def _build_ledger(
     caps: list[tuple[str, float]],
     composite: float,
     blended: bool,
+    withheld_cost: float = 0.0,
 ) -> list[LedgerRow]:
     """One row per rule, showing what it actually cost the composite.
 
@@ -353,6 +360,11 @@ def _build_ledger(
         rows.append(LedgerRow(
             label=label, points=-round(cost, 1),
             rule_id=rule_id, category=category,
+        ))
+    if withheld_cost >= 0.05:
+        rows.append(LedgerRow(
+            label="No work history could be read: judged categories scored as no evidence",
+            points=-round(withheld_cost, 1), rule_id="score/withheld",
         ))
     rows.sort(key=lambda r: r.points)
 

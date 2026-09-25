@@ -125,6 +125,8 @@ def analyze(resume: Resume, full_text: str) -> list[Finding]:
                     evidence=bullet[:120],
                     locator=locator,
                     provenance=Provenance.RECRUITER_EVIDENCE,
+                    # Once per bullet, so charged by share (grounding 14).
+                    cost_scale=1 / len(resume.bullets),
                 )
             )
 

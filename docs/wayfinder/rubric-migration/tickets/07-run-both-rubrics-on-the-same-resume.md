@@ -1,5 +1,5 @@
 type: prototype (HITL)
-status: open
+status: closed
 claimed: claude
 blocked-by: 06
 
@@ -111,9 +111,81 @@ disagree with it. That is 09's, and this comparison cannot stand in for it.
   two predictions.
 - `MAP.md` — one decision, two open questions.
 
-## What is left
+## The first live run: the owner's resume (25 September)
 
-1. Run the live path with `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` set, on the fixtures
-   and on the owner's resume (`--doc`). Then this ticket closes.
+The owner ran `--doc` on their own resume on their own machine, with both keys set. The
+live path worked end to end on its first run. Only numbers and ids are recorded here; the
+resume and its quoted text stay off the repo.
+
+| | old | new | moved |
+|---|---|---|---|
+| composite | 64.7 (D) | 59.3 (F) | -5.4 |
+| parser gate | 92.5 | 91.5 | -1.0 |
+| human gate | 57.7 | 51.2 | -6.5 |
+
+- **The fall is mostly the `Resume craft` floor, on a real document now.** The judges put
+  the category in band C (58), with no unmet criterion. It scores **17.4**, which is
+  0.3 × 58 + 0.7 × 0: the rule channel is floored, as on 30 of 08's 30 documents.
+  At weight 25 that floor costs about 10 composite points, more than the 5.4 the resume
+  fell, so the D to F is this open item and not a judgement about the resume.
+- **The two providers split on 2 of 5 judged categories, one criterion each, one band
+  apart.** `Agentic systems` split on C3 (C or B, scored C) and `Production ownership`
+  on C3 (D or C, scored D). They agreed on the other three. This is the first reading
+  of two live judges under the band lookup. It is one document, so it is an input to
+  09 and not a tolerance verdict.
+- **Two script fixes, found by the run.** The channel label still said *never yet run*,
+  and a rule id of 34 characters ran into the next column. Both fixed.
+
+## The live run on the seven fixtures (25 September)
+
+The owner ran `--fixtures` with both keys set. (Their checkout predates the two script
+fixes above, so their output still carried the old label.)
+
+| fixture | old | new | moved |
+|---|---|---|---|
+| strong | 84.1 (B) | 72.4 (C) | -11.7 |
+| no_phone | 83.2 (B) | 72.9 (C) | -10.3 |
+| buried_evidence | 76.0 (C) | 65.6 (D) | -10.4 |
+| slop | 34.6 (F) | 38.1 (F) | +3.5 |
+| two_column | 64.1 (D) | 86.6 (B) | +22.5 |
+| hidden_text | 40.0 (F) | 40.0 (F) | +0.0 |
+| scanned | 0.0 (F) | 0.0 (F) | +0.0 |
+
+- **The inversion is back, and larger.** `two_column`, whose roles do not parse, scores
+  86.6 and ranks **first** of the seven: above `strong` (72.4) by 14.2 and above
+  `buried_evidence` (65.6) by 21.0. 06 said the inversion was closed on the strength of
+  `buried_evidence` at 90.1, but that was the recorded judge. Live, the two models mark
+  every readable document down on the behaviour block, and `two_column` escapes that
+  because all five judged categories are withheld and the composite renormalises over
+  the three it checked. Withholding a category costs nothing, so a parse failure is
+  now worth about 14 points against a good resume. The old rubric ranked it fourth.
+- **02's constant holds on live judges.** `Agentic systems` and `AI-assisted coding
+  fluency` are band E, every criterion unmet, on all four fixtures that were judged,
+  from both providers. It weighs on the 10 to 12 point fall of the three readable
+  good fixtures: 22.5 points of weight at a value of 10.
+- **`Production ownership` C4 splits the providers on every good fixture.** Over the
+  five live documents (four fixtures and the owner's resume), the two providers split
+  on 6 of 25 category readings, each by one band. Four of the six are
+  `Production ownership`: C4 on `strong`, `no_phone` and `buried_evidence`, C3 on the
+  owner's resume. The others are `Resume craft` C4 on `buried_evidence` and
+  `Agentic systems` C3 on the owner's resume. `slop` had no splits. That makes one
+  criterion, C4 *post-launch work*, the one most of the disagreement comes from. It is
+  a count from five documents, not a tolerance.
+- **`Resume craft` discriminates on the fixtures and not on real resumes.** 90.1 on
+  `strong` and `no_phone`, 67.8 on `buried_evidence`, 3.0 on `slop`. That is the spread a
+  short document allows. The owner's resume, at full length, was floored to 17.4 at
+  band C (above).
+- **The old rubric's providers disagreed by up to 28 points inside one category**
+  (`AI/ML relevance & depth` on `hidden_text`, 20 to 48). The new rubric's widest
+  disagreement is one band. Whether one band fits inside the acceptance bar is 09's.
+- `hidden_text` and `scanned` do not move. The fraud cap and the unreadable path set
+  them on both sides.
+
+## Closed
+
+Every document the ticket named has been through the live path, and each difference
+above is explained by a category and criterion. What the run found goes to 09 (the
+`Production ownership` C4 split) and back to the other map (the withheld-category
+inversion, and the `Resume craft` floor).
 2. 09 is unblocked for everything that does not need 07's live run, since its inputs are
    08's set and the harness rather than this comparison.

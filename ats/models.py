@@ -131,6 +131,10 @@ class Finding(BaseModel):
     # What this finding cost the composite. Set during scoring so the report and
     # the ledger always quote the same number.
     points: float = 0.0
+    # Multiplies the severity cost. A `Resume craft` rule that fires once per bullet
+    # sets it to 1 / bullets, so it charges for the share of bullets that fail rather
+    # than their count, and a long resume is not floored for being long (grounding 14).
+    cost_scale: float = 1.0
     # Category-space severity cost, kept only while scoring converts it into the
     # composite-space `points` above.
     _raw_cost: float = 0.0
@@ -350,9 +354,7 @@ def _gate_text(value: float | None) -> str:
 class Report(BaseModel):
     composite: float
     grade: str
-    # None where the gate could not be spoken for -- see `score._subscore`. A gate whose
-    # categories were withheld reports no number rather than averaging over whichever
-    # ones happened to survive.
+    # None where nothing in the gate was assessed -- see `score._subscore`.
     parser_subscore: float | None
     human_subscore: float | None
     categories: list[CategoryScore] = Field(default_factory=list)

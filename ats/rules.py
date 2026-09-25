@@ -321,6 +321,12 @@ def content_mechanics(resume: Resume) -> list[Finding]:
                 gate=Gate.MANAGER,
             ))
 
+    # Every `Resume craft` rule above fires at most once per bullet, so it charges for
+    # the share of bullets that fail (grounding 14).
+    for finding in out:
+        if finding.category is Category.RESUME_CRAFT:
+            finding.cost_scale = 1 / len(bullets)
+
     rate = quantified / len(bullets)
     if rate < QUANTIFICATION_TARGET:
         out.append(_finding(

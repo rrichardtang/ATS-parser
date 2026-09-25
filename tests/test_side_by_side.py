@@ -76,18 +76,18 @@ def test_a_withheld_document_is_not_given_a_band(two_column):
     assert new["withheld_but_recorded"]
     assert not new["judged"]
     judged_rows = [c for c in new["categories"] if c["category"] in JUDGED]
-    assert all(not c["assessed"] for c in judged_rows)
+    assert all(c["note"].startswith("withheld") for c in judged_rows)
 
 
-def test_a_gate_with_no_score_prints_n_a(two_column):
-    """A gate holding a withheld category reports None, not a number (score._subscore);
-    the comparison has to print that rather than fail formatting it."""
+def test_a_withheld_document_prints_its_no_evidence_scores(two_column):
+    """Grounding 13: the withheld rows print the no-evidence value and why, and the
+    human gate is a number again rather than n/a."""
     old = sbs.run_old(two_column, None)
     new = sbs.run_new(two_column, None)
-    assert new["human_subscore"] is None
-    human = next(line for line in sbs.render("two_column", old, new, "rules-only")
-                 if line.startswith("human gate"))
-    assert human.split()[-2:] == ["n/a", "n/a"]
+    assert new["human_subscore"] is not None
+    text = sbs.render("two_column", old, new, "rules-only")
+    row = next(line for line in text if line.strip().startswith("Agentic systems"))
+    assert "10.0" in row and "withheld" in row
 
 
 def test_the_rename_and_the_retirement_are_still_true(strong, two_column, tmp_path):
