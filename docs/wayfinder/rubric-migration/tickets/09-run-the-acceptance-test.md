@@ -74,6 +74,7 @@ The run itself is left: it needs both keys, which this session does not have.
     .venv/bin/python scripts/agreement_harness.py --acceptance-set --resume <resume.pdf>
 
 That is 38 documents (7 fixtures, 30 drawn, the owner's resume) × 2 providers × 2
-samples, up to 152 calls. The three fixtures whose roles do not parse are withheld
-before any call, so 140 in practice. The raw replies go to `runs/`, which is
+samples, up to 152 calls. Three fixtures are skipped before any call (`two_column`
+and `hidden_text` are withheld because their roles do not parse, and `scanned` has no
+text layer), so 140 in practice. The raw replies go to `runs/`, which is
 gitignored; the printed tables quote nothing and are what belongs here.

@@ -449,3 +449,16 @@ def test_a_provider_that_flips_a_criterion_on_rerun_is_unstable():
     rows = {r.criterion: r for r in agreement.analyse(run).criteria}
     c4 = rows["production-ownership/C4"]
     assert c4.unstable == 1 and c4.agree == 0 and c4.disagree == 0
+
+
+def test_a_foreign_band_vocabulary_is_not_ranked_on_the_spec_ladder():
+    """A pre-05 recording names bands the specs do not. With no --bands, the ladder
+    E to A must not be applied to them: the old note says adjacency is unknown."""
+    judgments = [
+        passes.ContentJudgment("anthropic", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
+        passes.ContentJudgment("openai", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "solid"}}, []),
+    ]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    report = agreement.analyse(run)
+    assert any("no band order was declared" in note for note in report.notes)
+    assert report.bands[0].far == 1

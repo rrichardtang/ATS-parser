@@ -31,6 +31,7 @@ reply on `ContentJudgment` rather than a parsed number.
 """
 from __future__ import annotations
 
+import functools
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -229,14 +230,16 @@ def band_of(category: str, entry: dict) -> str | None:
     answers = passes.criterion_answers({category: entry})
     if not answers:
         return None
-    slug = rubric.slug_by_category().get(category)
-    if slug is None:
-        return None
-    spec = rubric.load_spec(slug)
+    spec = _spec(passes.criteria_index()[answers[0].category][0])
     by_id = {a.criterion_id.split("/", 1)[1]: a.met for a in answers}
     if any(c["id"] not in by_id for c in spec["criteria"]):
         return None
     return rubric.band_of(by_id, spec)["label"]
+
+
+@functools.lru_cache(maxsize=None)
+def _spec(slug: str) -> dict:
+    return rubric.load_spec(slug)
 
 
 def spec_band_order() -> list[str] | None:
@@ -552,7 +555,19 @@ def analyse(run: HarnessRun, band_order: list[str] | None = None) -> AgreementRe
         for r in live
     }
 
-    band_order = band_order or spec_band_order()
+    if not band_order:
+        # The specs' ladder, but only for labels it contains. A recording made
+        # before 05 may use another vocabulary, and ranking that on E to A would
+        # print an ordinal alpha over an order nobody declared.
+        default = spec_band_order() or []
+        seen = {
+            label
+            for r in live for j in r.judgments
+            for name, entry in j.categories.items()
+            if (label := band_of(name, entry)) is not None
+        }
+        if seen and seen <= set(default):
+            band_order = default
     report.numeric = _numeric_tables(live, scored)
     report.criteria = _criterion_tables(live)
     report.bands = _band_tables(live, band_order)
