@@ -1,5 +1,5 @@
 type: task (AFK)
-status: open
+status: closed
 claimed: claude
 blocked-by: 07, 08
 
@@ -91,3 +91,95 @@ code turned up two faults behind the silence, both fixed:
   passes, which had the same fault.
 - The harness saved only at the end, so a crash or Ctrl-C discarded every call already
   paid for. It now saves and prints a progress line after each resume.
+
+## The run, 25 September
+
+Run by the owner with both keys: `anthropic:claude-sonnet-5` and `openai:gpt-5.6-luna`,
+2 samples each, on 38 documents (7 fixtures, 08's 30 drawn documents, the owner's
+resume). Three fixtures were skipped before any call (`two_column`, `hidden_text`
+withheld; `scanned` has no text layer), so 35 documents were judged, 140 replies, 47.4
+minutes, no failed calls. The raw run is `runs/agreement-20260925T034102Z.json` on the
+owner's machine, gitignored. The temperature did not reach either provider (both
+current models dropped the parameter), so reruns measure each provider's own default
+sampling.
+
+### Criterion agreement, the primary measurement
+
+875 criterion readings (25 criteria × 35 documents). **Unstable 107, disagree 59,
+agree 709.** A provider changing its own answer between two samples of the same document
+happened almost twice as often as the two providers disagreeing.
+
+| category | agree | disagree | unstable | alpha, lowest to highest |
+|---|---|---|---|---|
+| `Production ownership` | 129 | 18 | 28 | 0.27 (C4) to 0.67 |
+| `Resume craft` | 133 | 14 | 28 | 0.27 (C3) to 1.00 |
+| `Agentic systems` | 133 | 14 | 28 | 0.67 to 0.81 |
+| `Evaluation rigour` | 145 | 10 | 20 | 0.71 (C3) to 1.00 |
+| `AI-assisted coding fluency` | 169 | 3 | 3 | 0.66 to 1.00 |
+
+The weakest criteria: `production-ownership/C2` (11 unstable, alpha 0.48), `/C3`
+(0.47), `/C4` (0.27), `resume-craft/C2` (10 unstable, 0.42) and `/C3` (0.27).
+
+### Bands, derived from the answers
+
+| category | exact | adjacent | far | unstable | alpha | verdict |
+|---|---|---|---|---|---|---|
+| `AI-assisted coding fluency` | 34 | 0 | 0 | 1 | 1.00 | look |
+| `Evaluation rigour` | 24 | 3 | 0 | 8 | 0.93 | FAIL |
+| `Agentic systems` | 19 | 3 | 1 | 12 | 0.74 | FAIL |
+| `Resume craft` | 7 | 8 | 0 | 20 | 0.56 | FAIL |
+| `Production ownership` | 9 | 0 | 7 | 19 | 0.33 | FAIL |
+
+### Composite
+
+Between the two providers' mean composites (no-deduct): 26 pass, 6 look, **3 FAIL**
+(`05-career-changer-eval` 9.8, `29-returning-agentic-corporate` 9.8,
+`30-junior-genai-product` 11.8). The owner's resume: 1.0. The composite passes on 26 of
+35 while four categories fail at band level, because a category disagreement is diluted
+by its weight and by averaging two samples per provider.
+
+### Findings
+
+Placed-finding agreement is at or below chance on every document under every key: the
+highest kappa is +0.00. Two providers naming a defect do not name it in the same place
+more often than random flagging would.
+
+## Against the five proxy verdicts
+
+| category | proxy | this run |
+|---|---|---|
+| `Production ownership` | LOOK | **FAIL**, the worst: 7 far splits, alpha 0.33 |
+| `AI-assisted coding fluency` | unmeasured | look, near-perfect. Probably a floor: on these documents almost every answer is likely `no`, which agrees by construction. Check prevalence in the raw run before crediting the category. |
+| `Evaluation rigour` | PASS | **FAIL** by the verdict rule, but alpha 0.93. It fails on 3 adjacent splits and 8 unstable documents |
+| `Agentic systems` | LOOK | **FAIL**, 12 unstable |
+| `Resume craft` | LOOK | **FAIL**, 20 unstable |
+
+**The pre-registered `Resume craft` prediction was wrong about where.** It said the
+category would fail first, through C4 and C5 not being independent. It fails, but C4
+and C5 are its two best criteria (agree 34 and 33, alpha 1.00). Its failure is C1 to C3
+and instability. C4 and C5 agreeing is most likely the same floor migration 08 found (C5
+`yes` on 0 of 30 full-length documents): both judges say `no` because both criteria get
+harder with length. It is not evidence the criteria work.
+
+## What it means
+
+1. **Repeatability is the first problem, not agreement between providers.** 107 unstable
+   readings against 59 disagreements. No wording fix aimed at making two providers agree
+   can pass while one provider disagrees with itself this often.
+2. **The band verdict rule cannot be passed at this sample size.** More than one adjacent
+   split in 35 documents is a FAIL, so `Evaluation rigour` fails at alpha 0.93.
+   Krippendorff's usual reading is 0.800 or above reliable, 0.667 to 0.800 tentative.
+   On that reading: `AI-assisted coding fluency` and `Evaluation rigour` pass, `Agentic
+   systems` is tentative, and `Resume craft` and `Production ownership` fail. Restating
+   the bar is the other map's decision; this is the evidence.
+3. **`Production ownership` C2 to C4 and `Resume craft` C2 and C3 are where to work.**
+   They carry most of both the instability and the disagreement.
+4. Placed findings do not agree beyond chance, so a finding's location is not yet a
+   stable thing to show a user as fact.
+
+## Closed
+
+Done when the test has run against two providers on documents nobody wrote to pass
+it, with criterion agreement reported and bands derived from it, and the result set
+against the five proxy verdicts. All three are above. The results go back to the other
+map as rubric questions.
