@@ -104,7 +104,8 @@ def _cost(finding: Finding, weights: dict[Category, float], points: dict[Severit
     weight -- amplifying by target-role signal never reopens the hard-gate risk
     this clamp exists to close.
     """
-    raw = points[finding.severity] * config.dimension_multiplier(finding.rule_id)
+    raw = (points[finding.severity] * config.dimension_multiplier(finding.rule_id)
+           * finding.cost_scale)
     if finding.rule_id in FRAUD_RULES:
         return raw
     ceiling = weights[finding.category] * config.scoring()["max_single_finding_share"]

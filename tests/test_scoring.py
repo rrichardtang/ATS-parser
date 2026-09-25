@@ -568,3 +568,50 @@ def test_the_craft_categorys_own_gate_moves_nothing(monkeypatch):
     # And the findings stayed where they put themselves, not where the category is.
     assert len(after.by_gate(Gate.RECRUITER)) == 1
     assert len(after.by_gate(Gate.MANAGER)) == 1
+
+
+def test_resume_craft_bullet_rules_charge_by_share_not_count():
+    """Grounding 14. Rules that fire once per bullet charged 12 points a bullet, so a
+    full-length resume floored `Resume craft`'s rule channel whatever its quality: 30
+    of 30 drawn documents. Charged by share, the same proportion of weak bullets costs
+    the same at any length, and a long resume is not floored for being long."""
+    from ats.rules import content_mechanics
+    from ats.sections import Resume, Role
+    from ats.slop import analyze as slop_analyze
+
+    # Written apart, so `content/duplicate-bullet` and `slop/robotic-rhythm` stay out.
+    good = [
+        "Cut p99 inference latency from 380ms to 95ms on four A10Gs.",
+        "Raised answer groundedness from 71% to 88% by adding a reranker.",
+        "Shipped a LoRA fine-tune for ticket triage, +11 points exact match.",
+        "Cut GPU spend 34% by replacing padded batching with length buckets.",
+        "Streaming features dropped staleness from 18 hours to 4 minutes.",
+        "Drift monitor caught a 9-point AUC regression before release.",
+        "Throughput went from 40 to 310 requests per second after the port.",
+        "Reduced on-call pages by 60% after rewriting the retry policy.",
+    ]
+    weak = [
+        "Responsible for working on various projects across the organisation.",
+        "Helped the team with a range of different initiatives and tasks.",
+        "Worked closely with stakeholders on multiple important deliverables.",
+        "Participated in meetings and contributed ideas to ongoing efforts.",
+        "Assisted colleagues whenever needed across several workstreams.",
+        "Involved in many aspects of the product development lifecycle.",
+        "Supported ongoing operations and provided help to other groups.",
+        "Collaborated with people in other departments on shared goals.",
+    ]
+
+    def craft(bullets):
+        resume = Resume(roles=[Role(heading="Engineer", bullets=bullets)])
+        findings = content_mechanics(resume) + slop_analyze(resume, "\n".join(bullets))
+        report = build(findings)
+        return next(c.score for c in report.categories
+                    if c.category is Category.RESUME_CRAFT)
+
+    def half(n):
+        return [b for pair in zip(good[:n], weak[:n]) for b in pair]
+
+    short, long_ = craft(half(2)), craft(half(8))
+    assert short == pytest.approx(long_, abs=2)
+    assert long_ > 0, "half-weak is not no-evidence"
+    assert craft(weak) < long_

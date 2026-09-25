@@ -227,6 +227,10 @@ and the drift problem does not arise.
   saturates. The other map's, raised from here.
   **Seen on a real resume** (07's first live run): judged band C (58), scored 17.4, and
   the floor alone costs about 10 composite points, turning a D into an F.
+  **Decided in grounding 14**: the six `Resume craft` rules that fire once per bullet
+  charge by the share of bullets that fail. Over the thirty the rule channel is now 55
+  to 83 (median 66.4) and floored on none. This fixes the rule channel only; the next
+  item, the judged criteria that get harder with length, is untouched.
 - **`Resume craft` C4 and C5 stop discriminating on full-length documents** (found by
   08). C5 fails a document if *any* bullet is portable and C2 needs an outcome in
   *every* role, so both get strictly harder with length: across all 66 documents that

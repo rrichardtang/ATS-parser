@@ -304,6 +304,13 @@ documents written to exercise the rubric. The real number is
   evidence, and that is accepted: an ATS that stores no work history forwards nothing a
   reader can use.
 
+- **`Resume craft`'s per-bullet rules charge by share** (14, the owner's decision). The
+  six rules that fire at most once per bullet (`content/no-outcome`, `slop/portable`,
+  `content/passive-voice`, `content/first-person`, `content/long-bullet`,
+  `content/weak-opener`) cost their severity times the share of bullets that fail, so
+  the same proportion of weak bullets costs the same at any length. Rules that fire per
+  match or per pair (`slop/banned-word`, `content/duplicate-bullet`) are unchanged.
+
 ## Not yet specified
 
 - **Whether the acceptance test has ever passed on the rubric being designed.** It has
