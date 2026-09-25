@@ -201,10 +201,9 @@ def withholding_reason(resume: Resume) -> str:
 
     05's rule, and it is not optional: every criterion asks about a bullet inside a
     role, so a document whose roles did not survive extraction has its judged
-    categories **withheld** -- not guessed, and not zeroed. The parser gate has
-    already found and charged for that defect; scoring it again charges one fault
-    twice. `two_column`, `hidden_text` and `scanned` are the documents that exercise
-    it.
+    categories **withheld**: not guessed, and scored as no evidence (`score.build`,
+    grounding ticket 13). `two_column`, `hidden_text` and `scanned` are the documents
+    that exercise it.
     """
     if not resume.roles:
         return ("no roles survived extraction, so there are no bullets for a "

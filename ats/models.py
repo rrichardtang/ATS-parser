@@ -350,9 +350,7 @@ def _gate_text(value: float | None) -> str:
 class Report(BaseModel):
     composite: float
     grade: str
-    # None where the gate could not be spoken for -- see `score._subscore`. A gate whose
-    # categories were withheld reports no number rather than averaging over whichever
-    # ones happened to survive.
+    # None where nothing in the gate was assessed -- see `score._subscore`.
     parser_subscore: float | None
     human_subscore: float | None
     categories: list[CategoryScore] = Field(default_factory=list)

@@ -94,9 +94,9 @@ def analyze(run: RunInput) -> Report:
     if reason:
         notes.append(
             "Judged categories withheld: " + reason + ". "
-            "The parser gate has already charged for that; scoring the content as "
-            "well would charge one fault twice, so they are left out of the composite "
-            "rather than scored at a number nobody measured."
+            "An applicant tracking system that cannot read your jobs stores none, so "
+            "each of these categories is scored as if it found no evidence (10 of "
+            "100). Fix the layout and run this again."
         )
 
     if not providers or not doc.has_text_layer:

@@ -170,10 +170,9 @@ def build(
     # 100 and carry its full weight, manufacturing a result from a check that never
     # ran. It is printed and left out of the arithmetic instead. The last clause keeps
     # that self-correcting -- if a finding does deduct there, the category is assessed
-    # after all and its deduction counts. A *withheld* category is the one case that
-    # clause must not rescue: withholding says the criteria have no subject on this
-    # document, which a stray slop finding does not make untrue, so it is checked
-    # first and a deduction there costs nothing (see `share` below).
+    # after all and its deduction counts. A *withheld* category is always assessed: it
+    # scores as no evidence (see `build`'s docstring), and a deduction there costs
+    # nothing (see `share` below).
     assessed = {
         category: (category in withheld
                    or category not in JUDGED_CATEGORIES
@@ -193,11 +192,10 @@ def build(
         # A category floors at zero, so deductions past 100 cost nothing. Scaling
         # by that keeps the reported points equal to what was actually lost.
         floor_scale = (min(raw_total, 100.0) / raw_total) if raw_total > 0 else 0.0
-        # A finding in a category the composite excluded moved nothing, so it reports
-        # nothing. Before withholding this could not arise -- `assessed` was false only
-        # where `deductions` was zero -- and quoting a category-weighted cost for a
-        # category outside `total_weight` would put points on a card that the composite
-        # never lost.
+        # A finding moves nothing, and reports nothing, where its category is out of
+        # the composite or withheld: a withheld category scores its no-evidence value
+        # whatever was deducted there, so quoting a cost would put points on a card
+        # that the composite never lost.
         share = ((weights[finding.category] / total_weight)
                  if total_weight and assessed[finding.category]
                  and finding.category not in withheld else 0.0)
