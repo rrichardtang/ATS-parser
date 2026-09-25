@@ -57,6 +57,9 @@ Measured after, deterministic layer only:
 
 `slop` stays at 0 on its per-match rules, which is the channel doing its job.
 
+On a real resume (the owner's, live, after the change): band C both before and after,
+17.4 before and 51.0 after, so the rule channel moved from 0 to 48.
+
 Not touched: `Resume craft` C4 and C5, the judged criteria that get harder with length
 (migration 08's finding). That is a separate question about the criteria, not the
 rules.

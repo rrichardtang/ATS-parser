@@ -128,9 +128,10 @@ resume and its quoted text stay off the repo.
   0.3 × 58 + 0.7 × 0: the rule channel is floored, as on 30 of 08's 30 documents.
   At weight 25 that floor costs about 10 composite points, more than the 5.4 the resume
   fell, so the D to F is this open item and not a judgement about the resume.
-- **The two providers split on 2 of 5 judged categories, one criterion each, one band
-  apart.** `Agentic systems` split on C3 (C or B, scored C) and `Production ownership`
-  on C3 (D or C, scored D). They agreed on the other three. This is the first reading
+- **The two providers split on 2 of 5 judged categories, one criterion each.**
+  `Agentic systems` split on C3 (C or A, two bands, scored C) and `Production ownership`
+  on C3 (D or C, one band, scored D). *(Corrected 25 September: this first said both
+  were one band. The script prints band names, and "Bounded agent in the world" is A.)* They agreed on the other three. This is the first reading
   of two live judges under the band lookup. It is one document, so it is an input to
   09 and not a tolerance verdict.
 - **Two script fixes, found by the run.** The channel label still said *never yet run*,
@@ -165,7 +166,10 @@ fixes above, so their output still carried the old label.)
   good fixtures: 22.5 points of weight at a value of 10.
 - **`Production ownership` C4 splits the providers on every good fixture.** Over the
   five live documents (four fixtures and the owner's resume), the two providers split
-  on 6 of 25 category readings, each by one band. Four of the six are
+  on 6 of 25 category readings. **Four of the six are two bands apart** (corrected: this
+  first said one band each): `Production ownership` C against A on `strong`, `no_phone`
+  and `buried_evidence`, and `Agentic systems` C against A on the owner's resume. The
+  other two are one band. Four of the six are
   `Production ownership`: C4 on `strong`, `no_phone` and `buried_evidence`, C3 on the
   owner's resume. The others are `Resume craft` C4 on `buried_evidence` and
   `Agentic systems` C3 on the owner's resume. `slop` had no splits. That makes one
@@ -177,7 +181,8 @@ fixes above, so their output still carried the old label.)
   band C (above).
 - **The old rubric's providers disagreed by up to 28 points inside one category**
   (`AI/ML relevance & depth` on `hidden_text`, 20 to 48). The new rubric's widest
-  disagreement is one band. Whether one band fits inside the acceptance bar is 09's.
+  disagreement here is two bands, 37 points of category value. Whether that fits inside
+  the acceptance bar is 09's.
 - `hidden_text` and `scanned` do not move. The fraud cap and the unreadable path set
   them on both sides.
 
@@ -189,3 +194,30 @@ above is explained by a category and criterion. What the run found goes to 09 (t
 inversion, and the `Resume craft` floor).
 2. 09 is unblocked for everything that does not need 07's live run, since its inputs are
    08's set and the harness rather than this comparison.
+
+## After closing: a second live run on the owner's resume (25 September)
+
+The owner re-ran `--doc` after grounding 13 and 14 landed. Same document, same two
+providers, same prompts.
+
+| | first run | second run |
+|---|---|---|
+| composite (new rubric) | 59.3 (F) | 69.1 (D) |
+| composite (old rubric) | 64.7 | 61.2 |
+| `Resume craft` | band C, 17.4 | band C, 51.0 |
+| `Agentic systems` | C or A, scored C (58) | A, both agree (95) |
+| `Evaluation rigour` | A, both agree (97.0) | C or A, scored C (70.0) |
+| `Production ownership` | D or C, scored D | D or A, scored D |
+| `AI-assisted coding fluency` | D, both agree | D or B, scored D |
+
+- **Grounding 14 did what it was measured to do.** `Resume craft` was band C on both runs
+  and its score went from 17.4 to 51.0, worth about 8.4 composite points, most of the
+  9.8 the composite rose.
+- **The same judges moved two bands between runs, on the same document.** `Agentic
+  systems` went from a C/A split to A on both, and `Evaluation rigour` the opposite way.
+  `Production ownership` split three bands (D against A). The old rubric moved too, by
+  3.5 composite points. So disagreement between runs is at least as large as
+  disagreement between providers, and 09 cannot measure the second without the first:
+  it needs repeated runs per provider, not one reading each.
+- Three splits in this run, all two or more bands. Across both owner's-resume runs and
+  the four fixtures: 9 splits in 30 readings, 7 of them two bands or more.
