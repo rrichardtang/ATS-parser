@@ -61,7 +61,13 @@ class _FakeOpenAI:
 def _patch(monkeypatch, provider_module, factory):
     module = pytest.importorskip(provider_module)
     attr = "Anthropic" if provider_module == "anthropic" else "OpenAI"
-    monkeypatch.setattr(module, attr, lambda api_key: factory)
+    def client(api_key, timeout=None):
+        # Every client is bounded to gather's timeout, or a call gather gave up on
+        # holds the process open for the SDK's default ten minutes.
+        assert timeout == llm.CALL_TIMEOUT
+        return factory
+
+    monkeypatch.setattr(module, attr, client)
 
 
 def test_anthropic_omits_temperature_the_sdk_no_longer_accepts(monkeypatch):
