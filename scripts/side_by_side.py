@@ -348,7 +348,7 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
                  f"{new['composite']:>10.1f}"
                  f"{new['composite'] - old['composite']:>+10.1f}"
                  f"   {old['grade']} -> {new['grade']}")
-    # A gate holding a withheld category reports no score (score._subscore), so either
+    # A gate nothing in which was assessed reports no score (score._subscore), so either
     # side can be None, and a move to or from n/a is not a number either.
     for label, key in (("parser gate", "parser_subscore"),
                        ("human gate", "human_subscore")):
@@ -385,7 +385,8 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
             shown, tail = "n/a", f"   {cat['note'] or 'not assessed'}"
         else:
             shown = f"{cat['score']:.1f}"
-            tail = f"   band {judged['band']}" if judged else "   rules only"
+            tail = (f"   band {judged['band']}" if judged
+                    else f"   {cat['note'] or 'rules only'}")
         lines.append(f"  {label:<32}{'--':>10}{shown:>10}{'new':>10}{tail}")
 
     if new["judged"]:
@@ -406,7 +407,8 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
 
     if new["withheld"]:
         lines.append("")
-        lines.append(f"withheld on this document: {new['withheld']}")
+        lines.append(f"withheld on this document, and scored as no evidence (grounding "
+                     f"13): {new['withheld']}")
         lines.append("  " + ", ".join(c.value for c in JUDGED_CATEGORIES))
         if new["withheld_but_recorded"]:
             lines.append("  recorded criterion answers exist for this document and are "

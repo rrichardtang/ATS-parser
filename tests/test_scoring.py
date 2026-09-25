@@ -19,7 +19,7 @@ from ats.models import (
     Provenance,
     Severity,
 )
-from ats.score import build, rule_shares
+from ats.score import build, no_evidence_values, rule_shares
 
 
 def _judged(category, band, value, high=None, high_value=None):
@@ -120,23 +120,17 @@ def test_unevidenced_findings_are_dropped():
     assert build([bare]).findings == []
 
 
-def test_a_gate_of_withheld_categories_reports_no_score():
-    """A gate cannot average over the one category that happened to survive.
-
-    Five of the six human-gate categories are withheld on a document whose roles did
-    not parse. `Title & seniority alignment` is the survivor, undeducted at 100, and
-    renormalising over it alone printed **human gate 100** on a document no parser can
-    read -- the same manufactured result `assessed` already refuses per category.
-    """
+def test_a_gate_of_withheld_categories_averages_their_no_evidence_values():
+    """Grounding 13. Five of the six human-gate categories are withheld on a document
+    whose roles did not parse. Renormalising over `Title & seniority alignment` alone
+    once printed **human gate 100**; 06 then printed nothing. Now the five count at
+    their no-evidence value of 10 beside Title's 100: (5*100 + 75*10) / 80."""
     withheld = {c: "no roles survived extraction" for c in JUDGED_CATEGORIES}
     report = build([_finding("parse/multi-column", Category.PARSEABILITY)],
                    withheld=withheld)
 
-    assert report.human_subscore is None
-    # The parser gate holds no withheld category, so it still reports.
+    assert report.human_subscore == pytest.approx(15.6, abs=0.1)
     assert report.parser_subscore is not None
-    # And the composite is unaffected -- withholding is not a deduction.
-    assert report.composite > 0
 
 
 def test_gate_subscores_are_independent():
@@ -320,14 +314,14 @@ def test_judges_that_agree_contest_nothing():
     assert not row.contested and row.note == "" and row.low is None
 
 
-def test_a_withheld_category_neither_inflates_nor_deflates_the_composite():
-    """The bug 06 names, and its fix.
+def test_a_withheld_category_scores_as_no_evidence():
+    """The bug 06 names, and grounding 13's fix for what 06 left.
 
     On a document whose roles did not parse, `content_pass` withholds all five judged
     categories before spending a call. Told nothing, `build` floated the three with a
-    rule channel at 100 -- 52.5 of the composite's points manufactured out of checks
-    that never ran. Withheld categories are left out instead, and the composite
-    renormalises over the 25 points the parser gate actually assessed.
+    rule channel at 100. 06 left them out and renormalised, which made withholding
+    free: on live judges `two_column` outranked every readable fixture. Each now
+    scores what its spec gives a document where every criterion is `no`.
     """
     reason = "withheld -- no roles survived extraction"
     withheld = {c: reason for c in JUDGED_CATEGORIES}
@@ -339,15 +333,14 @@ def test_a_withheld_category_neither_inflates_nor_deflates_the_composite():
 
     rows = {c.category: c for c in told.categories}
     for category in JUDGED_CATEGORIES:
-        assert not rows[category].assessed
-        assert rows[category].score == 0.0
+        assert rows[category].assessed
+        assert rows[category].score == no_evidence_values()[category] == 10.0
         assert rows[category].note == reason
     assert told.composite < untold.composite, "the 100s are gone"
-    # The composite is exactly the parser gate's three categories, renormalised.
-    scored = [c for c in told.categories if c.assessed]
-    assert {c.category for c in scored} == {
-        Category.PARSEABILITY, Category.STRUCTURE, Category.TITLE}
-    assert sum(c.weight for c in scored) == 25.0
+    assert told.composite < 40, "an unreadable work history cannot pass"
+    # The loss has its own ledger row, and the ledger still reconciles.
+    assert any(r.rule_id == "score/withheld" for r in told.ledger)
+    assert 100 + sum(r.points for r in told.ledger) == pytest.approx(told.composite, abs=0.1)
 
 
 def test_a_withheld_category_is_not_rescued_by_a_deduction():
@@ -363,7 +356,7 @@ def test_a_withheld_category_is_not_rescued_by_a_deduction():
     report = build([slop], withheld={Category.RESUME_CRAFT: "withheld -- no roles"})
 
     row = next(c for c in report.categories if c.category is Category.RESUME_CRAFT)
-    assert not row.assessed
+    assert row.score == 10.0
     assert report.findings[0].points == 0.0
     assert not [r for r in report.ledger if r.rule_id == "slop/x"]
 
@@ -380,7 +373,7 @@ def test_a_withheld_category_cannot_also_carry_a_judged_value():
     )
     row = next(c for c in report.categories
                if c.category is Category.PRODUCTION_OWNERSHIP)
-    assert not row.assessed and row.score == 0.0
+    assert row.score == 10.0
 
 
 def test_a_gap_with_no_band_across_it_is_refused_at_the_boundary():

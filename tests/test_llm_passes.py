@@ -517,9 +517,8 @@ def test_a_document_whose_roles_did_not_parse_is_withheld(monkeypatch, fixtures)
     assert any("withheld" in note for note in report.notes)
     assert not [f for f in report.findings if f.source.startswith("llm:")
                 and f.rule_id.startswith("production-ownership/")]
-    # 06: and the composite is told, so the three judged categories with a rule
-    # channel no longer ride at 100 on a document no parser can read.
+    # 06 and grounding 13: the composite is told, so the judged categories score as no
+    # evidence rather than riding at 100 on a document no parser can read.
     for row in report.categories:
         if row.category in JUDGED_CATEGORIES:
-            assert not row.assessed and row.note.startswith("withheld")
-    assert sum(c.weight for c in report.categories if c.assessed) == 25.0
+            assert row.score == 10.0 and row.note.startswith("withheld")

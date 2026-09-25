@@ -160,7 +160,8 @@ and the drift problem does not arise.
   is excluded from the composite, which renormalises over what was checked, and
   withholding is resolved from the *document* so the deterministic-only path is fixed
   too. Side effect, on the recorded judge only: `two_column` no longer outranked
-  `buried_evidence`. Live, it does again (07).
+  `buried_evidence`. Live, it did again (07). **The exclusion is superseded** by
+  grounding 13: a withheld category now scores as no evidence.
 - **`content/bullet-invariants` is `content/no-outcome`** (04, implementing 12). It
   deducts on one predicate. The other three are priced elsewhere or nowhere —
   ownership in `Production ownership`, measurability nowhere now that
@@ -197,7 +198,8 @@ and the drift problem does not arise.
 - `Resume craft` is `Gate.RECRUITER`, and the choice moves no number — `12`.
 
 - **A gate holding a withheld category reports no score** (06, after the fixtures made
-  it visible). `score._subscore` returns `None` rather than a number, and the report
+  it visible; **superseded** by grounding 13, under which the gate averages the withheld
+  categories at their no-evidence value, so `two_column`'s human gate is 15.6). `score._subscore` returns `None` rather than a number, and the report
   prints `n/a`. Measured on the fixtures before the fix: `two_column` printed **human
   gate 100** at composite 86.6, and `hidden_text` printed **human gate 100** at
   composite 40.0 and grade F — in both cases off `Title & seniority alignment` alone,
@@ -248,9 +250,10 @@ and the drift problem does not arise.
   65.6 and `strong` 72.4, because both providers mark the behaviour block down on every
   readable document. `two_column` escapes it: its roles do not parse, all five judged
   categories are withheld, and the composite renormalises over the three it checked.
-  It ranks first of the seven fixtures, 14.2 above `strong`. Renormalising was 06's
-  answer to *don't score what you never assessed*. What it leaves open is what a
-  document should pay for being unassessable. The other map's, raised from here.
+  It ranks first of the seven fixtures, 14.2 above `strong`. **Decided in grounding
+  13**: a withheld category scores what its spec gives a document with every criterion
+  `no` (band E, 10). `two_column` is 29.1 and ranks sixth of seven. The move is
+  deterministic, so it is measured without a live run.
 - **`Production ownership` C4 is where the providers disagree** (found by 07). Six
   one-band splits in 25 live category readings, four of them `Production ownership`,
   three of those on C4. 09 should report agreement per criterion, not only per

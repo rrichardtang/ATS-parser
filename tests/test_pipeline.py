@@ -38,21 +38,22 @@ def test_scanned_pdf_fails_cleanly_without_crashing(analyzed):
 
 
 def test_two_column_hits_the_parser_gate_not_the_human_gate(analyzed):
-    """The defect is the parser's, and the human gate declines to score at all.
+    """The defect is the parser's, and the reader pays for it too.
 
-    This test used to assert `parser_subscore < human_subscore`, which passed for the
+    This test once asserted `parser_subscore < human_subscore`, which passed for the
     wrong reason: every human-gate category except `Title & seniority alignment` was
     withheld, Title sat at an undeducted 100, and the gate reported **100** on a
-    document no parser can read. The parser gate really was lower -- because the human
-    gate was inventing a perfect score, not because the defect was correctly placed.
+    document no parser can read. Grounding 13 scores the withheld five as no evidence,
+    so the human gate is lower than the parser gate and the resume cannot pass.
     """
     report = analyzed["two_column"]
     assert any(f.rule_id == "parse/multi-column" for f in report.findings)
     # The parser gate is assessed and charged for the defect.
     assert report.parser_subscore is not None and report.parser_subscore < 100
-    # The human gate holds five withheld categories, so it reports nothing.
-    assert report.human_subscore is None
-    assert [c.category for c in report.categories if not c.assessed]
+    # An ATS that stored no work history forwards nothing a reader can use.
+    assert report.human_subscore is not None
+    assert report.human_subscore < report.parser_subscore
+    assert report.composite < 40
 
 
 def test_slop_resume_fails_the_human_gate_while_parsing_fine(analyzed):
