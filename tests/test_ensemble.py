@@ -5,8 +5,6 @@ whose output is generated in order to win a selection. The ranking/audit split i
 what keeps best-of-N honest, so it is tested directly.
 """
 import concurrent.futures
-import threading
-import time
 
 import pytest
 
@@ -266,24 +264,29 @@ def test_a_call_past_the_timeout_is_a_failed_call_not_a_crash():
 
 
 def test_a_future_finishing_between_the_take_loop_and_the_late_count_is_classified(monkeypatch):
-    """`as_completed` can raise TimeoutError after a future has already finished but
-    before the deadline branch counts it -- that future must land in results or
-    errors, not neither."""
-    def slow_then_timeout(fs, timeout=None):
-        time.sleep(0.2)
+    """A future still running when the deadline branch looks at it, but done by the
+    time the late calls are counted, must land in results or errors, not neither."""
+    class FinishesAfterFirstLook:
+        looks = 0
+
+        def done(self):
+            self.looks += 1
+            return self.looks > 1
+
+    class Pool:
+        def __init__(self, max_workers):
+            pass
+
+        def submit(self, fn):
+            return FinishesAfterFirstLook()
+
+        def shutdown(self, wait, cancel_futures):
+            pass
+
+    def deadline(fs, timeout=None):
         raise concurrent.futures.TimeoutError
 
-    monkeypatch.setattr(ensemble.concurrent.futures, "as_completed", slow_then_timeout)
+    monkeypatch.setattr(ensemble.concurrent.futures, "ThreadPoolExecutor", Pool)
+    monkeypatch.setattr(ensemble.concurrent.futures, "as_completed", deadline)
 
-    release = threading.Event()
-
-    def boom():
-        raise Exception("boom")
-
-    results, errors = gather(
-        [lambda: 1, boom, lambda: release.wait(5)], timeout=1
-    )
-    release.set()
-
-    assert results == [1]
-    assert sorted(errors) == sorted(["boom", "timed out after 1s"])
+    assert gather([lambda: 1], timeout=1) == ([], ["timed out after 1s"])

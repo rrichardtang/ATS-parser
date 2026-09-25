@@ -115,14 +115,25 @@ def _truncated(label: str, reason: str | None) -> None:
         )
 
 
+def _anthropic_client(api_key: str):
+    import anthropic
+
+    return anthropic.Anthropic(
+        api_key=api_key, timeout=anthropic.Timeout(CALL_TIMEOUT, connect=5.0)
+    )
+
+
+def _openai_client(api_key: str):
+    import openai
+
+    return openai.OpenAI(
+        api_key=api_key, timeout=openai.Timeout(CALL_TIMEOUT, connect=5.0)
+    )
+
+
 def _dispatch(provider: Provider, system: str, user: str, temperature: float) -> str:
     if provider.name == "anthropic":
-        import anthropic
-        import httpx
-
-        client = anthropic.Anthropic(
-            api_key=provider.api_key, timeout=httpx.Timeout(CALL_TIMEOUT, connect=5.0)
-        )
+        client = _anthropic_client(provider.api_key)
         response = client.messages.create(
             model=provider.model,
             max_tokens=MAX_TOKENS,
@@ -135,12 +146,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
         )
 
     if provider.name == "openai":
-        import httpx
-        import openai
-
-        client = openai.OpenAI(
-            api_key=provider.api_key, timeout=httpx.Timeout(CALL_TIMEOUT, connect=5.0)
-        )
+        client = _openai_client(provider.api_key)
         legacy = bool(LEGACY_OPENAI.match(provider.model))
         request: dict[str, Any] = {
             "model": provider.model,

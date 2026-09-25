@@ -59,17 +59,20 @@ class _FakeOpenAI:
 
 
 def _patch(monkeypatch, provider_module, factory):
-    module = pytest.importorskip(provider_module)
-    attr = "Anthropic" if provider_module == "anthropic" else "OpenAI"
-    def client(api_key, timeout=None):
-        # Every client is bounded to gather's timeout, or a call gather gave up on
-        # holds the process open for the SDK's default ten minutes. The connect leg
-        # stays short so a dead endpoint fails fast instead of at the read bound.
-        assert timeout.read == llm.CALL_TIMEOUT
-        assert timeout.connect == 5.0
-        return factory
+    pytest.importorskip(provider_module)
+    monkeypatch.setattr(llm, f"_{provider_module}_client", lambda api_key: factory)
 
-    monkeypatch.setattr(module, attr, client)
+
+@pytest.mark.parametrize("provider_module", ["anthropic", "openai"])
+def test_real_clients_are_built_with_a_short_connect_and_the_call_timeout(provider_module):
+    """Every client is bounded to gather's timeout, or a call gather gave up on holds
+    the process open for the SDK's default ten minutes. The connect leg stays short
+    so a dead endpoint fails fast. Builds the real SDK client: a fake here hid that
+    the SDKs reject a plain `httpx.Timeout`."""
+    pytest.importorskip(provider_module)
+    timeout = getattr(llm, f"_{provider_module}_client")("sk-test").timeout
+    assert timeout.read == llm.CALL_TIMEOUT
+    assert timeout.connect == 5.0
 
 
 def test_anthropic_omits_temperature_the_sdk_no_longer_accepts(monkeypatch):
