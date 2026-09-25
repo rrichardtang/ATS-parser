@@ -259,9 +259,16 @@ and the drift problem does not arise.
   `no` (band E, 10). `two_column` is 29.1 and ranks sixth of seven. The move is
   deterministic, so it is measured without a live run.
 - **`Production ownership` C4 is where the providers disagree** (found by 07). Six
-  one-band splits in 25 live category readings, four of them `Production ownership`,
-  three of those on C4. 09 should report agreement per criterion, not only per
-  category, or this will read as a category-wide tolerance problem.
+  splits in 25 live category readings, four of them two bands apart (an earlier note
+  here said one band; wrong), four of them `Production ownership`, three of those on
+  C4. 09 should report agreement per criterion, not only per category, or this will
+  read as a category-wide tolerance problem.
+- **The same judge does not repeat itself** (07's second run on the owner's resume).
+  Same document, same providers: `Agentic systems` moved from C to A and `Evaluation
+  rigour` from A to C, and `Production ownership` split D against A. 09 needs repeated
+  runs per provider, so that disagreement between runs is measured before disagreement
+  between providers is blamed on the rubric. Counting both runs and the fixtures: 9
+  splits in 30 readings, 7 of them two bands or more.
 - **What the report does with an unmet criterion.** 05 produces them — one per
   criterion per resume, carrying the absence the candidate most needs to hear — and
   stops there, because nothing in the report renders a non-finding today. They ride
