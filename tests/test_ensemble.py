@@ -240,3 +240,20 @@ def test_raising_n_never_ships_a_hack():
                     f"a hacked candidate shipped at N={n}"
                 )
                 assert winner.audit_score == 100.0
+
+
+def test_a_call_past_the_timeout_is_a_failed_call_not_a_crash():
+    """`as_completed` raised TimeoutError out of the pool, which then waited for the
+    slow call anyway and lost every result already in hand."""
+    import threading
+    import time
+
+    from ats.ensemble import gather
+
+    release = threading.Event()
+    started = time.monotonic()
+    results, errors = gather([lambda: "fast", lambda: release.wait(5)], timeout=1)
+    release.set()
+    assert results == ["fast"]
+    assert errors == ["timed out after 1s"]
+    assert time.monotonic() - started < 3, "gather waited for the slow call"

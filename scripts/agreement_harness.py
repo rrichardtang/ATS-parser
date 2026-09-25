@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -177,20 +178,32 @@ def main() -> None:
             "08's acceptance set was not run (--acceptance-set): every document here "
             "was written by a session that was also validating the rubric."
         )
-    print()
-    run = agreement.collect(providers, targets, args.samples, temperature, notes)
-
     out = Path(args.out) if args.out else (
         DEFAULT_OUT / f"agreement-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
     )
     out.parent.mkdir(parents=True, exist_ok=True)
-    # Saved before analyse(), deliberately: scoring a judgement runs score.build,
-    # which writes each finding's cost onto the shared deterministic findings.
-    # Saving afterwards would bake one judgement's deductions into the raw record.
-    out.write_text(json.dumps(run.to_dict(), indent=2), encoding="utf-8")
+    shown = out.relative_to(ROOT) if out.is_relative_to(ROOT) else out
+    print(f"\nSaving after every resume to {shown}; a stopped run keeps what it paid for.")
+    started = time.monotonic()
+
+    def after_each(run: agreement.HarnessRun) -> None:
+        # Saved before analyse(), deliberately: scoring a judgement runs score.build,
+        # which writes each finding's cost onto the shared deterministic findings.
+        # Saving afterwards would bake one judgement's deductions into the raw record.
+        out.write_text(json.dumps(run.to_dict(), indent=2), encoding="utf-8")
+        latest = run.resumes[-1]
+        state = (f"skipped ({latest.skipped})" if latest.skipped
+                 else f"{len(latest.judgments)} replies"
+                 + (f", {len(latest.errors)} failed" if latest.errors else ""))
+        print(f"  [{len(run.resumes)}/{len(targets)}] {latest.name}: {state}  "
+              f"({(time.monotonic() - started) / 60:.1f} min)", flush=True)
+
+    run = agreement.collect(providers, targets, args.samples, temperature, notes,
+                            after_each=after_each)
+    print()
 
     print(render(agreement.analyse(run, band_order)))
-    print(f"Raw judgements saved to {out.relative_to(ROOT) if out.is_relative_to(ROOT) else out}")
+    print(f"Raw judgements saved to {shown}")
 
 
 if __name__ == "__main__":

@@ -182,8 +182,13 @@ def collect(
     samples: int,
     temperature: float,
     notes: list[str] | None = None,
+    after_each: Callable[[HarnessRun], None] | None = None,
 ) -> HarnessRun:
-    """`targets` is [(name, pdf path)] -- the fixtures, plus the real resume."""
+    """`targets` is [(name, pdf path)] -- the fixtures, plus the real resume.
+
+    `after_each` is called with the run so far after every resume, so a caller can
+    report progress and save what has been paid for before the sweep ends.
+    """
     meta = {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "providers": [p.label for p in providers],
@@ -191,13 +196,12 @@ def collect(
         "temperature": temperature,
         "notes": list(notes or []),
     }
-    return HarnessRun(
-        meta=meta,
-        resumes=[
-            judge_resume(providers, name, path, samples, temperature)
-            for name, path in targets
-        ],
-    )
+    run = HarnessRun(meta=meta)
+    for name, path in targets:
+        run.resumes.append(judge_resume(providers, name, path, samples, temperature))
+        if after_each:
+            after_each(run)
+    return run
 
 
 def planned_calls(targets: list[tuple[str, str]], providers: int, samples: int) -> int:

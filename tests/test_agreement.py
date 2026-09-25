@@ -462,3 +462,16 @@ def test_a_foreign_band_vocabulary_is_not_ranked_on_the_spec_ladder():
     report = agreement.analyse(run)
     assert any("no band order was declared" in note for note in report.notes)
     assert report.bands[0].far == 1
+
+
+def test_collect_reports_after_every_resume(monkeypatch, fixtures):
+    """The harness saves and prints after each resume, so a long sweep shows progress
+    and a stopped one keeps the calls it already paid for."""
+    providers = _judges(monkeypatch, {"anthropic": [AGREEING], "openai": [DISAGREEING]})
+    seen = []
+    agreement.collect(
+        providers,
+        [("strong", str(fixtures["strong"])), ("no_phone", str(fixtures["no_phone"]))],
+        1, 0.7, after_each=lambda run: seen.append([r.name for r in run.resumes]),
+    )
+    assert seen == [["strong"], ["strong", "no_phone"]]
