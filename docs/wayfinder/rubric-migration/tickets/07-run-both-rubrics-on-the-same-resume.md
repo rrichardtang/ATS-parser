@@ -111,9 +111,33 @@ disagree with it. That is 09's, and this comparison cannot stand in for it.
   two predictions.
 - `MAP.md` — one decision, two open questions.
 
+## The first live run: the owner's resume (25 September)
+
+The owner ran `--doc` on their own resume on their own machine, with both keys set. The
+live path worked end to end on its first run. Only numbers and ids are recorded here; the
+resume and its quoted text stay off the repo.
+
+| | old | new | moved |
+|---|---|---|---|
+| composite | 64.7 (D) | 59.3 (F) | -5.4 |
+| parser gate | 92.5 | 91.5 | -1.0 |
+| human gate | 57.7 | 51.2 | -6.5 |
+
+- **The fall is mostly the `Resume craft` floor, on a real document now.** The judges put
+  the category in band C (58), with no unmet criterion. It scores **17.4**, which is
+  0.3 × 58 + 0.7 × 0: the rule channel is floored, as on 30 of 08's 30 documents.
+  At weight 25 that floor costs about 10 composite points, more than the 5.4 the resume
+  fell, so the D to F is this open item and not a judgement about the resume.
+- **The two providers split on 2 of 5 judged categories, one criterion each, one band
+  apart.** `Agentic systems` split on C3 (C or B, scored C) and `Production ownership`
+  on C3 (D or C, scored D). They agreed on the other three. This is the first reading
+  of two live judges under the band lookup. It is one document, so it is an input to
+  09 and not a tolerance verdict.
+- **Two script fixes, found by the run.** The channel label still said *never yet run*,
+  and a rule id of 34 characters ran into the next column. Both fixed.
+
 ## What is left
 
-1. Run the live path with `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` set, on the fixtures
-   and on the owner's resume (`--doc`). Then this ticket closes.
+1. Run the live path on the seven fixtures. Then this ticket closes.
 2. 09 is unblocked for everything that does not need 07's live run, since its inputs are
    08's set and the harness rather than this comparison.

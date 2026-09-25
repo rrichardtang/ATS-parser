@@ -421,7 +421,7 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
         lines.append("")
         lines.append("findings that stopped deducting (04)")
         for rule_id in advice:
-            lines.append(f"  {rule_id:<34}was {old_costs[rule_id]:>5.1f}   now 0.0"
+            lines.append(f"  {rule_id:<33} was {old_costs[rule_id]:>5.1f}   now 0.0"
                          f"   gate {gates[rule_id]}")
         lines.append(f"  {'points returned':<34}{returned(old, new):>9.1f}")
 
@@ -435,7 +435,7 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
             lines.append(f"  {was} -> {now:<20}"
                          f"cost {old_costs[was]:>6.1f} -> {new_costs[now]:.1f}")
         for rule_id in sorted(retired):
-            lines.append(f"  {rule_id:<34}cost {old_costs[rule_id]:>6.1f} -> gone"
+            lines.append(f"  {rule_id:<33} cost {old_costs[rule_id]:>6.1f} -> gone"
                          f"   {RETIRED[rule_id]}")
 
     old_home = {f["rule_id"]: f["category"] for f in old["findings"]}
@@ -449,7 +449,7 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
         lines.append("")
         lines.append("findings that changed category (07 §1)")
         for rule_id, was, now in sorted(set(refiled)):
-            lines.append(f"  {rule_id:<34}{was} -> {now}")
+            lines.append(f"  {rule_id:<33} {was} -> {now}")
 
     known = set(RENAMED) | set(RENAMED.values()) | set(RETIRED)
     gone = sorted(old_ids - new_ids - known)
@@ -458,9 +458,9 @@ def render(name: str, old: dict, new: dict, channel: str) -> list[str]:
         lines.append("")
         lines.append("rules that fired on one side only")
         for rule_id in gone:
-            lines.append(f"  {rule_id:<34}old only (cost {old_costs[rule_id]:.1f})")
+            lines.append(f"  {rule_id:<33} old only (cost {old_costs[rule_id]:.1f})")
         for rule_id in added:
-            lines.append(f"  {rule_id:<34}new only")
+            lines.append(f"  {rule_id:<33} new only")
     return lines
 
 
@@ -543,7 +543,7 @@ def main() -> int:
             rows.append(summary_row(name, old, new))
             continue
         if live:
-            channel = "live: each rubric calls its own content pass (never yet run)"
+            channel = "live: each rubric calls its own content pass"
         elif old_scores.get(name) and judgments:
             channel = (f"old: {len(old_scores[name])} recorded providers, 30 Aug "
                        "baseline; new: recorded model-claude criterion answers")

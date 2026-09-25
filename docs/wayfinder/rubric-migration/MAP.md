@@ -171,7 +171,7 @@ and the drift problem does not arise.
   subprocess. The pin is load-bearing: 02 reads as a documentation ticket and removed
   four `RULE_DIMENSION` entries, so a later commit would have moved the *before*
   picture silently. Three judge channels: recorded (the fixtures), rules-only (any
-  document), live (**never run** — no credentials on this map).
+  document), live (first run 25 September, on the owner's resume; the fixtures are still to go).
   [both-rubrics.md](both-rubrics.md).
 - **The rubric is measured on a drawn set, and bands are observed rather than
   targeted** (08). Three tiers: 30 invented documents in `corpus/resumes/synthetic/`,
@@ -222,6 +222,8 @@ and the drift problem does not arise.
   category and that category is the heaviest. Either per-occurrence costs need a cap, or
   `rule_share` needs to mean something other than a fixed share when the rule channel
   saturates. The other map's, raised from here.
+  **Seen on a real resume** (07's first live run): judged band C (58), scored 17.4, and
+  the floor alone costs about 10 composite points, turning a D into an F.
 - **`Resume craft` C4 and C5 stop discriminating on full-length documents** (found by
   08). C5 fails a document if *any* bullet is portable and C2 needs an outcome in
   *every* role, so both get strictly harder with length: across all 66 documents that
