@@ -50,3 +50,30 @@ Done when: the acceptance test has been run against two providers on documents n
 wrote in order to pass it, criterion agreement is reported per category with band
 agreement derived from it, and the result is written up wherever it contradicts or
 confirms the five proxy verdicts.
+
+## Built, 25 September: the harness reads criterion answers
+
+The harness could not measure this rubric. It read `score` and `band` from each reply,
+and since 05 a reply carries neither, only criterion answers. So on a live run both its
+per-category tables would have come out empty, and only the composite rows would have
+had numbers.
+
+- **Per-criterion agreement** (`agreement.CriterionAgreement`), the primary
+  measurement. For each criterion and resume: the providers agree, disagree, or one of
+  them is **unstable** (answered both yes and no across its own reruns). Unstable
+  resumes are counted apart rather than folded into either side, because 07's second
+  run showed one judge moving two bands on the same document. Krippendorff's alpha,
+  nominal, between providers.
+- **Band agreement derived from the answers.** `agreement.band_of` looks the band up
+  with `rubric.band_of`, the same lookup the report uses, when a reply names none. Band
+  order defaults to the specs' shared ladder, E to A.
+- Repeated runs were already there: `--samples`, default 2 per provider.
+
+The run itself is left: it needs both keys, which this session does not have.
+
+    .venv/bin/python scripts/agreement_harness.py --acceptance-set --resume <resume.pdf>
+
+That is 38 documents (7 fixtures, 30 drawn, the owner's resume) × 2 providers × 2
+samples, up to 152 calls. The three fixtures whose roles do not parse are withheld
+before any call, so 140 in practice. The raw replies go to `runs/`, which is
+gitignored; the printed tables quote nothing and are what belongs here.

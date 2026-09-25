@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Iterable
 
-from . import config, passes, pipeline
+from . import config, passes, pipeline, rubric
 from .extract import extract
 from .llm import Provider
 from .models import Category, Finding, JudgedCategory, UnmetCriterion
@@ -209,20 +209,44 @@ def planned_calls(targets: list[tuple[str, str]], providers: int, samples: int) 
 # --------------------------------------------------------------------------
 
 
-def numeric_of(entry: dict) -> float | None:
+def numeric_of(category: str, entry: dict) -> float | None:
     try:
         return float(entry["score"])
     except (KeyError, TypeError, ValueError):
         return None
 
 
-def band_of(entry: dict) -> str | None:
+def band_of(category: str, entry: dict) -> str | None:
+    """The band a judgement puts this category in.
+
+    A reply recorded before 05 names its band. Since 05 the model names none, so the
+    band is looked up from its criterion answers, the same lookup the report uses.
+    An incomplete answer set has no band, as in `rubric.band_of`.
+    """
     label = entry.get("band")
-    return label.strip() if isinstance(label, str) and label.strip() else None
+    if isinstance(label, str) and label.strip():
+        return label.strip()
+    answers = passes.criterion_answers({category: entry})
+    if not answers:
+        return None
+    slug = rubric.slug_by_category().get(category)
+    if slug is None:
+        return None
+    spec = rubric.load_spec(slug)
+    by_id = {a.criterion_id.split("/", 1)[1]: a.met for a in answers}
+    if any(c["id"] not in by_id for c in spec["criteria"]):
+        return None
+    return rubric.band_of(by_id, spec)["label"]
+
+
+def spec_band_order() -> list[str] | None:
+    """Worst to best, when every spec shares one ladder, which all five do."""
+    orders = {tuple(b["label"] for b in spec["bands"]) for spec in rubric.load_specs()}
+    return list(orders.pop()) if len(orders) == 1 else None
 
 
 def _per_provider(
-    run: ResumeRun, category: str, read: Callable[[dict], Any]
+    run: ResumeRun, category: str, read: Callable[[str, dict], Any]
 ) -> dict[str, list]:
     """provider -> its value for this category, one per sample that supplied one."""
     out: dict[str, list] = defaultdict(list)
@@ -230,7 +254,7 @@ def _per_provider(
         entry = judgment.categories.get(category)
         if entry is None:
             continue
-        value = read(entry)
+        value = read(category, entry)
         if value is not None:
             out[judgment.provider].append(value)
     return dict(out)
@@ -295,7 +319,7 @@ def score_judgment(run: ResumeRun, judgment: passes.ContentJudgment) -> Scored |
         category = Category(name)
         if category in values:
             continue
-        value = numeric_of(entry)
+        value = numeric_of(name, entry)
         if value is not None:
             values[category] = JudgedCategory(category=category, value=value)
     if not values:
@@ -334,6 +358,26 @@ class NumericAgreement:
     within_max: float | None
     alpha: Alpha
     over_bar: int
+
+
+@dataclass
+class CriterionAgreement:
+    """One criterion's yes/no answers, compared across providers and across reruns.
+
+    The primary measurement (09): a band is a lookup from these answers, so a band
+    split is always a criterion split somewhere, and two band splits can need
+    opposite fixes. `unstable` counts resumes where one provider answered both yes
+    and no across its own samples. It is left out of `agree` and `disagree`, as a
+    wobbling band is in `BandAgreement`, and it is the number a between-provider
+    disagreement has to be read against.
+    """
+
+    criterion: str
+    resumes: int
+    agree: int
+    disagree: int
+    unstable: int
+    alpha: Alpha
 
 
 @dataclass
@@ -440,6 +484,7 @@ class AgreementReport:
     meta: dict
     providers: list[str]
     numeric: list[NumericAgreement] = field(default_factory=list)
+    criteria: list[CriterionAgreement] = field(default_factory=list)
     bands: list[BandAgreement] = field(default_factory=list)
     composites: list[CompositeRow] = field(default_factory=list)
     findings: list[FindingsRow] = field(default_factory=list)
@@ -507,7 +552,9 @@ def analyse(run: HarnessRun, band_order: list[str] | None = None) -> AgreementRe
         for r in live
     }
 
+    band_order = band_order or spec_band_order()
     report.numeric = _numeric_tables(live, scored)
+    report.criteria = _criterion_tables(live)
     report.bands = _band_tables(live, band_order)
     report.composites = _composite_rows(live, scored)
     report.findings = _findings_rows(live)
@@ -537,15 +584,49 @@ def analyse(run: HarnessRun, band_order: list[str] | None = None) -> AgreementRe
     return report
 
 
-def _categories(live: list[ResumeRun], read: Callable[[dict], Any]) -> list[str]:
+def _categories(live: list[ResumeRun], read: Callable[[str, dict], Any]) -> list[str]:
     """Every category some judge answered on this channel, numeric or band."""
     return sorted({
         name
         for run in live
         for judgment in run.judgments
         for name, entry in judgment.categories.items()
-        if read(entry) is not None
+        if read(name, entry) is not None
     })
+
+
+def _criterion_tables(live: list[ResumeRun]) -> list[CriterionAgreement]:
+    # criterion -> resume -> provider -> answers, one per sample that gave one
+    answers: dict[str, dict[str, dict[str, list[bool]]]] = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(list)))
+    for run in live:
+        for judgment in run.judgments:
+            for answer in passes.criterion_answers(judgment.categories):
+                answers[answer.criterion_id][run.name][judgment.provider].append(answer.met)
+
+    tables = []
+    for criterion in sorted(answers):
+        agree = disagree = unstable = resumes = 0
+        units: list[list[str]] = []
+        for by_provider in answers[criterion].values():
+            if any(len(set(v)) > 1 for v in by_provider.values()):
+                resumes += 1
+                unstable += 1
+                continue
+            if len(by_provider) < 2:
+                continue  # one judge agrees with itself by construction
+            resumes += 1
+            said = [v[0] for v in by_provider.values()]
+            units.append(["yes" if met else "no" for met in said])
+            if len(set(said)) == 1:
+                agree += 1
+            else:
+                disagree += 1
+        tables.append(CriterionAgreement(
+            criterion=criterion, resumes=resumes, agree=agree, disagree=disagree,
+            unstable=unstable, alpha=alpha(units, level="nominal"),
+        ))
+    return tables
 
 
 def _numeric_tables(
