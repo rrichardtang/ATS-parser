@@ -22,9 +22,10 @@ OPENAI_MODEL = "gpt-5.6-luna"
 # wearing a parse bug's clothes, so it must not be tuned down casually.
 MAX_TOKENS = 16000
 
-# Seconds per request. The same as `ensemble.gather`'s timeout, so a call that gather
-# has given up on does not keep its thread, and the process, alive for the SDKs'
-# default ten minutes.
+# Seconds per attempt, matching `ensemble.gather`'s timeout. The SDKs retry a timeout
+# (default max_retries=2) and `call()` may run a second `_dispatch` for JSON repair,
+# so a thread gather has given up on can outlive this by several attempts -- but it
+# bounds what used to be the SDKs' default ten minutes per attempt.
 CALL_TIMEOUT = 180.0
 
 # OpenAI renamed max_tokens -> max_completion_tokens and pinned temperature to its
@@ -117,8 +118,11 @@ def _truncated(label: str, reason: str | None) -> None:
 def _dispatch(provider: Provider, system: str, user: str, temperature: float) -> str:
     if provider.name == "anthropic":
         import anthropic
+        import httpx
 
-        client = anthropic.Anthropic(api_key=provider.api_key, timeout=CALL_TIMEOUT)
+        client = anthropic.Anthropic(
+            api_key=provider.api_key, timeout=httpx.Timeout(CALL_TIMEOUT, connect=5.0)
+        )
         response = client.messages.create(
             model=provider.model,
             max_tokens=MAX_TOKENS,
@@ -131,9 +135,12 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
         )
 
     if provider.name == "openai":
+        import httpx
         import openai
 
-        client = openai.OpenAI(api_key=provider.api_key, timeout=CALL_TIMEOUT)
+        client = openai.OpenAI(
+            api_key=provider.api_key, timeout=httpx.Timeout(CALL_TIMEOUT, connect=5.0)
+        )
         legacy = bool(LEGACY_OPENAI.match(provider.model))
         request: dict[str, Any] = {
             "model": provider.model,

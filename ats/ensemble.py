@@ -74,10 +74,14 @@ def gather(fns: list, timeout: int = 180) -> tuple[list, list[str]]:
         # than ending it. This used to raise out of the pool, which then waited for
         # the slow call anyway and lost every result already in hand. A call that
         # finished at the deadline, after `as_completed` last yielded, is still kept.
+        late = 0
         for future in futures:
-            if future.done() and future not in collected:
+            if future in collected:
+                continue
+            if future.done():
                 take(future)
-        late = sum(1 for f in futures if not f.done())
+            else:
+                late += 1
         log.warning("%d ensemble call(s) still running after %ds; dropped", late, timeout)
         errors.extend([f"timed out after {timeout}s"] * late)
     finally:

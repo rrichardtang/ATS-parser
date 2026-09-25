@@ -63,8 +63,10 @@ def _patch(monkeypatch, provider_module, factory):
     attr = "Anthropic" if provider_module == "anthropic" else "OpenAI"
     def client(api_key, timeout=None):
         # Every client is bounded to gather's timeout, or a call gather gave up on
-        # holds the process open for the SDK's default ten minutes.
-        assert timeout == llm.CALL_TIMEOUT
+        # holds the process open for the SDK's default ten minutes. The connect leg
+        # stays short so a dead endpoint fails fast instead of at the read bound.
+        assert timeout.read == llm.CALL_TIMEOUT
+        assert timeout.connect == 5.0
         return factory
 
     monkeypatch.setattr(module, attr, client)
