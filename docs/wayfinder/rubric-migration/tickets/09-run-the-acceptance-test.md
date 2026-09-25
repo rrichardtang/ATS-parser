@@ -78,3 +78,16 @@ samples, up to 152 calls. Three fixtures are skipped before any call (`two_colum
 and `hidden_text` are withheld because their roles do not parse, and `scanned` has no
 text layer), so 140 in practice. The raw replies go to `runs/`, which is
 gitignored; the printed tables quote nothing and are what belongs here.
+
+## The first attempt ran silent, and could have lost everything
+
+The owner started the run and saw nothing for over five minutes. That was expected:
+resumes are judged one after another and each waits on its four calls. But reading the
+code turned up two faults behind the silence, both fixed:
+
+- `ensemble.gather` let a call past its 180 s timeout raise out of the pool. The pool
+  then waited for the slow call anyway, and the exception ended the sweep. A slow call
+  is now a failed call, recorded like any other. This path is shared with the app's own
+  passes, which had the same fault.
+- The harness saved only at the end, so a crash or Ctrl-C discarded every call already
+  paid for. It now saves and prints a progress line after each resume.

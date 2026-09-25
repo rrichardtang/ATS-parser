@@ -4,8 +4,11 @@ Pass 3 is the only place Goodhart pressure arises, because it is the only pass
 whose output is generated in order to win a selection. The ranking/audit split is
 what keeps best-of-N honest, so it is tested directly.
 """
+import concurrent.futures
+
 import pytest
 
+from ats import ensemble
 from ats.rubric import load_spec
 from ats.ensemble import (
     audit_clean,
@@ -13,6 +16,7 @@ from ats.ensemble import (
     combine_bands,
     combine_slop,
     filter_slop,
+    gather,
     rank_score,
     select_rewrite,
 )
@@ -240,3 +244,49 @@ def test_raising_n_never_ships_a_hack():
                     f"a hacked candidate shipped at N={n}"
                 )
                 assert winner.audit_score == 100.0
+
+
+def test_a_call_past_the_timeout_is_a_failed_call_not_a_crash():
+    """`as_completed` raised TimeoutError out of the pool, which then waited for the
+    slow call anyway and lost every result already in hand."""
+    import threading
+    import time
+
+    from ats.ensemble import gather
+
+    release = threading.Event()
+    started = time.monotonic()
+    results, errors = gather([lambda: "fast", lambda: release.wait(5)], timeout=1)
+    release.set()
+    assert results == ["fast"]
+    assert errors == ["timed out after 1s"]
+    assert time.monotonic() - started < 3, "gather waited for the slow call"
+
+
+def test_a_future_finishing_between_the_take_loop_and_the_late_count_is_classified(monkeypatch):
+    """A future still running when the deadline branch looks at it, but done by the
+    time the late calls are counted, must land in results or errors, not neither."""
+    class FinishesAfterFirstLook:
+        looks = 0
+
+        def done(self):
+            self.looks += 1
+            return self.looks > 1
+
+    class Pool:
+        def __init__(self, max_workers):
+            pass
+
+        def submit(self, fn):
+            return FinishesAfterFirstLook()
+
+        def shutdown(self, wait, cancel_futures):
+            pass
+
+    def deadline(fs, timeout=None):
+        raise concurrent.futures.TimeoutError
+
+    monkeypatch.setattr(ensemble.concurrent.futures, "ThreadPoolExecutor", Pool)
+    monkeypatch.setattr(ensemble.concurrent.futures, "as_completed", deadline)
+
+    assert gather([lambda: 1], timeout=1) == ([], ["timed out after 1s"])

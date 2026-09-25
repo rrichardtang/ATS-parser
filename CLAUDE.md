@@ -34,9 +34,15 @@ The push gate is this repo's own: `.claude/settings.json` runs the scripts in
 Change it in `claude-config`, bump the version, then re-run its `vendor.sh` against this repo.
 `.vendored-from` names the commit the copy came from.
 
-- Before a push, have `harness:felix-the-fixer` review the commits being pushed, then run the
-  `--record` command the push gate prints, as its own command. Read `harness:protocol` before
-  spawning either subagent.
+- Every code change is built by `harness:bob-the-builder` and approved by `harness:felix-the-fixer`
+  before it is pushed, including fixes for Felix's own findings: those go back through Bob, then
+  Felix again. The orchestrating session does not write code itself. Read `harness:protocol`
+  before spawning either.
+- Push only after Felix has approved the exact commits being pushed and the test suite has
+  passed, as a separate command from the test run. Then run the `--record` command the push gate
+  prints, as its own command.
+- The push gate only loads when the session starts inside this repository. A session started
+  elsewhere has no gate, so these steps are the only check.
 - The gate is a nudge. Anyone can record a receipt, and GitHub never sees it. The pull request
   review on GitHub is the actual check.
 - No TODO/FIXME markers or placeholder stubs unless asked for. The practices hook flags them as

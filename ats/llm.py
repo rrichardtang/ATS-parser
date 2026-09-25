@@ -22,6 +22,12 @@ OPENAI_MODEL = "gpt-5.6-luna"
 # wearing a parse bug's clothes, so it must not be tuned down casually.
 MAX_TOKENS = 16000
 
+# Seconds per attempt, matching `ensemble.gather`'s timeout. The SDKs retry a timeout
+# (default max_retries=2) and `call()` may run a second `_dispatch` for JSON repair,
+# so a thread gather has given up on can outlive this by several attempts -- but it
+# bounds what used to be the SDKs' default ten minutes per attempt.
+CALL_TIMEOUT = 180.0
+
 # OpenAI renamed max_tokens -> max_completion_tokens and pinned temperature to its
 # default on everything after the gpt-4 generation, and still serves both eras from
 # one SDK -- so the model, not the SDK, decides which spelling a request gets.
@@ -109,11 +115,25 @@ def _truncated(label: str, reason: str | None) -> None:
         )
 
 
+def _anthropic_client(api_key: str):
+    import anthropic
+
+    return anthropic.Anthropic(
+        api_key=api_key, timeout=anthropic.Timeout(CALL_TIMEOUT, connect=5.0)
+    )
+
+
+def _openai_client(api_key: str):
+    import openai
+
+    return openai.OpenAI(
+        api_key=api_key, timeout=openai.Timeout(CALL_TIMEOUT, connect=5.0)
+    )
+
+
 def _dispatch(provider: Provider, system: str, user: str, temperature: float) -> str:
     if provider.name == "anthropic":
-        import anthropic
-
-        client = anthropic.Anthropic(api_key=provider.api_key)
+        client = _anthropic_client(provider.api_key)
         response = client.messages.create(
             model=provider.model,
             max_tokens=MAX_TOKENS,
@@ -126,9 +146,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
         )
 
     if provider.name == "openai":
-        import openai
-
-        client = openai.OpenAI(api_key=provider.api_key)
+        client = _openai_client(provider.api_key)
         legacy = bool(LEGACY_OPENAI.match(provider.model))
         request: dict[str, Any] = {
             "model": provider.model,
