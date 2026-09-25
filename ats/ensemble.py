@@ -56,17 +56,27 @@ def gather(fns: list, timeout: int = 180) -> tuple[list, list[str]]:
         return results, errors
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=len(fns))
     futures = [pool.submit(fn) for fn in fns]
+    collected: set = set()
+
+    def take(future) -> None:
+        collected.add(future)
+        try:
+            results.append(future.result())
+        except Exception as exc:  # noqa: BLE001 - degradation is per-call
+            log.warning("ensemble call failed: %s", exc)
+            errors.append(str(exc))
+
     try:
         for future in concurrent.futures.as_completed(futures, timeout=timeout):
-            try:
-                results.append(future.result())
-            except Exception as exc:  # noqa: BLE001 - degradation is per-call
-                log.warning("ensemble call failed: %s", exc)
-                errors.append(str(exc))
+            take(future)
     except concurrent.futures.TimeoutError:
         # A slow call is a failed call, like any other: it degrades the run rather
         # than ending it. This used to raise out of the pool, which then waited for
-        # the slow call anyway and lost every result already in hand.
+        # the slow call anyway and lost every result already in hand. A call that
+        # finished at the deadline, after `as_completed` last yielded, is still kept.
+        for future in futures:
+            if future.done() and future not in collected:
+                take(future)
         late = sum(1 for f in futures if not f.done())
         log.warning("%d ensemble call(s) still running after %ds; dropped", late, timeout)
         errors.extend([f"timed out after {timeout}s"] * late)

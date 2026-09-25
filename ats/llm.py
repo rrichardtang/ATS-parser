@@ -22,6 +22,11 @@ OPENAI_MODEL = "gpt-5.6-luna"
 # wearing a parse bug's clothes, so it must not be tuned down casually.
 MAX_TOKENS = 16000
 
+# Seconds per request. The same as `ensemble.gather`'s timeout, so a call that gather
+# has given up on does not keep its thread, and the process, alive for the SDKs'
+# default ten minutes.
+CALL_TIMEOUT = 180.0
+
 # OpenAI renamed max_tokens -> max_completion_tokens and pinned temperature to its
 # default on everything after the gpt-4 generation, and still serves both eras from
 # one SDK -- so the model, not the SDK, decides which spelling a request gets.
@@ -113,7 +118,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
     if provider.name == "anthropic":
         import anthropic
 
-        client = anthropic.Anthropic(api_key=provider.api_key)
+        client = anthropic.Anthropic(api_key=provider.api_key, timeout=CALL_TIMEOUT)
         response = client.messages.create(
             model=provider.model,
             max_tokens=MAX_TOKENS,
@@ -128,7 +133,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
     if provider.name == "openai":
         import openai
 
-        client = openai.OpenAI(api_key=provider.api_key)
+        client = openai.OpenAI(api_key=provider.api_key, timeout=CALL_TIMEOUT)
         legacy = bool(LEGACY_OPENAI.match(provider.model))
         request: dict[str, Any] = {
             "model": provider.model,
