@@ -1,6 +1,6 @@
 type: task (AFK)
 status: open
-claimed:
+claimed: claude
 blocked-by: 07, 08
 
 # Run the acceptance test on the new rubric
