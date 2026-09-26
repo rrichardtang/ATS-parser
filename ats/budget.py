@@ -21,6 +21,8 @@ BATCH_DISCOUNT = 0.5
 CHARS_PER_TOKEN = 3
 
 # `llm.call` may send a second, JSON-repair call per sample; a batch request makes none.
+# Claude streams, and its SDK retries only before generation starts, so a live Claude
+# sample is at most these two generations.
 LIVE_ATTEMPTS = 2
 
 
@@ -43,15 +45,29 @@ def _rates(provider: Provider, batch: bool, openai_price: tuple[float, float] | 
             f"{provider.label}'s price is not known here: pass --openai-price IN,OUT "
             "($ per million tokens) or --claude-only."
         )
-    return (*openai_price, llm.MAX_TOKENS, LIVE_ATTEMPTS)
+    import openai
+
+    # OpenAI does not stream: a reply slower than `llm.CALL_TIMEOUT` times out and the
+    # SDK resends it (default max_retries), and each abandoned generation may be billed.
+    attempts = LIVE_ATTEMPTS * (1 + openai.DEFAULT_MAX_RETRIES)
+    return (*openai_price, llm.MAX_TOKENS, attempts)
 
 
 def worst_case(providers: list[Provider], prompt_tokens: list[int], samples: int,
                batch: bool, openai_price: tuple[float, float] | None) -> dict[str, float]:
-    """Dollars per provider label; `prompt_tokens` has one entry per judged document."""
+    """Dollars per provider label; `prompt_tokens` has one entry per judged document.
+
+    Raises ValueError on a negative sample count or price, or a cap below 1: any of
+    them makes a negative cost that would hide another provider's real one.
+    """
+    if samples < 0:
+        raise ValueError(f"samples must not be negative, got {samples}")
     costs = {}
     for provider in providers:
         in_rate, out_rate, cap, attempts = _rates(provider, batch, openai_price)
+        if cap < 1 or in_rate < 0 or out_rate < 0:
+            raise ValueError(f"{provider.label}: cap {cap} or price "
+                             f"({in_rate}, {out_rate}) out of range")
         per_call = sum(tokens * in_rate + cap * out_rate for tokens in prompt_tokens)
         costs[provider.label] = samples * attempts * per_call / 1e6
     return costs

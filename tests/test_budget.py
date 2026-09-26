@@ -1,4 +1,5 @@
 """The worst-case cost a run is refused on, with no provider and no network."""
+import openai
 import pytest
 
 from ats import budget, llm
@@ -36,7 +37,22 @@ def test_openai_is_refused_without_a_price_and_costed_with_one():
     assert not fits and "--openai-price" in report and "--claude-only" in report
 
     costs = budget.worst_case([OPENAI], [3000], 1, True, (1.0, 8.0))
-    assert costs[OPENAI.label] == pytest.approx(2 * (3000 * 1.0 + llm.MAX_TOKENS * 8.0) / 1e6)
+    # Repair retry x (1 + the SDK's timeout retries): OpenAI does not stream.
+    attempts = 2 * (1 + openai.DEFAULT_MAX_RETRIES)
+    assert costs[OPENAI.label] == pytest.approx(
+        attempts * (3000 * 1.0 + llm.MAX_TOKENS * 8.0) / 1e6)
+
+
+@pytest.mark.parametrize("providers, samples, price", [
+    ([Provider("anthropic", "k", "claude-sonnet-5", -10**7), OPENAI], 2, (5.0, 40.0)),
+    ([Provider("anthropic", "k", "claude-sonnet-5", 0)], 2, None),
+    ([CLAUDE, OPENAI], 2, (-1.0, -1.0)),
+    ([CLAUDE], -2, None),
+])
+def test_a_negative_cap_price_or_sample_count_is_refused(providers, samples, price):
+    """Any of them makes a negative cost that would offset another provider's."""
+    with pytest.raises(ValueError):
+        budget.verdict(providers, [5000] * 7, samples, True, price, 3.0)
 
 
 def test_skipped_documents_cost_nothing():
