@@ -76,9 +76,10 @@ the work?**
 and building something new counts: "Designed and implemented an LLM-powered marking
 workflow" is yes.
 *No* looks like: a role whose bullets are all responsibilities — "Responsible for
-maintaining the pipeline", "Worked on model architectures". Also a change that happened
-to the system but not because of the candidate's work — "is now owned by the ops team",
-"retrieval quality dropped and nobody noticed".
+maintaining the pipeline", "Worked on model architectures". Designing or working on
+something without building it is not a change: "Designed model architectures" is no.
+Also no when the bullet reports a change without saying the candidate's work caused it
+— "is now owned by the ops team", "retrieval quality dropped and nobody noticed".
 
 ### C3 — Says what it was for
 **Does the resume say what the work was for — a product, a user, a problem — rather than

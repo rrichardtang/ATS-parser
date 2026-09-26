@@ -33,12 +33,14 @@ pipeline", "Explored transformer architectures".
 interview?**
 
 *Yes* needs a named service, product, model, or pipeline in the same bullet as the
-destination — or what it does, specifically enough: "Built forecasting for build
-timelines" is yes, and so is what-it-does plus one detail that picks it out, like
-"Built ingestion on Airflow and Postgres".
-*No* looks like: "Shipped AI-powered solutions", "delivered scalable systems" —
-portable to any candidate. So is a bare category noun with no such detail: "the
-pipeline", "the ingestion".
+destination — or a word for what it is FOR, with no proper name: "Built forecasting for
+build timelines" is yes, and so is plain "built forecasting". A generic stage or kind
+word — ingestion, processing, ETL, pipeline, service — needs one more detail that picks
+it out: purpose, users, data, or stack. "Built ingestion on Airflow and Postgres" is
+yes.
+*No* looks like: a bare category noun with no picking-out detail — "the pipeline", "the
+ingestion service" — or "Shipped AI-powered solutions", "delivered scalable systems" —
+portable to any candidate.
 
 ### C3 — Operational fact
 **Does any bullet state a fact that could only be true after the system ran for real?**

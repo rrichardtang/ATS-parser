@@ -59,7 +59,7 @@ The boundaries for pattern 2, to be written into each criterion's `yes_requires`
    "same bullet" rule on purpose: the rule was there to stop a listed tool counting as
    shipped, and a name two bullets up in the same role is the same system to any reader.
 
-## Decided, 26 September (the owner)
+## Decided, 26 September (the owner): five readings
 
 From a 5-resume run on the owner's machine, after the OpenAI locator fix
 (`runs/agreement-20260926T224846Z.json`): 6 whole-answer flips on the five weak
@@ -72,23 +72,35 @@ did not change the whole answer.
 
 The five readings, written into `yes_requires` / `no_looks_like`:
 
-1. **`production-ownership/C2`: a bullet naming only what a system does, no proper
-   name, counts.** "Built forecasting for build timelines" is `yes` -- an interviewer
-   can say "tell me about the build-timeline forecasting".
-2. **`production-ownership/C2`: what it does plus one picking-out detail is enough.**
-   "Built ingestion on Airflow and Postgres" is `yes` (purpose, users, data, or stack
-   all count as the detail). A bare category noun alone -- "the pipeline", "the
-   ingestion" -- stays `no`.
+1. **`production-ownership/C2`: a word for what the system is FOR, no proper name,
+   counts on its own.** "Built forecasting for build timelines" is `yes`, and so is
+   plain "built forecasting" -- an interviewer can say "tell me about the
+   build-timeline forecasting".
+2. **`production-ownership/C2`: a generic stage or kind word needs one more
+   detail.** "Ingestion", "processing", "ETL", "pipeline", "service" count only with
+   one detail that picks the system out -- purpose, users, data, or stack. "Built
+   ingestion on Airflow and Postgres" is `yes`. "The ingestion service" and "the
+   pipeline" alone stay `no`.
 3. **`resume-craft/C2`: building something new is a change.** "Designed and
    implemented an LLM-powered marking workflow" is `yes` -- a new thing that now
    exists is a difference.
-4. **`resume-craft/C2`: a change not caused by the candidate's work is not a
-   change.** "is now owned by the ops team", "retrieval quality dropped and nobody
-   noticed" -- `no`. It must be different because of the work.
+4. **`resume-craft/C2`: a change the bullet doesn't attribute to the candidate's
+   work is not a change.** "is now owned by the ops team", "retrieval quality dropped
+   and nobody noticed" -- `no`.
 5. **`production-ownership/C4`: still-used is not post-launch work,** consistent with
    the existing "still in use" ruling for C4. "The eval suite has been run on every
    release since, 40 releases" is `no` -- it says the suite is still used, not what the
    candidate did to it.
+
+Round 1's text for readings 1 and 2 (commit a7b5821) stacked two overlapping sentences
+that contradicted each other on "the ingestion" -- one said what-it-does alone was
+enough, the other said a bare category noun wasn't. The owner's follow-up (round 2)
+replaced them with one rule: a purpose word stands alone, a stage/kind word needs a
+detail. Round 2 also sharpened reading 4 to name causation rather than leave the judge
+to guess it, and added a sixth reading to `resume-craft/C2`:
+
+6. **`resume-craft/C2`: designing or working on something without building it is not
+   a change.** "Designed model architectures" is `no`.
 
 **Not comparable to the 25 September baseline without qualification:** from 26
 September, Claude runs at effort medium with a cached system prompt, which the 25
@@ -157,6 +169,12 @@ Both parts, each built by bob-the-builder and approved by felix-the-fixer.
   `scripts/criteria_probe.py` matches tokens like `vLLM`, not descriptive names like
   "the forecasting service". The model is now told those count; the probe still says
   `no`. Expect the probe and the model to disagree on `production-ownership/C2`.
+- **The probe also misses the 26 September readings.** `SPECIFIC_TOKEN_RE` says `no`
+  to "Built forecasting for build timelines" and "Built ingestion on Airflow and
+  Postgres" -- neither is a name-shaped token. `OUTCOME_VERBS` has no designed or
+  implemented, so the `resume-craft/C2` probe says `no` to reading 3's example,
+  "Designed and implemented an LLM-powered marking workflow", where the model says
+  `yes`. Recorded, not fixed: the probe is not changed here.
 - **Reply size is unmeasured.** Felix estimated 6–7k output tokens for a 15-bullet
   resume and 10–11k for 30, against a 16,000 cap that OpenAI's reasoning tokens also
   count against. A truncated reply fails loudly, not silently. Only a live run can

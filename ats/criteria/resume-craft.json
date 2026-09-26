@@ -25,7 +25,7 @@
       "place_question": "Does THIS bullet name something that is different because of the work?",
       "question": "Does every role have at least one bullet naming something that is different because of the work?",
       "yes_requires": "A quote stating a change -- something cut, raised, replaced, unblocked, shipped. Not the assignment, the difference. Building something new counts too: 'Designed and implemented an LLM-powered marking workflow' is yes -- a new thing that now exists is a difference.",
-      "no_looks_like": "A role whose bullets are all responsibilities: 'Responsible for maintaining the pipeline', 'Worked on model architectures', 'Involved in the migration'. Also no when the change happened to the system but not because of the candidate's work: 'is now owned by the ops team', 'retrieval quality dropped and nobody noticed' -- it must be different because of the work.",
+      "no_looks_like": "A role whose bullets are all responsibilities: 'Responsible for maintaining the pipeline', 'Worked on model architectures', 'Involved in the migration'. Designing or working on something without building it is not a change: 'Designed model architectures' is no. Also no when the bullet reports a change without saying the candidate's work caused it: 'is now owned by the ops team', 'retrieval quality dropped and nobody noticed'.",
       "aliases": [],
       "deterministic": {
         "kind": "outcome_per_role"
