@@ -4,6 +4,7 @@ No network. What matters here is the wiring: that passes run, that each degrades
 on its own, and that a hacked rewrite from a model never reaches the report.
 """
 import json
+import re
 
 import pytest
 
@@ -306,13 +307,13 @@ def test_content_findings_are_keyed_by_the_criterion_they_answer(monkeypatch):
     reply = _answers(
         ("Production ownership", "C1", "no", "No destination named",
          "Owned GLIDE-ME end to end", "exp[0].bullet[0]"),
-        ("Production ownership", "C3", "no", "No operational fact",
+        ("Production ownership", "C5", "no", "Portable to any candidate",
          "Built a concurrent mapping tool", "exp[0].bullet[1]"),
     )
     result = _one_content_pass(monkeypatch, reply, _resume())
 
     assert {f.rule_id for f in result.data} == {
-        "production-ownership/C1", "production-ownership/C3",
+        "production-ownership/C1", "production-ownership/C5",
     }
 
 
@@ -355,14 +356,14 @@ def test_a_locator_that_resolves_to_nothing_demotes_rather_than_discards(monkeyp
     reply = _answers(
         ("Production ownership", "C1", "no", "No destination named",
          "Owned GLIDE-ME end to end", "exp[9].bullet[4]"),
-        ("Production ownership", "C3", "no", "No operational fact",
+        ("Production ownership", "C5", "no", "Portable to any candidate",
          "Owned GLIDE-ME end to end", "skills"),
     )
     result = _one_content_pass(monkeypatch, reply, _resume())
 
     assert result.data == []
     assert {c["criterion_id"] for c in result.meta["unmet"]} == {
-        "production-ownership/C1", "production-ownership/C3",
+        "production-ownership/C1", "production-ownership/C5",
     }
 
 
@@ -417,17 +418,17 @@ def test_two_judges_splitting_on_a_criterion_produce_a_contested_category(monkey
     moved the band.
     """
     def dispatch(provider, system, user, temperature):
-        c3 = "yes" if provider.name == "openai" else "no"
-        return _answers(
-            ("Production ownership", "C1", "yes", "", "Owned GLIDE-ME end to end",
-             "exp[0].bullet[0]"),
-            ("Production ownership", "C2", "yes", "", "GLIDE-ME", "exp[0].bullet[0]"),
-            ("Production ownership", "C3", c3, "nothing operational",
-             "Owned GLIDE-ME end to end", "exp[0].bullet[0]"),
-            ("Production ownership", "C4", "no", "no post-launch work", "", ""),
-            ("Production ownership", "C5", "yes", "", "Owned GLIDE-ME end to end",
-             "exp[0].bullet[0]"),
-        )
+        c3 = {"exp[0].bullet[0]"} if provider.name == "openai" else set()
+        bullets = ["exp[0].bullet[0]", "exp[0].bullet[1]"]
+        owned = {"answer": "yes", "evidence": "Owned GLIDE-ME end to end",
+                 "locator": "exp[0].bullet[0]"}
+        return json.dumps({"categories": {"Production ownership": {"criteria": [
+            {"id": "C1", **owned},
+            _per_place("C2", yes={"exp[0].bullet[0]"}, places=bullets),
+            _per_place("C3", yes=c3, places=bullets),
+            _per_place("C4", places=bullets),
+            {"id": "C5", **owned},
+        ]}}})
 
     monkeypatch.setattr(llm, "_dispatch", dispatch)
     result = passes.content_pass(
@@ -462,10 +463,12 @@ def test_the_judged_value_reaches_the_report(monkeypatch, fixtures):
     def dispatch(provider, system, user, temperature):
         if "ANSWER THE CRITERIA" not in system:
             return _router(system)
-        return _answers(*[
-            ("Production ownership", f"C{i}", "no", "not evidenced", "", "")
-            for i in range(1, 6)
-        ])
+        bullets = re.findall(r"exp\[\d+\]\.bullet\[\d+\]", user)
+        return json.dumps({"categories": {"Production ownership": {"criteria": [
+            {"id": "C1", "answer": "no", "why": "not evidenced"},
+            *[_per_place(cid, places=bullets) for cid in ("C2", "C3", "C4")],
+            {"id": "C5", "answer": "no", "why": "not evidenced"},
+        ]}}})
 
     monkeypatch.setattr(llm, "_dispatch", dispatch)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
@@ -492,7 +495,8 @@ def test_the_content_prompt_asks_the_criteria_and_no_longer_asks_for_a_score():
         spec = rubric.load_spec(slug)
         assert spec["category"] in system
         for criterion in spec["criteria"]:
-            assert criterion["question"] in system, f"{slug}/{criterion['id']} not asked"
+            asked = criterion.get("place_question") or criterion["question"]
+            assert asked in system, f"{slug}/{criterion['id']} not asked"
 
 
 def test_a_document_whose_roles_did_not_parse_is_withheld(monkeypatch, fixtures):
@@ -546,8 +550,8 @@ def _per_place(cid, yes=(), places=ALL_PLACES):
     ]}
 
 
-def _derive(category, item):
-    entry = passes.derive_scoped(category, {"criteria": [item]}, _two_roles())
+def _derive(category, item, resume=None):
+    entry = passes.derive_scoped(category, {"criteria": [item]}, resume or _two_roles())
     return entry["criteria"][0]
 
 
@@ -561,18 +565,47 @@ def test_any_bullet_is_yes_on_the_first_yes_place():
 
 def test_any_bullet_with_no_yes_is_an_unplaced_no():
     item = _derive(Category.PRODUCTION_OWNERSHIP, _per_place("C4"))
-    assert (item["answer"], item["evidence"], item["locator"]) == ("no", "", "")
-    assert item["why"] == "no place qualified"
+    assert (item["answer"], item["evidence"], item["locator"], item["why"]) == ("no", "", "", "")
+
+
+def test_the_summary_counts_for_any_place_but_not_any_bullet():
+    summary_only = _per_place("C3", yes={"summary"})
+    assert _derive(Category.RESUME_CRAFT, summary_only)["answer"] == "yes"
+    summary_only["id"] = "C2"
+    assert _derive(Category.PRODUCTION_OWNERSHIP, summary_only)["answer"] == "no"
+
+
+def test_a_missing_place_abstains_only_when_it_could_change_the_answer():
+    found = _derive(Category.PRODUCTION_OWNERSHIP,
+                    _per_place("C3", yes={"exp[0].bullet[0]"}, places=ALL_PLACES[:2]))
+    assert found["answer"] == "yes"
+    # exp[0] is missing, but exp[1] answered no settles "every role" either way.
+    failed = _derive(Category.RESUME_CRAFT, _per_place("C2", places=ALL_PLACES[3:]))
+    assert failed["answer"] == "no"
+    open_role = _derive(Category.RESUME_CRAFT,
+                        _per_place("C2", yes={"exp[0].bullet[0]"}, places=ALL_PLACES[:3]))
+    assert open_role["answer"] is None and "exp[1].bullet[0]" in open_role["why"]
 
 
 def test_every_role_needs_a_yes_in_each_role():
     both = _derive(Category.RESUME_CRAFT,
                    _per_place("C2", yes={"exp[0].bullet[1]", "exp[1].bullet[0]"}))
     assert both["answer"] == "yes"
-    # The summary is no role, so its `yes` does not rescue exp[1].
+    # The summary is no role, so its `yes` does not rescue the second role.
     one = _derive(Category.RESUME_CRAFT, _per_place("C2", yes={"summary", "exp[0].bullet[0]"}))
     assert (one["answer"], one["locator"]) == ("no", "")
-    assert one["why"] == "no bullet in exp[1] qualified"
+    assert one["why"] == "no bullet in “B” names what changed"
+
+
+def test_every_role_counts_a_role_with_no_bullets_as_failing():
+    from ats.sections import Role
+
+    resume = Resume(roles=[Role(heading="A", bullets=["Cut p99 latency 40%"]),
+                           Role(heading="B", bullets=[])])
+    item = _derive(Category.RESUME_CRAFT,
+                   _per_place("C2", yes={"exp[0].bullet[0]"}, places=["exp[0].bullet[0]"]),
+                   resume)
+    assert (item["answer"], item["why"]) == ("no", "no bullet in “B” names what changed")
 
 
 def test_every_role_does_not_need_the_summary_answered():
@@ -580,6 +613,15 @@ def test_every_role_does_not_need_the_summary_answered():
                    _per_place("C2", yes={"exp[0].bullet[0]", "exp[1].bullet[0]"},
                               places=ALL_PLACES[1:]))
     assert item["answer"] == "yes"
+
+
+def test_duplicate_place_answers_are_not_resolved_by_position():
+    item = _per_place("C3")
+    item["places"].insert(0, {"locator": "exp[1].bullet[0]", "answer": "maybe"})
+    item["places"].append({"locator": "exp[0].bullet[0]", "answer": "yes", "evidence": "q"})
+    derived = _derive(Category.PRODUCTION_OWNERSHIP, item)
+    # The unreadable answer is ignored; exp[0].bullet[0]'s yes and no cancel out.
+    assert derived["answer"] is None and derived["why"] == "no answer for exp[0].bullet[0]"
 
 
 def test_an_unknown_locator_is_ignored():
@@ -609,11 +651,25 @@ def test_a_place_left_out_is_an_abstention_not_a_no(monkeypatch):
     assert Category.PRODUCTION_OWNERSHIP not in result.judged
 
 
-def test_a_single_answer_for_a_scoped_criterion_passes_through():
-    """Runs recorded before 15 carry one answer per criterion and must still load."""
-    legacy = {"id": "C3", "answer": "yes", "evidence": "Cut p99 latency 40%",
-              "locator": "exp[1].bullet[0]", "why": "load"}
-    assert _derive(Category.PRODUCTION_OWNERSHIP, legacy) == legacy
+LEGACY_C3 = {"id": "C3", "answer": "yes", "evidence": "Cut p99 latency 40%",
+             "locator": "exp[1].bullet[0]", "why": "load"}
+
+
+def test_a_live_single_answer_for_a_scoped_criterion_is_an_abstention():
+    item = _derive(Category.PRODUCTION_OWNERSHIP, LEGACY_C3)
+    assert (item["answer"], item["why"]) == (None, "no per-place answers")
+
+
+def test_a_recorded_single_answer_for_a_scoped_criterion_still_loads():
+    """Runs recorded before 15 load through from_dict and never reach derive_scoped."""
+    from ats import agreement
+
+    run = agreement.ResumeRun.from_dict({"name": "r", "judgments": [{
+        "provider": "anthropic", "sample": 0,
+        "categories": {Category.PRODUCTION_OWNERSHIP.value: {"criteria": [LEGACY_C3]}},
+    }]})
+    [answer] = passes.criterion_answers(run.judgments[0].categories)
+    assert (answer.criterion_id, answer.met) == ("production-ownership/C3", True)
 
 
 def test_per_place_replies_band_the_category_end_to_end(monkeypatch):
@@ -631,7 +687,10 @@ def test_per_place_replies_band_the_category_end_to_end(monkeypatch):
     judged = result.judged[Category.PRODUCTION_OWNERSHIP]
     assert (judged.band, judged.value) == ("C", 58.0)
     assert result.data == [], "a derived no is unmet, not a placed finding"
-    assert [c["criterion_id"] for c in result.meta["unmet"]] == ["production-ownership/C4"]
+    [unmet] = result.meta["unmet"]
+    assert unmet["criterion_id"] == "production-ownership/C4"
+    c4 = next(c for c in rubric.load_spec("production-ownership")["criteria"] if c["id"] == "C4")
+    assert unmet["message"] == c4["no_looks_like"][:200]
 
 
 def test_the_prompt_asks_a_scoped_criterion_at_every_place():
@@ -642,3 +701,10 @@ def test_the_prompt_asks_a_scoped_criterion_at_every_place():
             if "scope" in criterion:
                 assert (f"ANSWER PER PLACE: {criterion['place_question']} "
                         f"{prompts.PER_PLACE[criterion['scope']]}") in system
+
+
+def test_every_scope_is_one_the_prompt_can_ask():
+    for slug in rubric.SLUGS:
+        for criterion in rubric.load_spec(slug)["criteria"]:
+            if "scope" in criterion:
+                assert criterion["scope"] in prompts.PER_PLACE, f"{slug}/{criterion['id']}"

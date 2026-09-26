@@ -165,38 +165,83 @@ def _derived(item, criteria: dict[str, dict], resume: Resume):
         return item
     criterion = criteria.get(str(item.get("id") or "").strip().upper()) or {}
     scope = criterion.get("scope")
-    # An entry with no "places" -- a run recorded before 15, criteria/judgments --
-    # passes through unchanged, so old recordings still load and still band.
-    if not scope or not isinstance(item.get("places"), list):
+    if not scope:
         return item
-    valid = resolvable_locators(resume)
-    answered: dict[str, dict] = {}
-    for place_answer in item["places"]:
-        if isinstance(place_answer, dict) and place_answer.get("locator") in valid:
-            answered.setdefault(place_answer["locator"], place_answer)
-
-    # A place left out is an abstention, never a `no`: reading it as `no` would
-    # rebuild the unsearched `no` this change exists to remove.
-    required = [loc for loc, _ in resume.bullets if loc in valid]
-    if scope == "any_bullet" and "summary" in valid:
+    # A scoped criterion answered the old way was never searched place by place, and
+    # that unsearched `no` is what 15 removes. Recorded runs never come through here.
+    if not isinstance(item.get("places"), list):
+        return _abstained(item, "no per-place answers")
+    answers = _place_answers(item["places"], resolvable_locators(resume))
+    if scope == "every_role":
+        return _every_role(item, answers, resume, criterion["name"])
+    required = [loc for loc, text in resume.bullets if text]
+    if scope == "any_place" and resume.summary:
         required.insert(0, "summary")
-    missing = [loc for loc in required if _met(answered.get(loc, {}).get("answer")) is None]
-    if missing:
-        return {**item, "answer": None, "why": f"no answer for {', '.join(missing)}"}
+    return _any_place(item, answers, required)
 
-    yes = [loc for loc in required if _met(answered[loc]["answer"])]
-    roles_without = sorted({loc.split(".")[0] for loc in required}
-                           - {loc.split(".")[0] for loc in yes})
-    if scope == "every_role" and roles_without:
-        return _derived_no(item, f"no bullet in {', '.join(roles_without)} qualified")
-    if not yes:
-        return _derived_no(item, "no place qualified")
-    return {**item, "answer": "yes", "evidence": answered[yes[0]].get("evidence") or "",
-            "locator": yes[0], "why": f"{yes[0]} qualified"}
+
+def _place_answers(entries: list, valid: set[str]) -> dict[str, dict]:
+    """Each resolvable place's readable answer. A place answered both yes and no is
+    left out: which of the two to believe is not the code's call."""
+    by_place: dict[str, list[dict]] = {}
+    for entry in entries:
+        if (isinstance(entry, dict) and entry.get("locator") in valid
+                and _met(entry.get("answer")) is not None):
+            by_place.setdefault(entry["locator"], []).append(entry)
+    return {loc: found[0] for loc, found in by_place.items()
+            if len({_met(e["answer"]) for e in found}) == 1}
+
+
+def _yes_places(answers: dict[str, dict], locators: list[str]) -> list[str]:
+    return [loc for loc in locators if loc in answers and _met(answers[loc]["answer"])]
+
+
+# Both derivations are monotone, so a missing place abstains only when its answer
+# could change the outcome. Reading it as `no` would rebuild the unsearched `no`.
+
+def _any_place(item: dict, answers: dict[str, dict], required: list[str]) -> dict:
+    yes = _yes_places(answers, required)
+    if yes:
+        return _derived_yes(item, answers, yes[0])
+    missing = [loc for loc in required if loc not in answers]
+    if missing:
+        return _abstained(item, f"no answer for {', '.join(missing)}")
+    return _derived_no(item, "")
+
+
+def _every_role(item: dict, answers: dict[str, dict], resume: Resume, name: str) -> dict:
+    if not resume.roles:
+        return _derived_no(item, "")
+    first_yes, failing, undecided = "", [], []
+    for r_index, role in enumerate(resume.roles):
+        bullets = [f"exp[{r_index}].bullet[{b_index}]"
+                   for b_index, text in enumerate(role.bullets) if text]
+        yes = _yes_places(answers, bullets)
+        if yes:
+            first_yes = first_yes or yes[0]
+        elif all(loc in answers for loc in bullets):
+            failing.append(f"“{role.heading[:40]}”")
+        else:
+            undecided.extend(loc for loc in bullets if loc not in answers)
+    if failing:
+        return _derived_no(item, f"no bullet in {', '.join(failing)} {name}")
+    if undecided:
+        return _abstained(item, f"no answer for {', '.join(undecided)}")
+    return _derived_yes(item, answers, first_yes)
+
+
+def _derived_yes(item: dict, answers: dict[str, dict], locator: str) -> dict:
+    return {**item, "answer": "yes", "evidence": answers[locator].get("evidence") or "",
+            "locator": locator, "why": f"{locator} qualified"}
+
+
+def _abstained(item: dict, why: str) -> dict:
+    return {**item, "answer": None, "why": why}
 
 
 def _derived_no(item: dict, why: str) -> dict:
-    """No single place is the defect, so nothing is quoted and `place` files it unmet."""
+    """No single place is the defect, so nothing is quoted and `place` files it unmet.
+    An empty `why` lets `place` fall back to the criterion's own `no_looks_like`."""
     return {**item, "answer": "no", "evidence": "", "locator": "", "why": why}
 
 

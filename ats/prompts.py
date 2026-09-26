@@ -39,10 +39,12 @@ it is something the candidate has to defend in an interview.
 # code (`passes.derive_scoped`) counts, because "does any bullet..." asked in one go
 # was answered `no` without every bullet being read.
 PER_PLACE = {
-    "any_bullet": "Answer it for EVERY place in PLACES, each on its own. Whether any "
-                  "place qualifies is counted from your answers, not by you.",
-    "every_role": "Answer it for EVERY bullet in PLACES, each on its own. Whether every "
-                  "role has one is counted from your answers, not by you.",
+    "any_bullet": "Answer it for EVERY role bullet in PLACES (not the summary). Whether "
+                  "any bullet qualifies is counted from your answers, not by you.",
+    "any_place": "Answer it for EVERY place in PLACES, the summary included. Whether any "
+                 "place qualifies is counted from your answers, not by you.",
+    "every_role": "Answer it for EVERY role bullet in PLACES (not the summary). Whether "
+                  "every role has one is counted from your answers, not by you.",
 }
 
 
@@ -58,12 +60,14 @@ def criteria_block() -> str:
         lines.append(f"## {spec['category']}")
         lines.append(spec["measures"])
         for criterion in spec["criteria"]:
-            lines.append(f"{criterion['id']} ({criterion['name']}): {criterion['question']}")
+            if "scope" in criterion:
+                asked = (f"ANSWER PER PLACE: {criterion['place_question']} "
+                         f"{PER_PLACE[criterion['scope']]}")
+            else:
+                asked = criterion["question"]
+            lines.append(f"{criterion['id']} ({criterion['name']}): {asked}")
             lines.append(f"    yes requires: {criterion['yes_requires']}")
             lines.append(f"    no looks like: {criterion['no_looks_like']}")
-            if "scope" in criterion:
-                lines.append(f"    ANSWER PER PLACE: {criterion['place_question']} "
-                             f"{PER_PLACE[criterion['scope']]}")
         lines.append("")
     return "\n".join(lines).strip()
 
@@ -92,25 +96,28 @@ Rules for answering, none of them optional:
 - Answer every criterion in every category. Do not skip one, and do not invent one.
 - Do not name a band. Do not give a category a score. Neither is yours to choose:
   both are computed from these answers.
-- "yes" requires an EXACT QUOTE from the resume in "evidence", and the "locator" of
-  the place it came from, copied verbatim from the PLACES list you are given.
-- "no" comes in two shapes, and the difference matters:
+- A criterion marked ANSWER PER PLACE gets no single answer, no "why" and no "fix".
+  Its "yes requires" describes what ONE qualifying place looks like: judge each
+  place alone against it. Return "places" with one entry for every place it names.
+  A "yes" quotes that place exactly in "evidence"; a "no" leaves "evidence" empty.
+  Skipping a place can leave the whole criterion unanswered.
+- Every other criterion gets one answer. Its "yes" requires an EXACT QUOTE from the
+  resume in "evidence", and the "locator" of the place it came from, copied
+  verbatim from the PLACES list you are given.
+- Its "no" comes in two shapes, and the difference matters:
   * nothing in the resume speaks to the question at all -- leave "evidence" and
     "locator" empty and say in "why" what is absent. There is nothing to quote.
   * the resume does speak to it and what it says is the problem -- quote it and
     locate it, exactly as a "yes" would, and give the fix.
 - NEVER write a locator that is not in the PLACES list. A quote you cannot place is
   worth less than no quote: say what is absent instead.
-- A criterion marked ANSWER PER PLACE gets no single answer. Return "places" with
-  one entry for every locator in PLACES, judged on that place alone. Skipping a
-  place makes the whole criterion unanswered.
 
 Return JSON only:
 {{
   "categories": {{
     "<category name>": {{
       "criteria": [
-        {{"id": "<C1..C5>",
+        {{"id": "<a criterion answered once>",
           "answer": "yes" | "no",
           "evidence": "<exact quote from the resume, or empty>",
           "locator": "<a locator from PLACES, or empty>",
@@ -120,7 +127,7 @@ Return JSON only:
           "places": [
             {{"locator": "<from PLACES>",
               "answer": "yes" | "no",
-              "evidence": "<exact quote from that place, or empty>"}}
+              "evidence": "<exact quote from that place on yes, empty on no>"}}
           ]}}
       ]
     }}
