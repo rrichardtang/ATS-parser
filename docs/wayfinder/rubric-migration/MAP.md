@@ -13,6 +13,12 @@ Done when a resume goes through `app.py` and is scored by the new category set f
 criterion answers the model actually returned — and the acceptance test has been run
 against two providers on documents nobody wrote in order to test it.
 
+**Status, 25 September: the destination is reached, and the rubric does not pass.**
+Resumes are scored through `app.py` from criterion answers, and 09 ran the acceptance
+test against two providers on documents nobody wrote to pass it. Four of five judged
+categories fail the band rule, mostly through judges not repeating themselves. What to
+change is the other map's; see 09 and *Not yet specified*.
+
 **This map decides nothing about what the rubric should be.** Every rubric question
 was settled by the other map; where a decision is missing, this map raises it there or
 records that it was forced by a code fact. What is open here is sequencing, safety and
@@ -289,6 +295,16 @@ and the drift problem does not arise.
   smallest possible disagreement is one band, which on `Production ownership` is 17–23
   points. The bar may need restating in bands rather than points — a question for the
   other map, raised from here, once 09 has a number.
+  **09 has the number.** The band verdict rule (more than one adjacent split fails)
+  fails `Evaluation rigour` at alpha 0.93, so it cannot be passed at n = 35. On
+  Krippendorff's usual reading (0.800 reliable, 0.667 tentative) two categories pass, one
+  is tentative and two fail. The other map's to restate.
+- **Judges do not repeat themselves** (09). Over 875 criterion readings a provider
+  changed its own answer between two samples 107 times; the providers disagreed 59
+  times. Repeatability comes before agreement. Worst: `production-ownership/C2`–`C4`,
+  `resume-craft/C2`–`C3`.
+- **Placed findings agree no better than chance** (09): kappa at or below 0 on every
+  document. What the report does with a finding's location depends on this.
 
 ## Out of scope
 

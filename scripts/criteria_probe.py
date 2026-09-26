@@ -198,7 +198,7 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
       alias            -- any bullet matching this criterion's aliases
       alias_in_anchor  -- this criterion's aliases, inside the anchor's bullet
       number_in        -- a digit inside the anchor's bullet
-      named_in         -- `SPECIFIC_TOKEN_RE` inside the anchor's bullet
+      named_in         -- `SPECIFIC_TOKEN_RE` inside the anchor's whole role
       unhedged_in      -- the anchor's bullet is not hedged or team-attributed
 
     plus four that ask about the whole document rather than one bullet, each reusing
@@ -210,15 +210,16 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
     is `no` too. That is a fact about the questions, not a scoring choice: "is the
     shipped thing named" has no answer when nothing shipped.
     """
-    bullets = [b for role in doc.resume.roles for b in role.bullets]
     verdict = Verdict("deterministic", note=doc.note)
     anchors: dict[str, str | None] = {}
+    anchor_roles: dict[str, str | None] = {}
 
     for criterion in spec["criteria"]:
         cid = criterion["id"]
         how = criterion.get("deterministic", {"kind": "alias"})
         kind = how["kind"]
         anchor = anchors.get(how.get("anchor", ""))
+        anchor_role = anchor_roles.get(how.get("anchor", ""))
         yes, evidence = False, ""
 
         # A criterion that presupposes another one has no subject when that one is
@@ -243,29 +244,46 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
             anchors[cid] = None
             continue
         elif kind == "alias":
-            hit = _find(_patterns(criterion), bullets)
+            hit, role_text = None, None
+            for role in doc.resume.roles:
+                hit = _find(_patterns(criterion), role.bullets)
+                if hit:
+                    role_text = " ".join(role.bullets)
+                    break
             if hit:
                 yes, evidence = True, f'{hit[1]!r} in "{hit[0][:100]}"'
                 anchors[cid] = hit[0]
+                anchor_roles[cid] = role_text
         elif kind == "alias_in_anchor":
             hit = _find(_patterns(criterion), [anchor]) if anchor else None
             if hit:
                 yes, evidence = True, f'{hit[1]!r} in the {how["anchor"]} bullet'
                 anchors[cid] = hit[0]
+                anchor_roles[cid] = anchor_role
         elif kind == "number_in":
             match = NUMBER_RE.search(anchor) if anchor else None
             if match:
                 yes, evidence = True, f'a number in "{anchor[:80]}"'
                 anchors[cid] = anchor
+                anchor_roles[cid] = anchor_role
         elif kind == "named_in":
-            match = SPECIFIC_TOKEN_RE.search(anchor) if anchor else None
+            # A name counts anywhere in the anchor's role, not only its own bullet
+            # (25 September decision 5): a system named two bullets up in the same
+            # role is the same system to any reader, so the search widens from the
+            # anchor bullet to the anchor's whole role. The role is the one the
+            # anchor was found in, not any role containing the anchor's bullet text
+            # (25 September decision 5, duplicate-bullet case): a bullet repeated
+            # verbatim in a later role must not borrow that role's name.
+            match = SPECIFIC_TOKEN_RE.search(anchor_role) if anchor_role else None
             if match:
                 yes, evidence = True, f"{match.group(0)!r} names the thing"
                 anchors[cid] = anchor
+                anchor_roles[cid] = anchor_role
         elif kind == "unhedged_in":
             if anchor and owned(anchor):
                 yes, evidence = True, f'subject is the candidate in "{anchor[:70]}"'
                 anchors[cid] = anchor
+                anchor_roles[cid] = anchor_role
             elif anchor:
                 evidence = "hedged or team-attributed"
         else:
@@ -274,6 +292,7 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
         verdict.answers[cid] = yes
         verdict.evidence[cid] = evidence
         anchors.setdefault(cid, None)
+        anchor_roles.setdefault(cid, None)
     return verdict
 
 

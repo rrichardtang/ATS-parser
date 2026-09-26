@@ -21,8 +21,10 @@
     {
       "id": "C2",
       "name": "names what changed",
+      "scope": "every_role",
+      "place_question": "Does THIS bullet name something that is different because of the work?",
       "question": "Does every role have at least one bullet naming something that is different because of the work?",
-      "yes_requires": "One quote per role stating a change -- something cut, raised, replaced, unblocked, shipped. Not the assignment, the difference.",
+      "yes_requires": "A quote stating a change -- something cut, raised, replaced, unblocked, shipped. Not the assignment, the difference.",
       "no_looks_like": "A role whose bullets are all responsibilities: 'Responsible for maintaining the pipeline', 'Worked on model architectures', 'Involved in the migration'.",
       "aliases": [],
       "deterministic": {
@@ -32,10 +34,12 @@
     {
       "id": "C3",
       "name": "says what it was for",
+      "scope": "any_place",
+      "place_question": "Does THIS place say what the work was for -- a user doing a task, or a problem solved?",
       "question": "Does the resume say what the work was for -- a product, a user, a problem -- rather than only the stack and the number?",
-      "yes_requires": "A quote naming the thing the work served. 'for ticket triage', 'so support agents could answer without escalating'.",
-      "no_looks_like": "Every bullet is a technology and a metric with no subject. 'Cut p99 latency 380ms to 95ms with vLLM' -- for what, and who noticed?",
-      "aliases": ["users", "user", "customers", "customer", "support", "agents", "tickets", "triage", "checkout", "onboarding", "fraud", "billing", "claims", "patients", "clinicians", "drivers", "merchants", "sellers", "buyers", "students", "moderation", "recommendations", "search results", "product", "shoppers", "subscribers", "borrowers", "underwriting", "so that", "so support", "for the team", "internal teams", "field staff"],
+      "yes_requires": "A quote naming a user doing a task, or a problem solved. 'for ticket triage', 'so support agents could answer without escalating', 'for dispatchers'. Who paid is not what it was for.",
+      "no_looks_like": "Every bullet is a technology and a metric with no subject. 'Cut p99 latency 380ms to 95ms with vLLM' -- for what, and who noticed? Naming only who paid -- 'clients', 'enterprise partners', 'customers', 'users' -- with no task or problem attached, is not enough.",
+      "aliases": ["support", "agents", "tickets", "triage", "checkout", "onboarding", "fraud", "billing", "claims", "patients", "clinicians", "drivers", "merchants", "sellers", "buyers", "students", "moderation", "recommendations", "search results", "product", "shoppers", "subscribers", "borrowers", "underwriting", "so that", "so support", "for the team", "internal teams", "field staff"],
       "deterministic": {
         "kind": "alias"
       }

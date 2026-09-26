@@ -144,9 +144,9 @@ def test_findings_agreement_keys_on_defect_kind_and_place_not_wording(monkeypatc
     """Two judges naming the same defect in the same place have agreed."""
     same_defect = "exp[0].bullet[0]"
     a = _reply(dict.fromkeys(CATEGORIES, 60),
-               [("C3", "no scale given here", "Cut p99 inference latency", same_defect)])
+               [("C1", "no scale given here", "Cut p99 inference latency", same_defect)])
     b = _reply(dict.fromkeys(CATEGORIES, 60),
-               [("C3", "this bullet never says how big", "Cut p99 inference latency", same_defect)])
+               [("C1", "this bullet never says how big", "Cut p99 inference latency", same_defect)])
     providers = _judges(monkeypatch, {"anthropic": [a], "openai": [b]})
     run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 1, 0.0)
     report = agreement.analyse(run)
@@ -166,8 +166,8 @@ def test_findings_agreement_reports_a_chance_line_under_every_key(monkeypatch, f
     1.00 -- and chance is 1.00 too, because there were only ever two keys in
     play and each judge took both. Kappa is what says so.
     """
-    places = [("C3", "no scale", "Cut p99 inference latency", "exp[0].bullet[0]"),
-              ("C3", "no scale", "Cut p99 inference latency", "exp[0].bullet[1]")]
+    places = [("C1", "no scale", "Cut p99 inference latency", "exp[0].bullet[0]"),
+              ("C1", "no scale", "Cut p99 inference latency", "exp[0].bullet[1]")]
     providers = _judges(monkeypatch, {
         "anthropic": [_reply(dict.fromkeys(CATEGORIES, 60), places)],
         "openai": [_reply(dict.fromkeys(CATEGORIES, 60), places)],

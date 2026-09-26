@@ -146,6 +146,105 @@ def resolvable_locators(resume: Resume) -> set[str]:
     return places
 
 
+def derive_scoped(category: Category, entry: dict, resume: Resume) -> dict:
+    """`entry` with each scoped criterion's per-place answers folded into one answer.
+
+    Ticket 15: the model answers a scoped criterion place by place and the count is
+    made here, the same way every time. Everything downstream still reads one answer
+    per criterion; the per-place list travels on it under "places" for audit.
+    """
+    items = entry.get("criteria")
+    if not isinstance(items, list):
+        return entry
+    _slug, criteria = criteria_index()[category]
+    return {**entry, "criteria": [_derived(item, criteria, resume) for item in items]}
+
+
+def _derived(item, criteria: dict[str, dict], resume: Resume):
+    if not isinstance(item, dict):
+        return item
+    criterion = criteria.get(str(item.get("id") or "").strip().upper()) or {}
+    scope = criterion.get("scope")
+    if not scope:
+        return item
+    # A scoped criterion answered the old way was never searched place by place, and
+    # that unsearched `no` is what 15 removes. Recorded runs never come through here.
+    if not isinstance(item.get("places"), list):
+        return _abstained(item, "no per-place answers")
+    answers = _place_answers(item["places"], resolvable_locators(resume))
+    if scope == "every_role":
+        return _every_role(item, answers, resume, criterion["name"])
+    required = [loc for loc, text in resume.bullets if text]
+    if scope == "any_place" and resume.summary:
+        required.insert(0, "summary")
+    return _any_place(item, answers, required)
+
+
+def _place_answers(entries: list, valid: set[str]) -> dict[str, dict]:
+    """Each resolvable place's readable answer. A place answered both yes and no is
+    left out: which of the two to believe is not the code's call."""
+    by_place: dict[str, list[dict]] = {}
+    for entry in entries:
+        if (isinstance(entry, dict) and entry.get("locator") in valid
+                and _met(entry.get("answer")) is not None):
+            by_place.setdefault(entry["locator"], []).append(entry)
+    return {loc: found[0] for loc, found in by_place.items()
+            if len({_met(e["answer"]) for e in found}) == 1}
+
+
+def _yes_places(answers: dict[str, dict], locators: list[str]) -> list[str]:
+    return [loc for loc in locators if loc in answers and _met(answers[loc]["answer"])]
+
+
+# Both derivations are monotone, so a missing place abstains only when its answer
+# could change the outcome. Reading it as `no` would rebuild the unsearched `no`.
+
+def _any_place(item: dict, answers: dict[str, dict], required: list[str]) -> dict:
+    yes = _yes_places(answers, required)
+    if yes:
+        return _derived_yes(item, answers, yes[0])
+    missing = [loc for loc in required if loc not in answers]
+    if missing:
+        return _abstained(item, f"no answer for {', '.join(missing)}")
+    return _derived_no(item, "")
+
+
+def _every_role(item: dict, answers: dict[str, dict], resume: Resume, name: str) -> dict:
+    if not resume.roles:
+        return _derived_no(item, "")
+    first_yes, failing, undecided = "", [], []
+    for r_index, role in enumerate(resume.roles):
+        bullets = [f"exp[{r_index}].bullet[{b_index}]"
+                   for b_index, text in enumerate(role.bullets) if text]
+        yes = _yes_places(answers, bullets)
+        if yes:
+            first_yes = first_yes or yes[0]
+        elif all(loc in answers for loc in bullets):
+            failing.append(f"“{role.heading[:40]}”")
+        else:
+            undecided.extend(loc for loc in bullets if loc not in answers)
+    if failing:
+        return _derived_no(item, f"no bullet in {', '.join(failing)} {name}")
+    if undecided:
+        return _abstained(item, f"no answer for {', '.join(undecided)}")
+    return _derived_yes(item, answers, first_yes)
+
+
+def _derived_yes(item: dict, answers: dict[str, dict], locator: str) -> dict:
+    return {**item, "answer": "yes", "evidence": answers[locator].get("evidence") or "",
+            "locator": locator, "why": f"{locator} qualified"}
+
+
+def _abstained(item: dict, why: str) -> dict:
+    return {**item, "answer": None, "why": why}
+
+
+def _derived_no(item: dict, why: str) -> dict:
+    """No single place is the defect, so nothing is quoted and `place` files it unmet.
+    An empty `why` lets `place` fall back to the criterion's own `no_looks_like`."""
+    return {**item, "answer": "no", "evidence": "", "locator": "", "why": why}
+
+
 def place(
     answers: list[CriterionAnswer], resume: Resume, provider_name: str,
 ) -> tuple[list[Finding], list[UnmetCriterion]]:
@@ -221,7 +320,9 @@ class ContentJudgment:
     `categories` holds the model's raw entry per category -- `{"criteria": [...]}`
     since 05 -- rather than anything parsed, so a caller that cares about *what* the
     model authored does not have to reconstruct it, and a run recorded before 05
-    (which carries `{"score": 62, "why": ...}`) still loads and still measures.
+    (which carries `{"score": 62, "why": ...}`) still loads and still measures. The
+    one exception is 15's: a scoped criterion's per-place answers arrive already
+    folded into one answer by `derive_scoped`, with the raw list kept on it.
 
     The validated projection of that raw entry is `criterion_answers(j.categories)`,
     derived on demand rather than stored: it needs nothing but the specs. `unmet` is
@@ -276,7 +377,7 @@ def content_judgments(
         for name, entry in (payload.get("categories") or {}).items():
             category = _category(name)
             if category and isinstance(entry, dict):
-                categories[category.value] = entry
+                categories[category.value] = derive_scoped(category, entry, resume)
 
         # The model has no findings vocabulary of its own any more: a finding is the
         # evidence for one criterion and its id is the criterion's, so both objects a

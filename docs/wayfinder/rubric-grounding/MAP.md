@@ -311,6 +311,13 @@ documents written to exercise the rubric. The real number is
   the same proportion of weak bullets costs the same at any length. Rules that fire per
   match or per pair (`slop/banned-word`, `content/duplicate-bullet`) are unchanged.
 
+- **Five boundaries for the weakest criteria** (15, the owner's decisions, from the
+  flips in migration 09's run). "Stayed on afterwards" is not post-launch work; "still
+  in use" is an operational fact, not post-launch work; a descriptive name is a named
+  system and a bare noun is not; who paid is not what it was for; a system named
+  elsewhere in the same role counts for `production-ownership/C2`. Written up in 15;
+  not yet in the specs.
+
 ## Not yet specified
 
 - **Whether the acceptance test has ever passed on the rubric being designed.** It has
