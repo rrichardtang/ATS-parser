@@ -146,6 +146,60 @@ def resolvable_locators(resume: Resume) -> set[str]:
     return places
 
 
+def derive_scoped(category: Category, entry: dict, resume: Resume) -> dict:
+    """`entry` with each scoped criterion's per-place answers folded into one answer.
+
+    Ticket 15: the model answers a scoped criterion place by place and the count is
+    made here, the same way every time. Everything downstream still reads one answer
+    per criterion; the per-place list travels on it under "places" for audit.
+    """
+    items = entry.get("criteria")
+    if not isinstance(items, list):
+        return entry
+    _slug, criteria = criteria_index()[category]
+    return {**entry, "criteria": [_derived(item, criteria, resume) for item in items]}
+
+
+def _derived(item, criteria: dict[str, dict], resume: Resume):
+    if not isinstance(item, dict):
+        return item
+    criterion = criteria.get(str(item.get("id") or "").strip().upper()) or {}
+    scope = criterion.get("scope")
+    # An entry with no "places" -- a run recorded before 15, criteria/judgments --
+    # passes through unchanged, so old recordings still load and still band.
+    if not scope or not isinstance(item.get("places"), list):
+        return item
+    valid = resolvable_locators(resume)
+    answered: dict[str, dict] = {}
+    for place_answer in item["places"]:
+        if isinstance(place_answer, dict) and place_answer.get("locator") in valid:
+            answered.setdefault(place_answer["locator"], place_answer)
+
+    # A place left out is an abstention, never a `no`: reading it as `no` would
+    # rebuild the unsearched `no` this change exists to remove.
+    required = [loc for loc, _ in resume.bullets if loc in valid]
+    if scope == "any_bullet" and "summary" in valid:
+        required.insert(0, "summary")
+    missing = [loc for loc in required if _met(answered.get(loc, {}).get("answer")) is None]
+    if missing:
+        return {**item, "answer": None, "why": f"no answer for {', '.join(missing)}"}
+
+    yes = [loc for loc in required if _met(answered[loc]["answer"])]
+    roles_without = sorted({loc.split(".")[0] for loc in required}
+                           - {loc.split(".")[0] for loc in yes})
+    if scope == "every_role" and roles_without:
+        return _derived_no(item, f"no bullet in {', '.join(roles_without)} qualified")
+    if not yes:
+        return _derived_no(item, "no place qualified")
+    return {**item, "answer": "yes", "evidence": answered[yes[0]].get("evidence") or "",
+            "locator": yes[0], "why": f"{yes[0]} qualified"}
+
+
+def _derived_no(item: dict, why: str) -> dict:
+    """No single place is the defect, so nothing is quoted and `place` files it unmet."""
+    return {**item, "answer": "no", "evidence": "", "locator": "", "why": why}
+
+
 def place(
     answers: list[CriterionAnswer], resume: Resume, provider_name: str,
 ) -> tuple[list[Finding], list[UnmetCriterion]]:
@@ -221,7 +275,9 @@ class ContentJudgment:
     `categories` holds the model's raw entry per category -- `{"criteria": [...]}`
     since 05 -- rather than anything parsed, so a caller that cares about *what* the
     model authored does not have to reconstruct it, and a run recorded before 05
-    (which carries `{"score": 62, "why": ...}`) still loads and still measures.
+    (which carries `{"score": 62, "why": ...}`) still loads and still measures. The
+    one exception is 15's: a scoped criterion's per-place answers arrive already
+    folded into one answer by `derive_scoped`, with the raw list kept on it.
 
     The validated projection of that raw entry is `criterion_answers(j.categories)`,
     derived on demand rather than stored: it needs nothing but the specs. `unmet` is
@@ -276,7 +332,7 @@ def content_judgments(
         for name, entry in (payload.get("categories") or {}).items():
             category = _category(name)
             if category and isinstance(entry, dict):
-                categories[category.value] = entry
+                categories[category.value] = derive_scoped(category, entry, resume)
 
         # The model has no findings vocabulary of its own any more: a finding is the
         # evidence for one criterion and its id is the criterion's, so both objects a

@@ -522,3 +522,123 @@ def test_a_document_whose_roles_did_not_parse_is_withheld(monkeypatch, fixtures)
     for row in report.categories:
         if row.category in JUDGED_CATEGORIES:
             assert row.score == 10.0 and row.note.startswith("withheld")
+
+
+# Ticket 15: five criteria are answered per place and the code counts.
+
+def _two_roles():
+    from ats.sections import Role
+
+    return Resume(summary="AI engineer", roles=[
+        Role(heading="A", bullets=["Shipped the claims assistant", "Wrote docs"]),
+        Role(heading="B", bullets=["Cut p99 latency 40%"]),
+    ])
+
+
+ALL_PLACES = ["summary", "exp[0].bullet[0]", "exp[0].bullet[1]", "exp[1].bullet[0]"]
+
+
+def _per_place(cid, yes=(), places=ALL_PLACES):
+    return {"id": cid, "places": [
+        {"locator": loc, "answer": "yes" if loc in yes else "no",
+         "evidence": "quote at " + loc if loc in yes else ""}
+        for loc in places
+    ]}
+
+
+def _derive(category, item):
+    entry = passes.derive_scoped(category, {"criteria": [item]}, _two_roles())
+    return entry["criteria"][0]
+
+
+def test_any_bullet_is_yes_on_the_first_yes_place():
+    item = _derive(Category.PRODUCTION_OWNERSHIP,
+                   _per_place("C3", yes={"exp[1].bullet[0]", "exp[0].bullet[1]"}))
+    assert (item["answer"], item["locator"], item["evidence"]) == (
+        "yes", "exp[0].bullet[1]", "quote at exp[0].bullet[1]")
+    assert len(item["places"]) == 4, "the per-place answers stay for audit"
+
+
+def test_any_bullet_with_no_yes_is_an_unplaced_no():
+    item = _derive(Category.PRODUCTION_OWNERSHIP, _per_place("C4"))
+    assert (item["answer"], item["evidence"], item["locator"]) == ("no", "", "")
+    assert item["why"] == "no place qualified"
+
+
+def test_every_role_needs_a_yes_in_each_role():
+    both = _derive(Category.RESUME_CRAFT,
+                   _per_place("C2", yes={"exp[0].bullet[1]", "exp[1].bullet[0]"}))
+    assert both["answer"] == "yes"
+    # The summary is no role, so its `yes` does not rescue exp[1].
+    one = _derive(Category.RESUME_CRAFT, _per_place("C2", yes={"summary", "exp[0].bullet[0]"}))
+    assert (one["answer"], one["locator"]) == ("no", "")
+    assert one["why"] == "no bullet in exp[1] qualified"
+
+
+def test_every_role_does_not_need_the_summary_answered():
+    item = _derive(Category.RESUME_CRAFT,
+                   _per_place("C2", yes={"exp[0].bullet[0]", "exp[1].bullet[0]"},
+                              places=ALL_PLACES[1:]))
+    assert item["answer"] == "yes"
+
+
+def test_an_unknown_locator_is_ignored():
+    item = _derive(Category.PRODUCTION_OWNERSHIP,
+                   _per_place("C3", yes={"exp[7].bullet[0]"},
+                              places=ALL_PLACES + ["exp[7].bullet[0]", "skills"]))
+    assert item["answer"] == "no"
+
+
+def test_a_place_left_out_is_an_abstention_not_a_no(monkeypatch):
+    item = _derive(Category.PRODUCTION_OWNERSHIP, _per_place("C3", places=ALL_PLACES[:-1]))
+    assert item["answer"] is None and "exp[1].bullet[0]" in item["why"]
+
+    # The rest of the category answered, but one judge's incomplete set has no band.
+    reply = json.dumps({"categories": {"Production ownership": {"criteria": [
+        {"id": "C1", "answer": "yes", "evidence": "Shipped the claims assistant",
+         "locator": "exp[0].bullet[0]"},
+        _per_place("C2", yes={"exp[0].bullet[0]"}),
+        _per_place("C3", places=ALL_PLACES[:-1]),
+        _per_place("C4"),
+        {"id": "C5", "answer": "yes", "evidence": "Shipped the claims assistant",
+         "locator": "exp[0].bullet[0]"},
+    ]}}})
+    result = _one_content_pass(monkeypatch, reply, _two_roles())
+    assert result.meta["criteria_answered"] == 4
+    assert "production-ownership/C3" not in {c["criterion_id"] for c in result.meta["unmet"]}
+    assert Category.PRODUCTION_OWNERSHIP not in result.judged
+
+
+def test_a_single_answer_for_a_scoped_criterion_passes_through():
+    """Runs recorded before 15 carry one answer per criterion and must still load."""
+    legacy = {"id": "C3", "answer": "yes", "evidence": "Cut p99 latency 40%",
+              "locator": "exp[1].bullet[0]", "why": "load"}
+    assert _derive(Category.PRODUCTION_OWNERSHIP, legacy) == legacy
+
+
+def test_per_place_replies_band_the_category_end_to_end(monkeypatch):
+    reply = json.dumps({"categories": {"Production ownership": {"criteria": [
+        {"id": "C1", "answer": "yes", "evidence": "Shipped the claims assistant",
+         "locator": "exp[0].bullet[0]"},
+        _per_place("C2", yes={"exp[0].bullet[0]"}),
+        _per_place("C3", yes={"exp[1].bullet[0]"}),
+        _per_place("C4"),
+        {"id": "C5", "answer": "yes", "evidence": "Shipped the claims assistant",
+         "locator": "exp[0].bullet[0]"},
+    ]}}})
+    result = _one_content_pass(monkeypatch, reply, _two_roles())
+
+    judged = result.judged[Category.PRODUCTION_OWNERSHIP]
+    assert (judged.band, judged.value) == ("C", 58.0)
+    assert result.data == [], "a derived no is unmet, not a placed finding"
+    assert [c["criterion_id"] for c in result.meta["unmet"]] == ["production-ownership/C4"]
+
+
+def test_the_prompt_asks_a_scoped_criterion_at_every_place():
+    system = prompts.content_system()
+    assert '"places": [' in system
+    for slug in rubric.SLUGS:
+        for criterion in rubric.load_spec(slug)["criteria"]:
+            if "scope" in criterion:
+                assert (f"ANSWER PER PLACE: {criterion['place_question']} "
+                        f"{prompts.PER_PLACE[criterion['scope']]}") in system

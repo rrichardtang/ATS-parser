@@ -35,6 +35,17 @@ it is something the candidate has to defend in an interview.
 # model answers and the questions the band lookup reads can never drift apart.
 
 
+# Ticket 15: for a scoped criterion the model answers each place on its own and the
+# code (`passes.derive_scoped`) counts, because "does any bullet..." asked in one go
+# was answered `no` without every bullet being read.
+PER_PLACE = {
+    "any_bullet": "Answer it for EVERY place in PLACES, each on its own. Whether any "
+                  "place qualifies is counted from your answers, not by you.",
+    "every_role": "Answer it for EVERY bullet in PLACES, each on its own. Whether every "
+                  "role has one is counted from your answers, not by you.",
+}
+
+
 def criteria_block() -> str:
     """The five specs, rendered as the questions a judge answers.
 
@@ -50,6 +61,9 @@ def criteria_block() -> str:
             lines.append(f"{criterion['id']} ({criterion['name']}): {criterion['question']}")
             lines.append(f"    yes requires: {criterion['yes_requires']}")
             lines.append(f"    no looks like: {criterion['no_looks_like']}")
+            if "scope" in criterion:
+                lines.append(f"    ANSWER PER PLACE: {criterion['place_question']} "
+                             f"{PER_PLACE[criterion['scope']]}")
         lines.append("")
     return "\n".join(lines).strip()
 
@@ -87,6 +101,9 @@ Rules for answering, none of them optional:
     locate it, exactly as a "yes" would, and give the fix.
 - NEVER write a locator that is not in the PLACES list. A quote you cannot place is
   worth less than no quote: say what is absent instead.
+- A criterion marked ANSWER PER PLACE gets no single answer. Return "places" with
+  one entry for every locator in PLACES, judged on that place alone. Skipping a
+  place makes the whole criterion unanswered.
 
 Return JSON only:
 {{
@@ -98,7 +115,13 @@ Return JSON only:
           "evidence": "<exact quote from the resume, or empty>",
           "locator": "<a locator from PLACES, or empty>",
           "why": "<one line: what the quote settles, or what is absent>",
-          "fix": "<what to do about it -- only when the answer is no>"}}
+          "fix": "<what to do about it -- only when the answer is no>"}},
+        {{"id": "<a criterion marked ANSWER PER PLACE>",
+          "places": [
+            {{"locator": "<from PLACES>",
+              "answer": "yes" | "no",
+              "evidence": "<exact quote from that place, or empty>"}}
+          ]}}
       ]
     }}
   }}
