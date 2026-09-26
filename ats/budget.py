@@ -77,11 +77,11 @@ def verdict(providers: list[Provider], prompt_tokens: list[int], samples: int,
 def _what_fits(providers, documents, samples, batch, total, budget) -> str:
     """The largest Claude output cap under which the same run would fit."""
     claude = next((p for p in providers if p.name == "anthropic"), None)
-    if claude is None or not documents:
-        return "Judge fewer documents (--docs) or take fewer --samples."
-    _, out_rate, cap, attempts = _rates(claude, batch, None)
-    per_cap_token = samples * attempts * documents * out_rate / 1e6
-    fitting = math.floor((budget - total) / per_cap_token) + cap
+    fitting = 0
+    if claude and documents:
+        _, out_rate, cap, attempts = _rates(claude, batch, None)
+        per_cap_token = samples * attempts * documents * out_rate / 1e6
+        fitting = math.floor((budget - total) / per_cap_token) + cap
     if fitting < 1:
-        return "No --max-tokens fits these documents: judge fewer (--docs) or take fewer --samples."
+        return "No --max-tokens fits: judge fewer documents (--docs) or take fewer --samples."
     return f"The largest --max-tokens that fits these documents is {fitting}."
