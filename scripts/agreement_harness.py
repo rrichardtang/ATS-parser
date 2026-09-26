@@ -10,6 +10,7 @@ as its own column rather than as the disagreement it is easily mistaken for.
     .venv/bin/python scripts/agreement_harness.py --dry-run
     .venv/bin/python scripts/agreement_harness.py --acceptance-set --only ""
     .venv/bin/python scripts/agreement_harness.py --resume ~/resume.pdf
+    .venv/bin/python scripts/agreement_harness.py --docs strong,thin --samples 1 --dry-run
     .venv/bin/python scripts/agreement_harness.py --from runs/agreement-....json
 
 Keys come from ANTHROPIC_API_KEY and OPENAI_API_KEY. Both are wanted: with one
@@ -72,11 +73,8 @@ def acceptance_targets() -> list[tuple[str, Path]]:
     return sorted(build_all().items())
 
 
-def run_notes(
-    providers, fixtures_run: int, fixtures_total: int, samples: int,
-    temperature: float, real_resume: bool,
-) -> list[str]:
-    """Everything about this run that would make its numbers mean less than they look."""
+def run_notes(providers, samples: int, temperature: float) -> list[str]:
+    """Everything about how this run sampled that would make its numbers mean less."""
     notes = []
     if samples < 2:
         notes.append(
@@ -90,11 +88,20 @@ def run_notes(
             "models dropped the parameter (see ats/llm.py), so the within-judge column "
             "measures each provider's own default sampling, not a temperature chosen here."
         )
+    return notes
 
+
+def coverage_notes(
+    names: set[str], fixtures: list, acceptance: list, resume: list,
+) -> list[str]:
+    """What the run left out of the corpus, given the names it actually judges."""
+    notes = []
     missing = []
-    if fixtures_run < fixtures_total:
-        missing.append(f"{fixtures_total - fixtures_run} of the {fixtures_total} fixtures (--only)")
-    if not real_resume:
+    fixtures_run = sum(name in names for name, _ in fixtures)
+    if fixtures_run < len(fixtures):
+        missing.append(f"{len(fixtures) - fixtures_run} of the {len(fixtures)} fixtures "
+                       "(--only, --docs)")
+    if not any(name in names for name, _ in resume):
         missing.append("the owner's own resume (--resume)")
     if missing:
         notes.append(
@@ -102,7 +109,51 @@ def run_notes(
             "The fixtures are synthetic and deliberately extreme, so they exercise the "
             "rubric's ends and say least about the middle, where real resumes sit."
         )
+    acceptance_run = sum(name in names for name, _ in acceptance)
+    if not acceptance_run:
+        notes.append(
+            "08's acceptance set was not run (--acceptance-set): every document here "
+            "was written by a session that was also validating the rubric."
+        )
+    elif acceptance_run < len(acceptance):
+        notes.append(f"Only {acceptance_run} of 08's {len(acceptance)} acceptance-set "
+                     "documents were run (--docs).")
     return notes
+
+
+def _names(csv: str) -> list[str]:
+    return [n.strip() for n in csv.split(",") if n.strip()]
+
+
+def select_targets(args) -> tuple[list[tuple[str, str]], list[str]]:
+    """The (name, path) targets the flags pick, and what they leave out of the corpus."""
+    fixtures = fixture_targets([])
+    docs = _names(args.docs)
+    acceptance = acceptance_targets() if args.acceptance_set or docs else []
+    resume = []
+    if args.resume:
+        resume_path = Path(args.resume).expanduser()
+        if not resume_path.exists():
+            raise SystemExit(f"no such resume: {resume_path}")
+        resume = [(resume_path.stem, resume_path)]
+
+    if docs:
+        pool = dict(fixtures + acceptance + resume)
+        unknown = [name for name in docs if name not in pool]
+        if unknown:
+            raise SystemExit(f"unknown document(s): {', '.join(unknown)}")
+        chosen = [(name, pool[name]) for name in docs]
+    else:
+        only = _names(args.only)
+        chosen = [(n, p) for n, p in fixtures if n in only] if only else list(fixtures)
+        if only and len(chosen) < len(only):
+            known = {n for n, _ in fixtures}
+            raise SystemExit(f"unknown fixture(s): {', '.join(sorted(set(only) - known))}")
+        chosen += acceptance + resume
+
+    names = {name for name, _ in chosen}
+    return ([(name, str(path)) for name, path in chosen],
+            coverage_notes(names, fixtures, acceptance, resume))
 
 
 def main() -> None:
@@ -113,6 +164,10 @@ def main() -> None:
     parser.add_argument("--resume", help="the real resume PDF, the 8th input")
     parser.add_argument("--only", default="",
                         help="comma-separated fixture names, instead of all seven")
+    parser.add_argument("--docs", default="",
+                        help="comma-separated document names, picked from the fixtures, "
+                             "08's acceptance set and the --resume file's stem; "
+                             "replaces --only and --acceptance-set")
     parser.add_argument("--acceptance-set", action="store_true",
                         help="also judge 08's 30 drawn documents (corpus/resumes/)")
     parser.add_argument("--temperature", type=float,
@@ -138,20 +193,7 @@ def main() -> None:
         print(render(agreement.analyse(run, band_order)))
         return
 
-    all_fixtures = fixture_targets([])
-    only = [n.strip() for n in args.only.split(",") if n.strip()]
-    fixtures = [(n, p) for n, p in all_fixtures if n in only] if only else all_fixtures
-    if only and len(fixtures) < len(only):
-        known = {n for n, _ in all_fixtures}
-        raise SystemExit(f"unknown fixture(s): {', '.join(sorted(set(only) - known))}")
-    targets: list[tuple[str, str]] = [(name, str(path)) for name, path in fixtures]
-    if args.acceptance_set:
-        targets += [(name, str(path)) for name, path in acceptance_targets()]
-    if args.resume:
-        resume_path = Path(args.resume).expanduser()
-        if not resume_path.exists():
-            raise SystemExit(f"no such resume: {resume_path}")
-        targets.append((resume_path.stem, str(resume_path)))
+    targets, coverage = select_targets(args)
 
     temperature = args.temperature
     if temperature is None:
@@ -172,15 +214,7 @@ def main() -> None:
     if not providers:
         raise SystemExit("no API key found; set ANTHROPIC_API_KEY and/or OPENAI_API_KEY")
 
-    notes = run_notes(
-        providers, len(fixtures), len(all_fixtures), args.samples,
-        temperature, bool(args.resume),
-    )
-    if not args.acceptance_set:
-        notes.append(
-            "08's acceptance set was not run (--acceptance-set): every document here "
-            "was written by a session that was also validating the rubric."
-        )
+    notes = run_notes(providers, args.samples, temperature) + coverage
     out = Path(args.out) if args.out else (
         DEFAULT_OUT / f"agreement-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
     )
