@@ -19,6 +19,13 @@ as its own column rather than as the disagreement it is easily mistaken for.
 running OpenAI's live meanwhile; `--collect`, once the batch has ended, finishes
 the run and prints the same tables a live run does.
 
+Nothing is sent until the run's worst case (every reply at its token cap, every
+live call repaired, no cache hits) fits `--budget`, $3 by default; `--dry-run`
+prints the same check. OpenAI's price is not known here, so a run that includes it
+needs `--openai-price IN,OUT` or `--claude-only`. `--max-tokens` lowers Claude's
+output cap for this run, which fits more documents under the budget; a reply that
+hits it is recorded as a failed call.
+
 Keys come from ANTHROPIC_API_KEY and OPENAI_API_KEY. Both are wanted: with one
 the only real number is the within-judge noise floor, since between-judge
 agreement is the thing being measured.
@@ -36,13 +43,14 @@ import json
 import logging
 import sys
 import time
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from ats import agreement, agreement_batch, config, llm  # noqa: E402
+from ats import agreement, agreement_batch, budget, config, llm  # noqa: E402
 from ats.agreement_table import render  # noqa: E402
 from ats.llm import LEGACY_OPENAI, providers_from  # noqa: E402
 
@@ -162,6 +170,28 @@ def select_targets(args) -> tuple[list[tuple[str, str]], list[str]]:
             coverage_notes(names, fixtures, acceptance, resume))
 
 
+def chosen_providers(args, keys: dict[str, str] | None = None) -> list:
+    """The providers the keys give, less OpenAI under --claude-only, at Claude's cap."""
+    return [replace(p, anthropic_max_tokens=args.max_tokens)
+            for p in providers_from(keys or {})
+            if p.name == "anthropic" or not args.claude_only]
+
+
+def prompt_tokens(targets) -> list[int]:
+    """The estimated input tokens of each judged document's content prompt; no network."""
+    prepared = [agreement.prepare(name, path) for name, path in targets]
+    return [budget.input_tokens(*agreement.content_prompt(*doc))
+            for doc in prepared if not doc[0].skipped]
+
+
+def _price(value: str) -> tuple[float, float]:
+    try:
+        rate_in, rate_out = (float(part) for part in value.split(","))
+    except ValueError:
+        raise argparse.ArgumentTypeError("expected IN,OUT in $ per million tokens")
+    return rate_in, rate_out
+
+
 def _stamped(prefix: str) -> Path:
     return DEFAULT_OUT / f"{prefix}-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
 
@@ -278,7 +308,18 @@ def main() -> None:
     parser.add_argument("--collect", metavar="BATCH_FILE",
                         help="finish a --batch run from its runs/agreement-batch-*.json")
     parser.add_argument("--dry-run", action="store_true",
-                        help="print the plan and what it will cost in calls, then stop")
+                        help="print the plan, its calls and its worst-case cost, then stop")
+    parser.add_argument("--claude-only", action="store_true",
+                        help="leave OpenAI out even when OPENAI_API_KEY is set")
+    parser.add_argument("--budget", type=float, default=3.0,
+                        help="refuse, before sending anything, a run whose worst case "
+                             "costs more dollars than this (default 3.0)")
+    parser.add_argument("--max-tokens", type=int, default=llm.ANTHROPIC_MAX_TOKENS,
+                        help="Claude's output cap for this run, thinking included "
+                             f"(default {llm.ANTHROPIC_MAX_TOKENS})")
+    parser.add_argument("--openai-price", type=_price, metavar="IN,OUT",
+                        help="OpenAI's $ per million input and output tokens; needed "
+                             "to budget a run that includes OpenAI")
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(name)s: %(message)s")
     logging.getLogger("ats.llm").setLevel(logging.INFO)
@@ -302,7 +343,7 @@ def main() -> None:
     if temperature is None:
         temperature = float(config.ensemble_settings()["temperature"])
 
-    providers = providers_from({})
+    providers = chosen_providers(args)
     calls = agreement.planned_calls(targets, len(providers), args.samples)
     print(f"{len(targets)} resume(s) x {len(providers)} provider(s) x {args.samples} "
           f"sample(s) = up to {calls} content calls "
@@ -312,10 +353,17 @@ def main() -> None:
     labels = ", ".join(p.label for p in providers)
     print(f"  providers: {labels or 'none -- set ANTHROPIC_API_KEY, OPENAI_API_KEY'}")
 
+    # A keyless dry run is costed as if both keys were set.
+    costed = providers or chosen_providers(args, {"anthropic": "-", "openai": "-"})
+    fits, report = budget.verdict(costed, prompt_tokens(targets), args.samples,
+                                  args.batch, args.openai_price, args.budget)
+    print(report)
     if args.dry_run:
         return
     if not providers:
         raise SystemExit("no API key found; set ANTHROPIC_API_KEY and/or OPENAI_API_KEY")
+    if not fits:
+        raise SystemExit("over budget; nothing was sent")
 
     notes = run_notes(providers, args.samples, temperature) + coverage
     if args.batch:

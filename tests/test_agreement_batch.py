@@ -178,3 +178,29 @@ def test_failed_truncated_and_unparseable_results_are_recorded_errors(fixtures):
     assert "expired" in errors[1] and "canceled" in errors[2]
     assert "token cap" in errors[3]
     assert "not repaired in batch mode" in errors[4]
+
+
+@pytest.mark.parametrize("mode", [["--batch"], []])
+def test_a_run_over_budget_is_refused_before_anything_is_sent(client, monkeypatch, mode):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr("sys.argv", ["agreement_harness", "--only", "strong",
+                                     "--budget", "0.5", *mode])
+    with pytest.raises(SystemExit, match="over budget"):
+        harness.main()
+    assert not client.created and not client.streamed
+
+
+def test_openai_without_a_price_is_refused_before_anything_is_sent(client, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "k")
+    monkeypatch.setattr("sys.argv", ["agreement_harness", "--only", "strong", "--batch"])
+    with pytest.raises(SystemExit):
+        harness.main()
+    assert not client.created and not client.streamed
+
+
+def test_claude_only_and_max_tokens_reach_the_batch(client, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "k")
+    monkeypatch.setattr("sys.argv", ["agreement_harness", "--only", "strong", "--batch",
+                                     "--claude-only", "--max-tokens", "20000"])
+    harness.main()
+    assert [r["params"]["max_tokens"] for r in client.created] == [20000, 20000]
