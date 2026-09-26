@@ -189,7 +189,16 @@ def _price(value: str) -> tuple[float, float]:
         rate_in, rate_out = (float(part) for part in value.split(","))
     except ValueError:
         raise argparse.ArgumentTypeError("expected IN,OUT in $ per million tokens")
+    if rate_in < 0 or rate_out < 0:
+        raise argparse.ArgumentTypeError("prices must not be negative")
     return rate_in, rate_out
+
+
+def _positive(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError(f"must be at least 1, got {number}")
+    return number
 
 
 def _stamped(prefix: str) -> Path:
@@ -283,7 +292,7 @@ def collect_batch(saved_path: Path, out: Path, band_order: list[str]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--samples", type=int, default=2,
+    parser.add_argument("--samples", type=_positive, default=2,
                         help="samples per provider per resume (default 2)")
     parser.add_argument("--resume", help="the real resume PDF, the 8th input")
     parser.add_argument("--only", default="",
@@ -314,7 +323,7 @@ def main() -> None:
     parser.add_argument("--budget", type=float, default=3.0,
                         help="refuse, before sending anything, a run whose worst case "
                              "costs more dollars than this (default 3.0)")
-    parser.add_argument("--max-tokens", type=int, default=llm.ANTHROPIC_MAX_TOKENS,
+    parser.add_argument("--max-tokens", type=_positive, default=llm.ANTHROPIC_MAX_TOKENS,
                         help="Claude's output cap for this run, thinking included "
                              f"(default {llm.ANTHROPIC_MAX_TOKENS})")
     parser.add_argument("--openai-price", type=_price, metavar="IN,OUT",
