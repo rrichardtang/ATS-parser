@@ -185,14 +185,31 @@ def _derived(item, criteria: dict[str, dict], resume: Resume):
     return _any_place(item, answers, required)
 
 
+def _resolved_locator(locator: str, valid: set[str]) -> str:
+    """A model's locator, resolved against the resume's valid ones.
+
+    Anthropic writes the bare locator; some OpenAI models copy the whole
+    `"<locator>: <text>"` line the prompt showed them into it. Splitting on the
+    first ":" recovers the locator OpenAI meant without fuzzy-matching anything:
+    an invented prefix still fails to resolve and is dropped as before.
+    """
+    if locator in valid:
+        return locator
+    prefix, sep, rest = locator.partition(":")
+    prefix = prefix.strip()
+    return prefix if sep and rest and prefix in valid else locator
+
+
 def _place_answers(entries: list, valid: set[str]) -> dict[str, dict]:
     """Each resolvable place's readable answer. A place answered both yes and no is
     left out: which of the two to believe is not the code's call."""
     by_place: dict[str, list[dict]] = {}
     for entry in entries:
-        if (isinstance(entry, dict) and entry.get("locator") in valid
-                and _met(entry.get("answer")) is not None):
-            by_place.setdefault(entry["locator"], []).append(entry)
+        if not isinstance(entry, dict) or _met(entry.get("answer")) is None:
+            continue
+        locator = _resolved_locator(str(entry.get("locator") or ""), valid)
+        if locator in valid:
+            by_place.setdefault(locator, []).append(entry)
     return {loc: found[0] for loc, found in by_place.items()
             if len({_met(e["answer"]) for e in found}) == 1}
 
@@ -273,7 +290,8 @@ def place(
             continue
         _slug, criteria = index[answer.category]
         criterion = criteria[answer.criterion_id.split("/", 1)[1]]
-        if answer.evidence and answer.locator in places:
+        locator = _resolved_locator(answer.locator, places)
+        if answer.evidence and locator in places:
             findings.append(Finding(
                 rule_id=answer.criterion_id,
                 category=answer.category,
@@ -286,7 +304,7 @@ def place(
                 message=(answer.why or criterion["no_looks_like"])[:200],
                 fix=answer.fix,
                 evidence=answer.evidence,
-                locator=answer.locator,
+                locator=locator,
                 provenance=Provenance.HEURISTIC,
                 source=f"llm:{provider_name}",
             ))

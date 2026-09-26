@@ -317,6 +317,16 @@ def test_content_findings_are_keyed_by_the_criterion_they_answer(monkeypatch):
     }
 
 
+def test_an_openai_style_locator_still_places_a_single_answer_finding(monkeypatch):
+    reply = _answers(
+        ("Production ownership", "C1", "no", "No destination named",
+         "Owned GLIDE-ME end to end", "exp[0].bullet[0]: Owned GLIDE-ME end to end"),
+    )
+    result = _one_content_pass(monkeypatch, reply, _resume())
+    [finding] = result.data
+    assert finding.locator == "exp[0].bullet[0]"
+
+
 def test_a_criterion_the_specs_do_not_have_is_dropped(monkeypatch):
     """Exactly as an unevidenced finding is dropped. There is no C9."""
     reply = _answers(
@@ -585,6 +595,36 @@ def test_a_missing_place_abstains_only_when_it_could_change_the_answer():
     open_role = _derive(Category.RESUME_CRAFT,
                         _per_place("C2", yes={"exp[0].bullet[0]"}, places=ALL_PLACES[:3]))
     assert open_role["answer"] is None and "exp[1].bullet[0]" in open_role["why"]
+
+
+def test_an_openai_style_locator_line_resolves_to_the_bare_locator():
+    """gpt-5.6-luna copies the whole `"<locator>: <text>"` prompt line into
+    `locator` instead of the bare locator Claude writes. Both must derive the
+    same answer."""
+    bare = _derive(Category.PRODUCTION_OWNERSHIP,
+                    _per_place("C3", yes={"exp[1].bullet[0]"}))
+    copied = _per_place("C3", yes={"exp[1].bullet[0]"})
+    copied["places"] = [
+        {**p, "locator": f"{p['locator']}: some bullet text"} for p in copied["places"]
+    ]
+    openai_style = _derive(Category.PRODUCTION_OWNERSHIP, copied)
+    assert (openai_style["answer"], openai_style["locator"]) == (
+        bare["answer"], bare["locator"])
+
+
+def test_summary_colon_form_resolves_to_summary():
+    copied = _per_place("C3", yes={"summary"})
+    copied["places"] = [
+        {**p, "locator": f"{p['locator']}: text"} for p in copied["places"]
+    ]
+    assert _derive(Category.RESUME_CRAFT, copied)["answer"] == "yes"
+
+
+def test_an_invented_locator_prefix_still_drops():
+    item = _per_place("C3", yes={"exp[1].bullet[0]"})
+    item["places"].append(
+        {"locator": "exp[9].bullet[9]: x", "answer": "yes", "evidence": "made up"})
+    assert _derive(Category.PRODUCTION_OWNERSHIP, item)["locator"] == "exp[1].bullet[0]"
 
 
 def test_every_role_needs_a_yes_in_each_role():
