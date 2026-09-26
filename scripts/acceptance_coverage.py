@@ -54,11 +54,13 @@ BEHAVIOUR = tuple(slug_by_category()[c.value] for c in DERIVED_CATEGORIES)
 def anywhere(doc: Doc, criterion: dict) -> bool | None:
     """The same predicate, asked of the whole document instead of one bullet.
 
-    An anchored criterion is answered inside the bullet that settled its anchor, which
-    is right for the rubric and severe as a floor: a resume that names its system in
-    the next bullet answers `no` here and `yes` from any reader. The gap between the
-    two columns is how much of a thin band is the anchor conjunction rather than the
-    documents -- the question this set cannot answer for itself, and 09 can.
+    An anchored criterion is answered inside the bullet that settled its anchor. For
+    `named_in` that already widens to the anchor's whole role (25 September decision
+    5), so this whole-document column now differs from the main one only when the
+    name sits in a *different* role -- which decision 5 rules out as not counting.
+    The gap between the two columns is how much of a thin band is the anchor
+    conjunction rather than the documents -- the question this set cannot answer for
+    itself, and 09 can.
 
     None for a criterion that is not anchored, which has no second column.
     """
