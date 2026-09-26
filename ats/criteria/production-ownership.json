@@ -20,8 +20,8 @@
       "id": "C2",
       "name": "named system",
       "question": "Is at least one shipped thing named specifically enough to ask about in an interview?",
-      "yes_requires": "A named service, product, model, or pipeline in the same bullet as the destination -- vLLM, Llama-3-8B, the eval harness, the retraining loop.",
-      "no_looks_like": "'Shipped AI-powered solutions', 'delivered scalable systems' -- portable to any candidate.",
+      "yes_requires": "A name specific enough that an interviewer could say 'tell me about X' and both know which system -- 'the forecasting service', 'the claims assistant', 'the retrieval pipeline', vLLM, Llama-3-8B, the eval harness -- named in the same bullet as the destination, or elsewhere in the same role.",
+      "no_looks_like": "A bare category noun -- 'the pipeline', 'the service', 'the system', 'the model' -- or a name that only appears in the skills section or a different role. 'Shipped AI-powered solutions', 'delivered scalable systems' -- portable to any candidate.",
       "aliases": [],
       "deterministic": {
         "kind": "named_in",
@@ -32,9 +32,9 @@
       "id": "C3",
       "name": "operational fact",
       "question": "Does any bullet state a fact that could only be true after the system ran for real?",
-      "yes_requires": "Load carried, users served, an incident, an outage, on-call, uptime, an SLA or SLO, or a regression caught in production.",
+      "yes_requires": "Load carried, users served, an incident, an outage, on-call, uptime, an SLA or SLO, a regression caught in production, or that the system is still in use or still running -- that it survived is itself an operational fact.",
       "no_looks_like": "Only pre-launch numbers -- offline accuracy, a benchmark score, a model size.",
-      "aliases": ["traffic", "uptime", "sla", "slo", "on-call", "on call", "oncall", "incident", "outage", "postmortem", "p99", "p95", "p50", "qps", "rps", "req/min", "requests per second", "throughput", "regression", "rollback", "rolled back", "monitor", "monitoring", "drift", "alert", "alerting", "reached production", "in production"],
+      "aliases": ["traffic", "uptime", "sla", "slo", "on-call", "on call", "oncall", "incident", "outage", "postmortem", "p99", "p95", "p50", "qps", "rps", "req/min", "requests per second", "throughput", "regression", "rollback", "rolled back", "monitor", "monitoring", "drift", "alert", "alerting", "reached production", "in production", "still in use", "still running"],
       "deterministic": {
         "kind": "alias"
       }
@@ -43,8 +43,8 @@
       "id": "C4",
       "name": "post-launch work",
       "question": "Does any bullet describe work done to a system that was already live?",
-      "yes_requires": "Operating, monitoring, debugging, tuning, migrating, porting, replacing, profiling or iterating on something already running -- as opposed to work that ended at release.",
-      "no_looks_like": "Every bullet ends at the launch. Nothing describes what happened to the system afterwards.",
+      "yes_requires": "Operating, monitoring, debugging, tuning, migrating, porting, replacing, profiling or iterating on something already running -- as opposed to work that ended at release. Staying is not work: 'stayed on afterwards' with no task named does not count, and neither does 'still in use' or 'is still running' -- that says the system survived, not what the candidate did to it.",
+      "no_looks_like": "Every bullet ends at the launch. Nothing describes what happened to the system afterwards -- including a bare 'stayed on' with no work named, or 'still in use' / 'is still running' on its own.",
       "aliases": ["operated", "operating", "operate", "monitored", "monitoring", "debugged", "debugging", "tuned", "tuning", "iterated", "iterating", "migrated", "migrating", "ported", "porting", "replaced", "replacing", "refactored", "profiled", "profiling", "patched", "rolled back", "maintained", "retraining", "retrained"],
       "deterministic": {
         "kind": "alias"

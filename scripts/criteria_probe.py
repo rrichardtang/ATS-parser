@@ -198,7 +198,7 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
       alias            -- any bullet matching this criterion's aliases
       alias_in_anchor  -- this criterion's aliases, inside the anchor's bullet
       number_in        -- a digit inside the anchor's bullet
-      named_in         -- `SPECIFIC_TOKEN_RE` inside the anchor's bullet
+      named_in         -- `SPECIFIC_TOKEN_RE` inside the anchor's whole role
       unhedged_in      -- the anchor's bullet is not hedged or team-attributed
 
     plus four that ask about the whole document rather than one bullet, each reusing
@@ -211,6 +211,8 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
     shipped thing named" has no answer when nothing shipped.
     """
     bullets = [b for role in doc.resume.roles for b in role.bullets]
+    bullet_role_text = {b: " ".join(role.bullets)
+                         for role in doc.resume.roles for b in role.bullets}
     verdict = Verdict("deterministic", note=doc.note)
     anchors: dict[str, str | None] = {}
 
@@ -258,7 +260,12 @@ def deterministic_verdict(doc: Doc, spec: dict) -> Verdict:
                 yes, evidence = True, f'a number in "{anchor[:80]}"'
                 anchors[cid] = anchor
         elif kind == "named_in":
-            match = SPECIFIC_TOKEN_RE.search(anchor) if anchor else None
+            # A name counts anywhere in the anchor's role, not only its own bullet
+            # (25 September decision 5): a system named two bullets up in the same
+            # role is the same system to any reader, so the search widens from the
+            # anchor bullet to the anchor's whole role.
+            role_text = bullet_role_text.get(anchor) if anchor else None
+            match = SPECIFIC_TOKEN_RE.search(role_text) if role_text else None
             if match:
                 yes, evidence = True, f"{match.group(0)!r} names the thing"
                 anchors[cid] = anchor
