@@ -19,7 +19,7 @@ CLAUDE = Provider("anthropic", "k", "claude-sonnet-5")
 def _message(text, stop_reason="end_turn"):
     return SimpleNamespace(content=[SimpleNamespace(type="text", text=text)],
                            stop_reason=stop_reason,
-                           usage=SimpleNamespace(output_tokens=1))
+                           usage=SimpleNamespace(input_tokens=1, output_tokens=1))
 
 
 def _result(custom_id, kind="succeeded", **fields):

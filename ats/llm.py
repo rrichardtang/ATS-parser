@@ -29,6 +29,12 @@ MAX_TOKENS = 16000
 # this size needs the streaming helper; the SDK refuses it on a plain `create`.
 ANTHROPIC_MAX_TOKENS = 64000
 
+# Effort defaults to "high", and output -- mostly that adaptive thinking -- was 84% of
+# a full agreement run's Claude bill. "medium" thinks less, which also leaves more of
+# max_tokens for the reply itself. The live app and the batch harness both send it, so
+# the harness measures the judge the app actually runs.
+ANTHROPIC_EFFORT = "medium"
+
 # Seconds per attempt. For Claude, which streams, this is the read timeout between
 # chunks -- an inactivity bound, not a wall clock -- so a long healthy reply outlasts
 # it; OpenAI does not stream, so there it bounds the whole reply. The SDKs retry a
@@ -60,6 +66,9 @@ class Provider:
     name: str
     api_key: str
     model: str
+    # Claude's output cap; the agreement harness lowers it per run (--max-tokens).
+    # OpenAI requests always send MAX_TOKENS.
+    anthropic_max_tokens: int = ANTHROPIC_MAX_TOKENS
 
     @property
     def label(self) -> str:
@@ -126,7 +135,8 @@ def _truncated(label: str, reason: str | None, cap: int) -> None:
     if reason in ("max_tokens", "length"):
         raise LLMError(
             f"{label}: response hit the {cap}-token cap and was cut off "
-            "mid-JSON; raise the cap in ats.llm or narrow the prompt"
+            "mid-JSON; raise the cap (ats.llm, or the harness's --max-tokens) "
+            "or narrow the prompt"
         )
 
 
@@ -148,19 +158,26 @@ def _openai_client(api_key: str):
 
 def anthropic_params(provider: Provider, system: str, user: str) -> dict[str, Any]:
     """One Claude request, shared by the live stream and a Message Batches request."""
+    # The system prompt is the same for every document, so it is cached (5-minute TTL):
+    # every call after the first in that window reads it at a tenth of the input price.
     return {
         "model": provider.model,
-        "max_tokens": ANTHROPIC_MAX_TOKENS,
-        "system": system,
+        "max_tokens": provider.anthropic_max_tokens,
+        "output_config": {"effort": ANTHROPIC_EFFORT},
+        "system": [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
         "messages": [{"role": "user", "content": user}],
     }
 
 
-def anthropic_text(label: str, message) -> str:
+def anthropic_text(provider: Provider, message) -> str:
     """A finished Claude message's text, failing loudly if it was cut off at the cap."""
-    log.info("%s used %s output tokens (stop_reason=%s)", label,
-             message.usage.output_tokens, message.stop_reason)
-    _truncated(label, message.stop_reason, ANTHROPIC_MAX_TOKENS)
+    usage = message.usage
+    log.info("%s used %s input (%s cache read, %s cache write) and %s output tokens "
+             "(stop_reason=%s)", provider.label, usage.input_tokens,
+             getattr(usage, "cache_read_input_tokens", 0) or 0,
+             getattr(usage, "cache_creation_input_tokens", 0) or 0,
+             usage.output_tokens, message.stop_reason)
+    _truncated(provider.label, message.stop_reason, provider.anthropic_max_tokens)
     return "".join(
         block.text for block in message.content if getattr(block, "type", "") == "text"
     )
@@ -178,7 +195,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
                         "abandoned so it stops billing"
                     )
             response = stream.get_final_message()
-        return anthropic_text(provider.label, response)
+        return anthropic_text(provider, response)
 
     if provider.name == "openai":
         client = _openai_client(provider.api_key)

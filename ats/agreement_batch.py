@@ -50,7 +50,7 @@ def _payload(provider: Provider, outcome) -> dict:
     if outcome.type != "succeeded":
         detail = f" ({outcome.error})" if outcome.type == "errored" else ""
         raise LLMError(f"{provider.label}: batch request {outcome.type}{detail}")
-    raw = llm.anthropic_text(provider.label, outcome.message)
+    raw = llm.anthropic_text(provider, outcome.message)
     try:
         return llm.extract_json(raw)
     except json.JSONDecodeError as exc:

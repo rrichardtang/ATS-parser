@@ -32,8 +32,8 @@ class _FakeAnthropic:
         self.messages = self
         self.closed = False
 
-    def stream(self, *, model, max_tokens, system, messages):
-        self.sent.append(dict(model=model, max_tokens=max_tokens))
+    def stream(self, **params):
+        self.sent.append(params)
         return self
 
     def __enter__(self):
@@ -49,7 +49,8 @@ class _FakeAnthropic:
     def get_final_message(self):
         return type("Message", (), {
             "content": [_Block(self.reply)], "stop_reason": self.stop_reason,
-            "usage": type("Usage", (), {"output_tokens": 42})(),
+            "usage": type("Usage", (), {"input_tokens": 7, "output_tokens": 42,
+                                         "cache_read_input_tokens": None})(),
         })()
 
 
@@ -104,7 +105,30 @@ def test_anthropic_omits_temperature_the_sdk_no_longer_accepts(monkeypatch):
     _patch(monkeypatch, "anthropic", _FakeAnthropic(sent))
 
     assert llm.call(ANTHROPIC, "sys", "user", 0.7) == {"ok": True}
-    assert sent == [{"model": "claude-sonnet-5", "max_tokens": llm.ANTHROPIC_MAX_TOKENS}]
+    assert "temperature" not in sent[0]
+
+
+def test_anthropic_sends_medium_effort_a_cached_system_and_no_thinking(monkeypatch):
+    """Sonnet 5 rejects `budget_tokens`; effort goes inside `output_config`."""
+    sent = []
+    _patch(monkeypatch, "anthropic", _FakeAnthropic(sent))
+
+    llm.call(ANTHROPIC, "sys", "user")
+    assert sent[0]["max_tokens"] == llm.ANTHROPIC_MAX_TOKENS
+    assert sent[0]["output_config"] == {"effort": "medium"}
+    assert sent[0]["system"] == [
+        {"type": "text", "text": "sys", "cache_control": {"type": "ephemeral"}}
+    ]
+    assert "thinking" not in sent[0]
+
+
+def test_a_lowered_cap_is_sent_and_named_when_hit(monkeypatch):
+    sent = []
+    _patch(monkeypatch, "anthropic", _FakeAnthropic(sent, stop_reason="max_tokens"))
+
+    with pytest.raises(LLMError, match="1234-token cap"):
+        llm.call(Provider("anthropic", "k", "claude-sonnet-5", 1234), "sys", "user")
+    assert sent[0]["max_tokens"] == 1234
 
 
 def test_openai_sends_max_completion_tokens_and_no_temperature(monkeypatch):
