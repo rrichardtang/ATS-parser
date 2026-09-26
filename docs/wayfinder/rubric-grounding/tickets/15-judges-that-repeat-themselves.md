@@ -90,3 +90,44 @@ Scoped to the five criteria this ticket is about; the other twenty keep one answ
 The five boundaries are in the specs and the deterministic judge; pattern 1 is decided
 and, if adopted, built; and the acceptance run (migration 09's command) is repeated with
 unstable readings on the five criteria measurably down.
+
+## Built, 26 September
+
+Both parts, each built by bob-the-builder and approved by felix-the-fixer.
+
+- **Round A** (1de8759, b29be5e): the five boundaries are in the specs' `yes_requires`
+  and `no_looks_like`. `resume-craft/C3` lost its bare "customer(s)" and "user(s)"
+  aliases; `production-ownership/C3` gained "still in use" and "still running". The
+  probe's `named_in` now searches the anchor's role, tracked with the anchor rather than
+  looked up by bullet text, which felix caught mis-resolving a bullet repeated across
+  roles.
+- **Round B** (2d4a83c, 047ec1d): `production-ownership/C2`, `/C3`, `/C4` are `any_bullet`
+  (role bullets only), `resume-craft/C3` is `any_place` (summary and bullets, because its
+  question is about the resume) and `resume-craft/C2` is `every_role`. The model answers
+  each place; `passes.derive_scoped`, called from `content_judgments`, derives one answer,
+  so everything downstream is unchanged and saved runs still load.
+  - A scoped criterion answered the old way (one answer) is an abstention on the live
+    path, so the model cannot fall back to the unsearched answer.
+  - A missing place abstains only when it could change the result: one `yes` settles
+    `any_*`; one role answered all `no`, or with no bullets, settles `every_role`.
+  - A place answered both `yes` and `no` counts as unanswered.
+  - A derived `no` is an unmet criterion, never a placed finding, and shows the
+    criterion's own `no_looks_like` (for `every_role`, the role that fell short).
+  - The model quotes only on `yes` places, to keep the reply inside the token limit.
+
+## Known gaps
+
+- **The deterministic judge cannot see decision 3.** `SPECIFIC_TOKEN_RE` in
+  `scripts/criteria_probe.py` matches tokens like `vLLM`, not descriptive names like
+  "the forecasting service". The model is now told those count; the probe still says
+  `no`. Expect the probe and the model to disagree on `production-ownership/C2`.
+- **Reply size is unmeasured.** Felix estimated 6–7k output tokens for a 15-bullet
+  resume and 10–11k for 30, against a 16,000 cap that OpenAI's reasoning tokens also
+  count against. A truncated reply fails loudly, not silently. Only a live run can
+  confirm it.
+
+## Left
+
+Rerun migration 09's acceptance test (owner's machine, both keys) and compare unstable
+readings on the five criteria against 25 September: `production-ownership/C2` 11,
+`/C3` 5, `/C4` 6, `resume-craft/C2` 10, `/C3` 7. Then this ticket closes.
