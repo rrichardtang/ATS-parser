@@ -1,6 +1,6 @@
 type: decision + build
 status: open
-claimed:
+claimed: claude
 blocked-by: —
 
 # Judges that give the same answer twice
