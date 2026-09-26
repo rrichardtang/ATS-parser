@@ -130,4 +130,9 @@ Both parts, each built by bob-the-builder and approved by felix-the-fixer.
 
 Rerun migration 09's acceptance test (owner's machine, both keys) and compare unstable
 readings on the five criteria against 25 September: `production-ownership/C2` 11,
-`/C3` 5, `/C4` 6, `resume-craft/C2` 10, `/C3` 7. Then this ticket closes.
+`/C3` 5, `/C4` 6, `resume-craft/C2` 10, `/C3` 7. These are the `unstable` column of the
+harness's per-criterion table for that run, which counts documents where either
+provider flipped. They are one lower than the flip counts above wherever both providers
+flipped on the same document (`12-returning-rag` on C2, `08-junior-mixed-quality` on C4,
+`24-forward-deployed-senior` on `resume-craft/C2`, `18-terse-data-senior` on
+`resume-craft/C3`). Then this ticket closes.
