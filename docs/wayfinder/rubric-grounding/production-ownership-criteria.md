@@ -33,9 +33,12 @@ pipeline", "Explored transformer architectures".
 interview?**
 
 *Yes* needs a named service, product, model, or pipeline in the same bullet as the
-destination.
+destination — or what it does, specifically enough: "Built forecasting for build
+timelines" is yes, and so is what-it-does plus one detail that picks it out, like
+"Built ingestion on Airflow and Postgres".
 *No* looks like: "Shipped AI-powered solutions", "delivered scalable systems" —
-portable to any candidate.
+portable to any candidate. So is a bare category noun with no such detail: "the
+pipeline", "the ingestion".
 
 ### C3 — Operational fact
 **Does any bullet state a fact that could only be true after the system ran for real?**
@@ -50,7 +53,9 @@ size.
 
 *Yes* needs operating, monitoring, debugging, tuning, migrating, porting, replacing,
 profiling or iterating on something already running.
-*No* looks like: every bullet ends at the launch.
+*No* looks like: every bullet ends at the launch. Also "The eval suite has been run on
+every release since, 40 releases" -- it says the suite is still used, not what the
+candidate did to it.
 
 ### C5 — First-person ownership
 **Is the shipped work attributed to this candidate rather than to a team, and without

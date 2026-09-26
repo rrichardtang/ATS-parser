@@ -72,9 +72,13 @@ role line.
 **Does every role have at least one bullet naming something that is different because of
 the work?**
 
-*Yes* needs one quote per role stating a change. Not the assignment, the difference.
+*Yes* needs one quote per role stating a change. Not the assignment, the difference —
+and building something new counts: "Designed and implemented an LLM-powered marking
+workflow" is yes.
 *No* looks like: a role whose bullets are all responsibilities — "Responsible for
-maintaining the pipeline", "Worked on model architectures".
+maintaining the pipeline", "Worked on model architectures". Also a change that happened
+to the system but not because of the candidate's work — "is now owned by the ops team",
+"retrieval quality dropped and nobody noticed".
 
 ### C3 — Says what it was for
 **Does the resume say what the work was for — a product, a user, a problem — rather than

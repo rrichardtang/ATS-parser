@@ -59,6 +59,42 @@ The boundaries for pattern 2, to be written into each criterion's `yes_requires`
    "same bullet" rule on purpose: the rule was there to stop a listed tool counting as
    shipped, and a name two bullets up in the same role is the same system to any reader.
 
+## Decided, 26 September (the owner)
+
+From a 5-resume run on the owner's machine, after the OpenAI locator fix
+(`runs/agreement-20260926T224846Z.json`): 6 whole-answer flips on the five weak
+criteria (`production-ownership/C2` ×3 -- both judges on `02`, OpenAI on `18`;
+`resume-craft/C2` ×2 -- Claude on `02` and `24`; `production-ownership/C4` ×1 -- OpenAI
+on `24`). Every flip was wholesale: all bullets of the resume moved at once, not one
+bullet's reading changing against the rest, which points at the question admitting two
+readings rather than at per-bullet noise. Of 35 per-bullet flip groups in the run, 29
+did not change the whole answer.
+
+The five readings, written into `yes_requires` / `no_looks_like`:
+
+1. **`production-ownership/C2`: a bullet naming only what a system does, no proper
+   name, counts.** "Built forecasting for build timelines" is `yes` -- an interviewer
+   can say "tell me about the build-timeline forecasting".
+2. **`production-ownership/C2`: what it does plus one picking-out detail is enough.**
+   "Built ingestion on Airflow and Postgres" is `yes` (purpose, users, data, or stack
+   all count as the detail). A bare category noun alone -- "the pipeline", "the
+   ingestion" -- stays `no`.
+3. **`resume-craft/C2`: building something new is a change.** "Designed and
+   implemented an LLM-powered marking workflow" is `yes` -- a new thing that now
+   exists is a difference.
+4. **`resume-craft/C2`: a change not caused by the candidate's work is not a
+   change.** "is now owned by the ops team", "retrieval quality dropped and nobody
+   noticed" -- `no`. It must be different because of the work.
+5. **`production-ownership/C4`: still-used is not post-launch work,** consistent with
+   the existing "still in use" ruling for C4. "The eval suite has been run on every
+   release since, 40 releases" is `no` -- it says the suite is still used, not what the
+   candidate did to it.
+
+**Not comparable to the 25 September baseline without qualification:** from 26
+September, Claude runs at effort medium with a cached system prompt, which the 25
+September numbers above predate. A rerun against this ticket's "Left" section is still
+needed before closing it.
+
 ## Decided, 26 September (the owner): ask per bullet
 
 - **Pattern 1: ask per bullet, let the program count.** Approved by the owner. Instead of "does any bullet...",
