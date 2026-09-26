@@ -80,7 +80,7 @@ def providers_from(keys: dict[str, str], models: dict[str, str] | None = None) -
     return found
 
 
-def _extract_json(raw: str) -> dict[str, Any]:
+def extract_json(raw: str) -> dict[str, Any]:
     raw = raw.strip()
     if raw.startswith("```"):
         raw = re.sub(r"^```(?:json)?\s*|\s*```$", "", raw, flags=re.MULTILINE).strip()
@@ -103,7 +103,7 @@ def call(provider: Provider, system: str, user: str, temperature: float = 0.0) -
         raise LLMError(f"{provider.label}: {exc}") from exc
 
     try:
-        return _extract_json(raw)
+        return extract_json(raw)
     except json.JSONDecodeError:
         log.warning("%s returned unparseable JSON; retrying once", provider.label)
         repair = (
@@ -112,7 +112,7 @@ def call(provider: Provider, system: str, user: str, temperature: float = 0.0) -
         )
         raw = _dispatch(provider, system, repair, 0.0)
         try:
-            return _extract_json(raw)
+            return extract_json(raw)
         except json.JSONDecodeError as exc:
             raise LLMError(f"{provider.label}: unparseable JSON after repair ({exc})") from exc
 
@@ -146,15 +146,30 @@ def _openai_client(api_key: str):
     )
 
 
+def anthropic_params(provider: Provider, system: str, user: str) -> dict[str, Any]:
+    """One Claude request, shared by the live stream and a Message Batches request."""
+    return {
+        "model": provider.model,
+        "max_tokens": ANTHROPIC_MAX_TOKENS,
+        "system": system,
+        "messages": [{"role": "user", "content": user}],
+    }
+
+
+def anthropic_text(label: str, message) -> str:
+    """A finished Claude message's text, failing loudly if it was cut off at the cap."""
+    log.info("%s used %s output tokens (stop_reason=%s)", label,
+             message.usage.output_tokens, message.stop_reason)
+    _truncated(label, message.stop_reason, ANTHROPIC_MAX_TOKENS)
+    return "".join(
+        block.text for block in message.content if getattr(block, "type", "") == "text"
+    )
+
+
 def _dispatch(provider: Provider, system: str, user: str, temperature: float) -> str:
     if provider.name == "anthropic":
         client = _anthropic_client(provider.api_key)
-        with client.messages.stream(
-            model=provider.model,
-            max_tokens=ANTHROPIC_MAX_TOKENS,
-            system=system,
-            messages=[{"role": "user", "content": user}],
-        ) as stream:
+        with client.messages.stream(**anthropic_params(provider, system, user)) as stream:
             deadline = time.monotonic() + STREAM_DEADLINE
             for _ in stream:
                 if time.monotonic() > deadline:
@@ -163,12 +178,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
                         "abandoned so it stops billing"
                     )
             response = stream.get_final_message()
-        log.info("%s used %s output tokens (stop_reason=%s)", provider.label,
-                 response.usage.output_tokens, response.stop_reason)
-        _truncated(provider.label, response.stop_reason, ANTHROPIC_MAX_TOKENS)
-        return "".join(
-            block.text for block in response.content if getattr(block, "type", "") == "text"
-        )
+        return anthropic_text(provider.label, response)
 
     if provider.name == "openai":
         client = _openai_client(provider.api_key)

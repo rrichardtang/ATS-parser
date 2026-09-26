@@ -361,39 +361,51 @@ def content_judgments(
     digest: dict | None = None,
 ) -> tuple[list[ContentJudgment], list[str]]:
     """Every (provider, sample) reply to the content prompt, parsed but not combined."""
-    summary = [f"{f.rule_id}: {f.message}" for f in deterministic]
-    user = prompts.content_user(resume, full_text, jd_text, summary, digest)
+    system, user = content_prompt(resume, full_text, jd_text, deterministic, digest)
 
     jobs = []
     for provider in providers:
         for index in range(samples):
             temp = 0.0 if samples == 1 else temperature
             jobs.append(
-                lambda p=provider, i=index, t=temp: (
-                    p.name, i, call(p, prompts.content_system(), user, t)
-                )
+                lambda p=provider, i=index, t=temp: (p.name, i, call(p, system, user, t))
             )
 
     raw, errors = ensemble.gather(jobs, timeout=CONTENT_TIMEOUT)
-
-    judgments: list[ContentJudgment] = []
-    for provider_name, index, payload in raw:
-        categories: dict[str, dict] = {}
-        for name, entry in (payload.get("categories") or {}).items():
-            category = _category(name)
-            if category and isinstance(entry, dict):
-                categories[category.value] = derive_scoped(category, entry, resume)
-
-        # The model has no findings vocabulary of its own any more: a finding is the
-        # evidence for one criterion and its id is the criterion's, so both objects a
-        # reply produces come out of the answers rather than out of a `findings` array
-        # the model would have had to name the defects in.
-        findings, unmet = place(
-            criterion_answers(categories), resume, provider_name
-        )
-        judgments.append(ContentJudgment(provider_name, index, categories, findings, unmet))
-
+    judgments = [
+        content_judgment(provider_name, index, payload, resume)
+        for provider_name, index, payload in raw
+    ]
     return judgments, errors
+
+
+def content_prompt(
+    resume: Resume, full_text: str, jd_text: str, deterministic: list[Finding],
+    digest: dict | None,
+) -> tuple[str, str]:
+    """The content pass's (system, user) prompt for one document."""
+    summary = [f"{f.rule_id}: {f.message}" for f in deterministic]
+    return prompts.content_system(), prompts.content_user(
+        resume, full_text, jd_text, summary, digest
+    )
+
+
+def content_judgment(
+    provider_name: str, index: int, payload: dict, resume: Resume,
+) -> ContentJudgment:
+    """One parsed content reply, as the judgement it stands for."""
+    categories: dict[str, dict] = {}
+    for name, entry in (payload.get("categories") or {}).items():
+        category = _category(name)
+        if category and isinstance(entry, dict):
+            categories[category.value] = derive_scoped(category, entry, resume)
+
+    # The model has no findings vocabulary of its own any more: a finding is the
+    # evidence for one criterion and its id is the criterion's, so both objects a
+    # reply produces come out of the answers rather than out of a `findings` array
+    # the model would have had to name the defects in.
+    findings, unmet = place(criterion_answers(categories), resume, provider_name)
+    return ContentJudgment(provider_name, index, categories, findings, unmet)
 
 
 def content_pass(

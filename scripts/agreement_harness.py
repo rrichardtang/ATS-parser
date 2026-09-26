@@ -12,6 +12,12 @@ as its own column rather than as the disagreement it is easily mistaken for.
     .venv/bin/python scripts/agreement_harness.py --resume ~/resume.pdf
     .venv/bin/python scripts/agreement_harness.py --docs strong,thin --samples 1 --dry-run
     .venv/bin/python scripts/agreement_harness.py --from runs/agreement-....json
+    .venv/bin/python scripts/agreement_harness.py --docs strong,thin --batch
+    .venv/bin/python scripts/agreement_harness.py --collect runs/agreement-batch-....json
+
+`--batch` sends Claude's calls through the Message Batches API at half the price,
+running OpenAI's live meanwhile; `--collect`, once the batch has ended, finishes
+the run and prints the same tables a live run does.
 
 Keys come from ANTHROPIC_API_KEY and OPENAI_API_KEY. Both are wanted: with one
 the only real number is the within-judge noise floor, since between-judge
@@ -36,7 +42,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from ats import agreement, config  # noqa: E402
+from ats import agreement, agreement_batch, config, llm  # noqa: E402
 from ats.agreement_table import render  # noqa: E402
 from ats.llm import LEGACY_OPENAI, providers_from  # noqa: E402
 
@@ -156,6 +162,88 @@ def select_targets(args) -> tuple[list[tuple[str, str]], list[str]]:
             coverage_notes(names, fixtures, acceptance, resume))
 
 
+def _stamped(prefix: str) -> Path:
+    return DEFAULT_OUT / f"{prefix}-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
+
+
+def _shown(path: Path) -> Path:
+    return path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+
+
+def _write(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def submit_batch(providers, targets, samples: int, temperature: float,
+                 notes: list[str]) -> Path:
+    """Submit Claude's content calls as one batch; run any other provider live now.
+
+    Saves the batch id and the run so far, OpenAI's replies included, to
+    `runs/agreement-batch-<timestamp>.json`, which `--collect` finishes.
+    """
+    claude = next((p for p in providers if p.name == "anthropic"), None)
+    if claude is None:
+        raise SystemExit("--batch needs ANTHROPIC_API_KEY: only Claude's calls are batched")
+    live = [p for p in providers if p is not claude]
+    prepared = [agreement.prepare(name, path) for name, path in targets]
+    requests = agreement_batch.requests(claude, prepared, samples)
+    if not requests:
+        raise SystemExit("every target was skipped; there is nothing to batch")
+
+    run = agreement.HarnessRun(
+        meta=agreement.run_meta(providers, samples, temperature,
+                                notes + [agreement_batch.NOTE]),
+        resumes=[resume_run for resume_run, _, _ in prepared],
+    )
+    batch = llm._anthropic_client(claude.api_key).messages.batches.create(requests=requests)
+    out = _stamped("agreement-batch")
+
+    def save() -> None:
+        _write(out, {"batch_id": batch.id, "anthropic_model": claude.model,
+                     "run": run.to_dict()})
+
+    save()
+    print(f"\nSubmitted {len(requests)} Claude request(s) as batch {batch.id}; "
+          f"saved to {_shown(out)}")
+    if live:
+        for resume_run, resume, text in prepared:
+            agreement.judge(live, resume_run, resume, text, samples, temperature)
+            save()
+            print(f"  {resume_run.name}: {len(resume_run.judgments)} live replies",
+                  flush=True)
+    print("Collect it once it has ended (most batches finish within an hour):\n"
+          f"  .venv/bin/python scripts/agreement_harness.py --collect {_shown(out)}")
+    return out
+
+
+def collect_batch(saved_path: Path, out: Path, band_order: list[str]) -> None:
+    """Finish a `--batch` run: merge Claude's results and save the run in full.
+
+    Exits non-zero, without waiting, while the batch is still processing.
+    """
+    saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    claude = next((p for p in providers_from({}, {"anthropic": saved["anthropic_model"]})
+                   if p.name == "anthropic"), None)
+    if claude is None:
+        raise SystemExit("--collect needs ANTHROPIC_API_KEY")
+    batches = llm._anthropic_client(claude.api_key).messages.batches
+    batch = batches.retrieve(saved["batch_id"])
+    if batch.processing_status != "ended":
+        counts = batch.request_counts
+        raise SystemExit(
+            f"batch {saved['batch_id']} is {batch.processing_status}: "
+            f"{counts.processing} processing, {counts.succeeded} succeeded, "
+            f"{counts.errored} errored. Collect again later."
+        )
+    run = agreement_batch.merge(agreement.HarnessRun.from_dict(saved["run"]), claude,
+                                batches.results(saved["batch_id"]))
+    # Saved before analyse(), for the reason `after_each` gives in main().
+    _write(out, run.to_dict())
+    print(render(agreement.analyse(run, band_order)))
+    print(f"Raw judgements saved to {_shown(out)}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -178,6 +266,11 @@ def main() -> None:
     parser.add_argument("--out", help=f"where to save the run (default {DEFAULT_OUT}/)")
     parser.add_argument("--from", dest="replay",
                         help="re-render a saved run; makes no API calls")
+    parser.add_argument("--batch", action="store_true",
+                        help="submit Claude's calls as one Message Batch (half price, "
+                             "results within hours); other providers run live now")
+    parser.add_argument("--collect", metavar="BATCH_FILE",
+                        help="finish a --batch run from its runs/agreement-batch-*.json")
     parser.add_argument("--dry-run", action="store_true",
                         help="print the plan and what it will cost in calls, then stop")
     args = parser.parse_args()
@@ -191,6 +284,10 @@ def main() -> None:
             json.loads(Path(args.replay).read_text(encoding="utf-8"))
         )
         print(render(agreement.analyse(run, band_order)))
+        return
+    out = Path(args.out) if args.out else _stamped("agreement")
+    if args.collect:
+        collect_batch(Path(args.collect), out, band_order)
         return
 
     targets, coverage = select_targets(args)
@@ -215,11 +312,10 @@ def main() -> None:
         raise SystemExit("no API key found; set ANTHROPIC_API_KEY and/or OPENAI_API_KEY")
 
     notes = run_notes(providers, args.samples, temperature) + coverage
-    out = Path(args.out) if args.out else (
-        DEFAULT_OUT / f"agreement-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
-    )
-    out.parent.mkdir(parents=True, exist_ok=True)
-    shown = out.relative_to(ROOT) if out.is_relative_to(ROOT) else out
+    if args.batch:
+        submit_batch(providers, targets, args.samples, temperature, notes)
+        return
+    shown = _shown(out)
     print(f"\nSaving after every resume to {shown}; a stopped run keeps what it paid for.")
     started = time.monotonic()
 
@@ -227,7 +323,7 @@ def main() -> None:
         # Saved before analyse(), deliberately: scoring a judgement runs score.build,
         # which writes each finding's cost onto the shared deterministic findings.
         # Saving afterwards would bake one judgement's deductions into the raw record.
-        out.write_text(json.dumps(run.to_dict(), indent=2), encoding="utf-8")
+        _write(out, run.to_dict())
         latest = run.resumes[-1]
         state = (f"skipped ({latest.skipped})" if latest.skipped
                  else f"{len(latest.judgments)} replies"

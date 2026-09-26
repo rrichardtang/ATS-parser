@@ -43,7 +43,7 @@ from .llm import Provider
 from .models import Category, Finding, JudgedCategory, UnmetCriterion
 from .reliability import Alpha, alpha
 from .score import build
-from .sections import parse
+from .sections import Resume, parse
 
 # MAP.md's composite bar, which ticket 03 kept: 5 points between judges passes,
 # above 8 fails, and between the two is a pass that wants another look.
@@ -138,6 +138,47 @@ class HarnessRun:
         )
 
 
+def prepare(name: str, pdf_path: str) -> tuple[ResumeRun, Resume, str]:
+    """Extract and parse one document: its run (skipped if it cannot be judged),
+    the parsed resume and the extracted text the content prompt quotes."""
+    doc = extract(pdf_path)
+    resume = parse(doc.text)
+    findings = pipeline.deterministic(doc, resume, "", pipeline.resolve_target_title(""))
+    run = ResumeRun(name, str(pdf_path), findings)
+    if not doc.has_text_layer:
+        run.skipped = "no text layer, so the content pass never runs on this document"
+    elif withheld := passes.withholding_reason(resume):
+        # 05 withholds the judged categories on a document whose roles did not
+        # survive extraction. Judging it here anyway would put agreement numbers in
+        # the table for the one kind of document the pipeline refuses to judge.
+        run.skipped = f"judged categories withheld: {withheld}"
+    return run, resume, doc.text
+
+
+def content_prompt(run: ResumeRun, resume: Resume, text: str) -> tuple[str, str]:
+    """The content prompt a harness judge sees for one prepared document.
+
+    No job description is passed, on purpose: a posting would move the judgement
+    and the corpus is meant to be comparable across resumes and across runs. The
+    personal-corpus digest still reaches the prompt, because it reaches every
+    real run too.
+    """
+    return passes.content_prompt(resume, text, "", run.deterministic, config.jd_digest())
+
+
+def judge(
+    providers: list[Provider], run: ResumeRun, resume: Resume, text: str,
+    samples: int, temperature: float,
+) -> None:
+    """Put every provider's `samples` replies on a prepared, unskipped run."""
+    if run.skipped:
+        return
+    run.judgments, run.errors = passes.content_judgments(
+        providers, resume, text, "", run.deterministic, samples, temperature,
+        config.jd_digest(),
+    )
+
+
 def judge_resume(
     providers: list[Provider],
     name: str,
@@ -145,35 +186,23 @@ def judge_resume(
     samples: int,
     temperature: float,
 ) -> ResumeRun:
-    """Run one resume past every provider `samples` times, keeping the replies apart.
+    """Run one resume past every provider `samples` times, keeping the replies apart."""
+    run, resume, text = prepare(name, pdf_path)
+    judge(providers, run, resume, text, samples, temperature)
+    return run
 
-    No job description is passed, on purpose: a posting would move the judgement
-    and the corpus is meant to be comparable across resumes and across runs. The
-    personal-corpus digest still reaches the prompt, because it reaches every
-    real run too.
-    """
-    doc = extract(pdf_path)
-    resume = parse(doc.text)
-    findings = pipeline.deterministic(doc, resume, "", pipeline.resolve_target_title(""))
-    if not doc.has_text_layer:
-        return ResumeRun(
-            name, str(pdf_path), findings,
-            skipped="no text layer, so the content pass never runs on this document",
-        )
-    withheld = passes.withholding_reason(resume)
-    if withheld:
-        # 05 withholds the judged categories on a document whose roles did not
-        # survive extraction. Judging it here anyway would put agreement numbers in
-        # the table for the one kind of document the pipeline refuses to judge.
-        return ResumeRun(
-            name, str(pdf_path), findings,
-            skipped=f"judged categories withheld: {withheld}",
-        )
-    judgments, errors = passes.content_judgments(
-        providers, resume, doc.text, "", findings, samples, temperature,
-        config.jd_digest(),
-    )
-    return ResumeRun(name, str(pdf_path), findings, judgments, errors=errors)
+
+def run_meta(
+    providers: list[Provider], samples: int, temperature: float,
+    notes: list[str] | None = None,
+) -> dict:
+    return {
+        "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "providers": [p.label for p in providers],
+        "samples_per_provider": samples,
+        "temperature": temperature,
+        "notes": list(notes or []),
+    }
 
 
 def collect(
@@ -189,14 +218,7 @@ def collect(
     `after_each` is called with the run so far after every resume, so a caller can
     report progress and save what has been paid for before the sweep ends.
     """
-    meta = {
-        "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "providers": [p.label for p in providers],
-        "samples_per_provider": samples,
-        "temperature": temperature,
-        "notes": list(notes or []),
-    }
-    run = HarnessRun(meta=meta)
+    run = HarnessRun(meta=run_meta(providers, samples, temperature, notes))
     for name, path in targets:
         run.resumes.append(judge_resume(providers, name, path, samples, temperature))
         if after_each:
