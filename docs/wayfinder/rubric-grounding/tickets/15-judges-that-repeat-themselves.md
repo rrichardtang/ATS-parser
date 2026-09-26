@@ -59,15 +59,31 @@ The boundaries for pattern 2, to be written into each criterion's `yes_requires`
    "same bullet" rule on purpose: the rule was there to stop a listed tool counting as
    shipped, and a name two bullets up in the same role is the same system to any reader.
 
-## Proposed, not yet decided
+## Decided, 26 September (the owner): ask per bullet
 
-- **Pattern 1: ask per bullet, let the program count.** Instead of "does any bullet...",
+- **Pattern 1: ask per bullet, let the program count.** Approved by the owner. Instead of "does any bullet...",
   the content pass answers the criterion for each bullet (or each role, for
   `resume-craft/C2`), and the code derives *any* or *every*. The model stops doing the
   search; the program does the counting, the same way each time. This is a change to
   `ats/prompts.py`, the reply parser and the answer shape, so it is a build, and it
   changes what `rubric.band_of` is handed. It also fixes pattern 3's quantifier misreads
   as a side effect.
+
+### How it is built
+
+Scoped to the five criteria this ticket is about; the other twenty keep one answer.
+
+- Each of the five specs gains a `scope`: `any_bullet` for `production-ownership/C2`,
+  `/C3`, `/C4` and `resume-craft/C3`, `every_role` for `resume-craft/C2`.
+- For a scoped criterion the model returns an answer **for every bullet in PLACES**
+  rather than one answer. The code derives the criterion: `any_bullet` is `yes` when
+  any bullet is `yes`; `every_role` is `yes` when each role has at least one `yes`.
+- A reply that leaves bullets out has not answered: the criterion is dropped as an
+  abstention, as an unreadable answer is today, rather than read as `no`. Reading a
+  missing bullet as `no` would rebuild the search failure this change removes.
+- A derived `yes` carries the first `yes` bullet's quote and locator. A derived `no`
+  is an unmet criterion, not a placed finding: there is no single bullet that is the
+  defect.
 
 ## Done when
 
