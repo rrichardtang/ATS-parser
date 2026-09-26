@@ -22,10 +22,18 @@ OPENAI_MODEL = "gpt-5.6-luna"
 # wearing a parse bug's clothes, so it must not be tuned down casually.
 MAX_TOKENS = 16000
 
-# Seconds per attempt, matching `ensemble.gather`'s timeout. The SDKs retry a timeout
-# (default max_retries=2) and `call()` may run a second `_dispatch` for JSON repair,
-# so a thread gather has given up on can outlive this by several attempts -- but it
-# bounds what used to be the SDKs' default ten minutes per attempt.
+# Claude's cap is separate and larger because claude-sonnet-5 runs adaptive thinking
+# when `thinking` is omitted, and thinking tokens count against max_tokens: the
+# per-place content reply plus thinking overran 16000 on 13-14 bullet resumes. A cap
+# this size needs the streaming helper; the SDK refuses it on a plain `create`.
+ANTHROPIC_MAX_TOKENS = 64000
+
+# Seconds per attempt. For Claude, which streams, this is the read timeout between
+# chunks -- an inactivity bound, not a wall clock -- so a long healthy reply outlasts
+# it; OpenAI does not stream, so there it bounds the whole reply. The SDKs retry a
+# timeout (default max_retries=2) and `call()` may run a second `_dispatch` for JSON
+# repair, so a thread `ensemble.gather` has given up on can outlive this by several
+# attempts -- but it bounds what used to be the SDKs' default ten minutes per attempt.
 CALL_TIMEOUT = 180.0
 
 # OpenAI renamed max_tokens -> max_completion_tokens and pinned temperature to its
@@ -102,7 +110,7 @@ def call(provider: Provider, system: str, user: str, temperature: float = 0.0) -
             raise LLMError(f"{provider.label}: unparseable JSON after repair ({exc})") from exc
 
 
-def _truncated(label: str, reason: str | None) -> None:
+def _truncated(label: str, reason: str | None, cap: int) -> None:
     """A response cut off at the token cap is a truncation failure, not a parse one.
 
     Retrying it with a "return valid JSON" repair prompt just buys a second
@@ -110,8 +118,8 @@ def _truncated(label: str, reason: str | None) -> None:
     """
     if reason in ("max_tokens", "length"):
         raise LLMError(
-            f"{label}: response hit the {MAX_TOKENS}-token cap and was cut off "
-            "mid-JSON; raise ats.llm.MAX_TOKENS or narrow the prompt"
+            f"{label}: response hit the {cap}-token cap and was cut off "
+            "mid-JSON; raise the cap in ats.llm or narrow the prompt"
         )
 
 
@@ -134,13 +142,16 @@ def _openai_client(api_key: str):
 def _dispatch(provider: Provider, system: str, user: str, temperature: float) -> str:
     if provider.name == "anthropic":
         client = _anthropic_client(provider.api_key)
-        response = client.messages.create(
+        with client.messages.stream(
             model=provider.model,
-            max_tokens=MAX_TOKENS,
+            max_tokens=ANTHROPIC_MAX_TOKENS,
             system=system,
             messages=[{"role": "user", "content": user}],
-        )
-        _truncated(provider.label, getattr(response, "stop_reason", None))
+        ) as stream:
+            response = stream.get_final_message()
+        log.info("%s used %s output tokens (stop_reason=%s)", provider.label,
+                 response.usage.output_tokens, response.stop_reason)
+        _truncated(provider.label, response.stop_reason, ANTHROPIC_MAX_TOKENS)
         return "".join(
             block.text for block in response.content if getattr(block, "type", "") == "text"
         )
@@ -161,7 +172,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
             request["temperature"] = temperature
         response = client.chat.completions.create(**request)
         choice = response.choices[0]
-        _truncated(provider.label, getattr(choice, "finish_reason", None))
+        _truncated(provider.label, getattr(choice, "finish_reason", None), MAX_TOKENS)
         return choice.message.content or ""
 
     raise LLMError(f"unknown provider {provider.name}")

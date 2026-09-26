@@ -23,16 +23,27 @@ class _Block:
 
 
 class _FakeAnthropic:
-    """Mimics anthropic 1.x: Messages.create() has no `temperature` parameter."""
+    """Mimics anthropic 1.x streaming: Messages.stream() has no `temperature` parameter
+    and yields a context manager whose get_final_message() is the whole reply."""
 
     def __init__(self, sent, stop_reason="end_turn", reply='{"ok": true}'):
         self.sent, self.stop_reason, self.reply = sent, stop_reason, reply
         self.messages = self
 
-    def create(self, *, model, max_tokens, system, messages):
+    def stream(self, *, model, max_tokens, system, messages):
         self.sent.append(dict(model=model, max_tokens=max_tokens))
-        return type("Response", (), {
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def get_final_message(self):
+        return type("Message", (), {
             "content": [_Block(self.reply)], "stop_reason": self.stop_reason,
+            "usage": type("Usage", (), {"output_tokens": 42})(),
         })()
 
 
@@ -75,12 +86,19 @@ def test_real_clients_are_built_with_a_short_connect_and_the_call_timeout(provid
     assert timeout.connect == 5.0
 
 
+def test_real_anthropic_client_has_the_streaming_helper():
+    """A fake stands in for `messages.stream` everywhere else; this fails on a wrong
+    method name before a live run does."""
+    pytest.importorskip("anthropic")
+    assert callable(llm._anthropic_client("sk-test").messages.stream)
+
+
 def test_anthropic_omits_temperature_the_sdk_no_longer_accepts(monkeypatch):
     sent = []
     _patch(monkeypatch, "anthropic", _FakeAnthropic(sent))
 
     assert llm.call(ANTHROPIC, "sys", "user", 0.7) == {"ok": True}
-    assert sent == [{"model": "claude-sonnet-5", "max_tokens": llm.MAX_TOKENS}]
+    assert sent == [{"model": "claude-sonnet-5", "max_tokens": llm.ANTHROPIC_MAX_TOKENS}]
 
 
 def test_openai_sends_max_completion_tokens_and_no_temperature(monkeypatch):
@@ -122,7 +140,7 @@ def test_truncated_reply_fails_as_truncation_not_as_bad_json(monkeypatch):
         sent, stop_reason="max_tokens", reply='{"findings": [{"message": "cut off',
     ))
 
-    with pytest.raises(LLMError, match="cut off"):
+    with pytest.raises(LLMError, match=f"{llm.ANTHROPIC_MAX_TOKENS}-token cap .* cut off"):
         llm.call(ANTHROPIC, "sys", "user")
     assert len(sent) == 1, "a truncated reply must not be retried as a parse repair"
 

@@ -32,6 +32,11 @@ log = logging.getLogger("ats.passes")
 
 MAX_REWRITE_TARGETS = 6
 
+# Wall-clock seconds for the content pass. Its per-place reply, with Claude's thinking
+# on top, can run past `ensemble.gather`'s 180 s default while still streaming; a
+# stalled stream is caught sooner by `llm.CALL_TIMEOUT` between chunks.
+CONTENT_TIMEOUT = 600
+
 # Only the categories a judge is actually asked about. `Parseability`, `Structure` and
 # `Title` are decided by rules alone, so a model naming one of them is answering a
 # question nobody put to it -- built over the whole enum, this map would resolve that
@@ -369,7 +374,7 @@ def content_judgments(
                 )
             )
 
-    raw, errors = ensemble.gather(jobs)
+    raw, errors = ensemble.gather(jobs, timeout=CONTENT_TIMEOUT)
 
     judgments: list[ContentJudgment] = []
     for provider_name, index, payload in raw:
