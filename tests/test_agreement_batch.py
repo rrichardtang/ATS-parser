@@ -108,6 +108,47 @@ def test_collect_builds_the_judgments_a_live_run_does(client, fixtures, tmp_path
     assert agreement_batch.NOTE in run.meta["notes"]
 
 
+def test_collect_uses_the_saved_text_not_the_path_on_disk(client, fixtures, tmp_path):
+    strong_copy = tmp_path / "strong.pdf"
+    strong_copy.write_bytes(fixtures["strong"].read_bytes())
+    targets = [("strong", str(strong_copy)), ("scanned", str(fixtures["scanned"]))]
+    saved = harness.submit_batch([CLAUDE], targets, 2, 0.7, [])
+    strong_copy.unlink()  # gone by the time collect runs, e.g. a rebuilt tests/fixtures/
+
+    out = tmp_path / "run.json"
+    harness.collect_batch(saved, out, [])
+
+    run = agreement.HarnessRun.from_dict(json.loads(out.read_text()))
+    assert run.resumes[0].judgments and not run.resumes[0].errors
+
+
+def test_a_missing_result_is_recorded_as_an_error(fixtures):
+    run = agreement.HarnessRun(
+        meta={"samples_per_provider": 2},
+        resumes=[agreement.prepare("strong", str(fixtures["strong"]))[0]],
+    )
+    results = [_result("doc0-s0", message=_message(AGREEING))]
+    agreement_batch.merge(run, CLAUDE, results, texts=["irrelevant"])
+
+    assert len(run.resumes[0].judgments) == 1
+    assert run.resumes[0].errors == [
+        f"{CLAUDE.label}: batch request doc0-s1 returned no result"
+    ]
+
+
+def test_collect_refuses_a_run_saved_before_the_live_phase_finished(fixtures, tmp_path):
+    saved = tmp_path / "partial.json"
+    saved.write_text(json.dumps({
+        "batch_id": "msgbatch_1", "anthropic_model": "claude-sonnet-5",
+        "texts": [], "live_done": False,
+        "run": agreement.HarnessRun().to_dict(),
+    }))
+    with pytest.raises(SystemExit) as stopped:
+        harness.collect_batch(saved, tmp_path / "run.json", [])
+    assert "live" in str(stopped.value.code)
+    assert not (tmp_path / "run.json").exists()
+
+
 def test_a_batch_still_processing_exits_non_zero_without_saving(client, fixtures, tmp_path):
     saved = _submit(fixtures)
     client.status = "in_progress"
@@ -128,7 +169,7 @@ def test_failed_truncated_and_unparseable_results_are_recorded_errors(fixtures):
         _result("doc0-s3", message=_message('{"categories": {', stop_reason="max_tokens")),
         _result("doc0-s4", message=_message("not json at all")),
     ]
-    agreement_batch.merge(run, CLAUDE, results)
+    agreement_batch.merge(run, CLAUDE, results, texts=["irrelevant"])
 
     errors = run.resumes[0].errors
     assert not run.resumes[0].judgments

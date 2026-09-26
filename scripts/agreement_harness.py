@@ -198,18 +198,19 @@ def submit_batch(providers, targets, samples: int, temperature: float,
     )
     batch = llm._anthropic_client(claude.api_key).messages.batches.create(requests=requests)
     out = _stamped("agreement-batch")
+    texts = [text for _, _, text in prepared]
 
-    def save() -> None:
+    def save(live_done: bool) -> None:
         _write(out, {"batch_id": batch.id, "anthropic_model": claude.model,
-                     "run": run.to_dict()})
+                     "texts": texts, "live_done": live_done, "run": run.to_dict()})
 
-    save()
+    save(live_done=not live)
     print(f"\nSubmitted {len(requests)} Claude request(s) as batch {batch.id}; "
           f"saved to {_shown(out)}")
     if live:
-        for resume_run, resume, text in prepared:
+        for index, (resume_run, resume, text) in enumerate(prepared):
             agreement.judge(live, resume_run, resume, text, samples, temperature)
-            save()
+            save(live_done=index == len(prepared) - 1)
             print(f"  {resume_run.name}: {len(resume_run.judgments)} live replies",
                   flush=True)
     print("Collect it once it has ended (most batches finish within an hour):\n"
@@ -223,6 +224,11 @@ def collect_batch(saved_path: Path, out: Path, band_order: list[str]) -> None:
     Exits non-zero, without waiting, while the batch is still processing.
     """
     saved = json.loads(saved_path.read_text(encoding="utf-8"))
+    if not saved.get("live_done"):
+        raise SystemExit(
+            f"{saved_path} was saved before its live (non-Claude) phase finished; "
+            "re-run --batch to completion before collecting it."
+        )
     claude = next((p for p in providers_from({}, {"anthropic": saved["anthropic_model"]})
                    if p.name == "anthropic"), None)
     if claude is None:
@@ -237,7 +243,7 @@ def collect_batch(saved_path: Path, out: Path, band_order: list[str]) -> None:
             f"{counts.errored} errored. Collect again later."
         )
     run = agreement_batch.merge(agreement.HarnessRun.from_dict(saved["run"]), claude,
-                                batches.results(saved["batch_id"]))
+                                batches.results(saved["batch_id"]), saved["texts"])
     # Saved before analyse(), for the reason `after_each` gives in main().
     _write(out, run.to_dict())
     print(render(agreement.analyse(run, band_order)))
