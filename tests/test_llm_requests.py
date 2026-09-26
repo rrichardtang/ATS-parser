@@ -24,11 +24,13 @@ class _Block:
 
 class _FakeAnthropic:
     """Mimics anthropic 1.x streaming: Messages.stream() has no `temperature` parameter
-    and yields a context manager whose get_final_message() is the whole reply."""
+    and yields a context manager that iterates events and whose get_final_message()
+    is the whole reply."""
 
     def __init__(self, sent, stop_reason="end_turn", reply='{"ok": true}'):
         self.sent, self.stop_reason, self.reply = sent, stop_reason, reply
         self.messages = self
+        self.closed = False
 
     def stream(self, *, model, max_tokens, system, messages):
         self.sent.append(dict(model=model, max_tokens=max_tokens))
@@ -38,7 +40,11 @@ class _FakeAnthropic:
         return self
 
     def __exit__(self, *exc):
+        self.closed = True
         return False
+
+    def __iter__(self):
+        return iter(["ping", "content_block_delta"])
 
     def get_final_message(self):
         return type("Message", (), {
@@ -152,3 +158,21 @@ def test_unparseable_reply_after_repair_names_the_provider(monkeypatch):
     with pytest.raises(LLMError, match="anthropic:claude-sonnet-5"):
         llm.call(ANTHROPIC, "sys", "user")
     assert len(sent) == 2
+
+
+def test_a_stream_past_its_deadline_is_abandoned_and_closed(monkeypatch):
+    """Pings reset the read timeout, so only a wall clock stops a runaway reply from
+    billing on after gather has dropped it; leaving the `with` closes the stream."""
+    fake = _FakeAnthropic([])
+    _patch(monkeypatch, "anthropic", fake)
+    monkeypatch.setattr(llm, "STREAM_DEADLINE", -1.0)
+
+    with pytest.raises(LLMError, match="still streaming"):
+        llm.call(ANTHROPIC, "sys", "user")
+    assert fake.closed
+
+
+def test_the_stream_deadline_fits_inside_the_content_pass_budget():
+    from ats import passes
+
+    assert llm.STREAM_DEADLINE < passes.CONTENT_TIMEOUT

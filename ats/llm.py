@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+import time
 from dataclasses import dataclass
 from typing import Any
 
@@ -35,6 +36,12 @@ ANTHROPIC_MAX_TOKENS = 64000
 # repair, so a thread `ensemble.gather` has given up on can outlive this by several
 # attempts -- but it bounds what used to be the SDKs' default ten minutes per attempt.
 CALL_TIMEOUT = 180.0
+
+# Wall-clock seconds per streamed Claude attempt. Pings and deltas reset the read
+# timeout above, so without this a runaway reply keeps billing up to the token cap
+# after `ensemble.gather` has given up on it. Sits inside the content pass's 600 s
+# budget (`passes.CONTENT_TIMEOUT`) with room for the connect and a slow first byte.
+STREAM_DEADLINE = 540.0
 
 # OpenAI renamed max_tokens -> max_completion_tokens and pinned temperature to its
 # default on everything after the gpt-4 generation, and still serves both eras from
@@ -148,6 +155,13 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
             system=system,
             messages=[{"role": "user", "content": user}],
         ) as stream:
+            deadline = time.monotonic() + STREAM_DEADLINE
+            for _ in stream:
+                if time.monotonic() > deadline:
+                    raise LLMError(
+                        f"{provider.label}: still streaming after {STREAM_DEADLINE:.0f}s; "
+                        "abandoned so it stops billing"
+                    )
             response = stream.get_final_message()
         log.info("%s used %s output tokens (stop_reason=%s)", provider.label,
                  response.usage.output_tokens, response.stop_reason)

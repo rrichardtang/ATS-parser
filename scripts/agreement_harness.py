@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import time
 from datetime import datetime, timezone
@@ -125,6 +126,8 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true",
                         help="print the plan and what it will cost in calls, then stop")
     args = parser.parse_args()
+    logging.basicConfig(level=logging.WARNING, format="%(name)s: %(message)s")
+    logging.getLogger("ats.llm").setLevel(logging.INFO)
 
     band_order = [b.strip() for b in args.bands.split(",") if b.strip()]
 
