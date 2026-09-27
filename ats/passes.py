@@ -444,7 +444,7 @@ def vote_samples(
         key = (judgment.provider, judgment.sample // votes[judgment.provider])
         groups.setdefault(key, []).append(judgment)
     return [voted_judgment(tries, resume, sample)
-            for (_provider, sample), tries in sorted(groups.items(), key=lambda g: g[0])]
+            for (_provider, sample), tries in sorted(groups.items())]
 
 
 def voted_judgment(
