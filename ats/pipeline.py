@@ -56,6 +56,17 @@ def deterministic(
     return findings
 
 
+def app_providers(keys: dict[str, str], models: dict[str, str],
+                  settings: dict) -> list[Provider]:
+    """The providers a check runs on: Claude only when `[ensemble] use_claude` is on.
+
+    A key alone never turns Claude on. Every pass reads this one list, so the slop and
+    rewrite passes cannot reach Claude by a route the content pass does not.
+    """
+    return [p for p in providers_from(keys, models)
+            if p.name != "anthropic" or settings["use_claude"]]
+
+
 def resolve_target_title(explicit: str) -> str:
     """The title a run scores against: explicit, else the personal corpus's first
     target title, else the tool's default. Public because the agreement harness has
@@ -72,8 +83,8 @@ def analyze(run: RunInput) -> Report:
     target_title = resolve_target_title(run.target_title)
     findings = deterministic(doc, resume, run.jd_text, target_title)
 
-    providers = providers_from(run.keys, run.models)
     settings = config.ensemble_settings(run.ensemble_mode)
+    providers = app_providers(run.keys, run.models, settings)
     notes: list[str] = []
     meta: dict = {
         "mode": settings["mode"],
@@ -102,7 +113,8 @@ def analyze(run: RunInput) -> Report:
     if not providers or not doc.has_text_layer:
         if not providers:
             notes.append(
-                "No API key supplied. Deterministic checks only -- everything "
+                "No API key supplied for an enabled provider (OpenAI; Claude only "
+                "when weights.toml sets use_claude). Deterministic checks only -- everything "
                 "mechanically checkable is here; substance and slop judgement are not."
             )
         return build(findings, partial=True, notes=notes, run_meta=meta,
@@ -115,7 +127,7 @@ def analyze(run: RunInput) -> Report:
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         content_future = pool.submit(
             passes.content_pass, providers, resume, doc.text, run.jd_text,
-            findings, int(settings["content_samples"]), float(settings["temperature"]),
+            findings, int(settings["content_votes"]), float(settings["temperature"]),
             digest,
         )
         slop_future = pool.submit(
@@ -161,7 +173,7 @@ def analyze(run: RunInput) -> Report:
             "shows the lower of the two bands, and names the other one."
         )
 
-    partial = bool(content.errors or slop_result.errors) or len(providers) < 2
+    partial = bool(content.errors or slop_result.errors)
     if len(providers) == 1:
         notes.append(
             f"One provider ({providers[0].name}). Cross-provider ensembling is off, "
@@ -190,14 +202,15 @@ def generate_rewrites(
     rewrite generation too. Mutates and returns `report`; `resume` is whatever
     parse_resume() returned when the report was first built.
     """
-    providers = providers_from(keys, models)
+    settings = config.ensemble_settings(ensemble_mode)
+    providers = app_providers(keys, models, settings)
     if not providers:
         report.notes.append(
-            "No API key supplied -- nothing to generate rewrites with."
+            "No API key supplied for an enabled provider -- nothing to generate "
+            "rewrites with."
         )
         return report
 
-    settings = config.ensemble_settings(ensemble_mode)
     rewrite_result = _safe(
         None, "rewrite",
         fn=lambda: passes.rewrite_pass(

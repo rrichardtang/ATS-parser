@@ -8,7 +8,7 @@ import re
 
 import pytest
 
-from ats import llm, passes, prompts, rubric
+from ats import config, llm, passes, prompts, rubric
 from ats.llm import Provider
 from ats.models import JUDGED_CATEGORIES, Category, Finding, Gate, Severity
 from ats.sections import Resume
@@ -81,7 +81,15 @@ def test_all_three_passes_contribute(stubbed, fixtures):
     assert report.run_meta["providers"], "providers not recorded"
 
 
-def test_cross_provider_scores_are_averaged_and_banded(stubbed, fixtures):
+@pytest.fixture
+def claude_on(monkeypatch):
+    """The owner's opt-in: `[ensemble] use_claude = true`."""
+    settings = config.ensemble_settings
+    monkeypatch.setattr(config, "ensemble_settings",
+                        lambda mode=None: {**settings(mode), "use_claude": True})
+
+
+def test_cross_provider_scores_are_averaged_and_banded(stubbed, claude_on, fixtures):
     report = analyze(RunInput(pdf_path=str(fixtures["slop"]), ensemble_mode="economy"))
     assert report.run_meta["pass1"]["providers"] == ["anthropic", "openai"]
 
@@ -107,8 +115,8 @@ def test_a_failing_pass_does_not_lose_the_report(monkeypatch, fixtures):
         return _router(system)
 
     monkeypatch.setattr(llm, "_dispatch", _explode)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
     report = analyze(RunInput(pdf_path=str(fixtures["slop"]), ensemble_mode="economy"))
     assert report.composite > 0
@@ -118,10 +126,25 @@ def test_a_failing_pass_does_not_lose_the_report(monkeypatch, fixtures):
 
 def test_single_provider_is_flagged_in_the_notes(monkeypatch, fixtures):
     monkeypatch.setattr(llm, "_dispatch", _stub(_router))
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     report = analyze(RunInput(pdf_path=str(fixtures["slop"]), ensemble_mode="economy"))
     assert any("one provider" in n.lower() for n in report.notes)
+    assert not report.partial, "one provider is the app's design, not a degraded run"
+
+
+def test_a_claude_key_never_calls_claude_in_the_app(monkeypatch, stubbed, fixtures):
+    """27 September: the app judges with OpenAI; a key is not the opt-in."""
+    called = set()
+
+    def dispatch(provider, system, user, temperature):
+        called.add(provider.name)
+        return _router(system)
+
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    report = analyze(RunInput(pdf_path=str(fixtures["slop"])))
+    assert called == {"openai"}
+    assert report.run_meta["providers"] == [f"openai:{llm.OPENAI_MODEL}"]
 
 
 def test_unquotable_llm_finding_is_dropped(monkeypatch, fixtures):
@@ -481,7 +504,7 @@ def test_the_judged_value_reaches_the_report(monkeypatch, fixtures):
         ]}}})
 
     monkeypatch.setattr(llm, "_dispatch", dispatch)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
 
     report = analyze(RunInput(pdf_path=str(fixtures["strong"]),
                               ensemble_mode="economy", enable_rewrites=False))
@@ -521,7 +544,7 @@ def test_a_document_whose_roles_did_not_parse_is_withheld(monkeypatch, fixtures)
         return _router(system)
 
     monkeypatch.setattr(llm, "_dispatch", dispatch)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
 
     report = analyze(RunInput(pdf_path=str(fixtures["two_column"]),
                               ensemble_mode="economy", enable_rewrites=False))

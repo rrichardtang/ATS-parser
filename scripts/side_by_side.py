@@ -47,9 +47,8 @@ sys.path.insert(0, str(ROOT))
 
 from ats import config, passes, score  # noqa: E402
 from ats.extract import extract  # noqa: E402
-from ats.llm import providers_from  # noqa: E402
 from ats.models import JUDGED_CATEGORIES, Category  # noqa: E402
-from ats.pipeline import deterministic, resolve_target_title  # noqa: E402
+from ats.pipeline import app_providers, deterministic, resolve_target_title  # noqa: E402
 from ats.rubric import SLUGS, load_spec, slug_by_category  # noqa: E402
 from ats.sections import parse  # noqa: E402
 from scripts.agreement_harness import acceptance_targets, fixture_targets  # noqa: E402
@@ -206,8 +205,8 @@ def run_new(pdf: Path, judgments: list[passes.ContentJudgment] | None,
         # the criteria nothing in the resume spoke to.
         settings = config.ensemble_settings()
         content = passes.content_pass(
-            providers_from({}), resume, doc.text, "", findings,
-            int(settings["content_samples"]), float(settings["temperature"]),
+            app_providers({}, {}, settings), resume, doc.text, "", findings,
+            int(settings["content_votes"]), float(settings["temperature"]),
             config.jd_digest(),
         )
         findings += content.data
