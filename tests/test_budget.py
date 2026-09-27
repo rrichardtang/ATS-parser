@@ -68,3 +68,10 @@ def test_openai_votes_multiply_its_calls():
     voted = budget.worst_case([OPENAI], [3000], {"openai": 6}, True, (0.10, 0.50))
     single = budget.worst_case([OPENAI], [3000], {"openai": 1}, True, (0.10, 0.50))
     assert voted[OPENAI.label] == pytest.approx(6 * single[OPENAI.label])
+
+
+def test_a_harness_openai_try_without_sdk_retries_is_two_attempts():
+    harness = Provider("openai", "k", "gpt-6-luna", openai_max_retries=0)
+    costs = budget.worst_case([harness], [3000], {"openai": 1}, True, (1.0, 8.0))
+    assert costs[harness.label] == pytest.approx(
+        budget.LIVE_ATTEMPTS * (3000 * 1.0 + llm.MAX_TOKENS * 8.0) / 1e6)

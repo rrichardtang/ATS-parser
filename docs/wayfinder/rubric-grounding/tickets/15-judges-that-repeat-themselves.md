@@ -272,13 +272,18 @@ costs about $0.11 per live check; the OpenAI judge costs about $0.01.
   `--claude-samples` (default 1) single-try answers, 1 call per resume. `--claude-only`
   and the new `--no-claude` leave one judge out. Claude's self-consistency is not
   claimed at 1 sample; the run notes say so. `ats/budget.py` counts every try, times
-  the existing repair and SDK-retry multipliers. `--openai-price` is still required;
-  gpt-6-luna's is `0.10,0.50`.
+  the JSON-repair multiplier. The harness builds OpenAI clients with no SDK retries
+  (`Provider.openai_max_retries = 0`), so a timed-out try is lost rather than resent and
+  billed again, and it shrinks only its own vote. The app keeps the SDK's default
+  retries. `--openai-price` is still required; gpt-6-luna's is `0.10,0.50`.
+- Between judges, the harness measures what the app could report. The composite spread
+  is the worst gap between any luna voted sample and Claude, not the gap between means.
+  A judge whose samples name two bands is counted `unstable` and is still compared, so a
+  far split behind a wobble is counted as far.
 - The report names each resume's failed calls (`<resume>: call failed: ...`). It also
   names each resume where a judge gave no composite (`<resume>: no composite from
   <provider>: ...`), and the composite tally counts rows with one judge.
 
 **Next run.** All 30 documents, `--docs` listing them, `--batch --max-tokens 25000
---openai-price 0.10,0.50`. The dry-run worst case is $13.55 (Claude $4.05, luna $9.50).
-Most of luna's worst case is the six-attempt multiplier: repair × (1 + the SDK's two
-retries). The default `--budget 3` refuses it, so it needs the owner's `--budget 14`.
+--openai-price 0.10,0.50`. The dry-run worst case is $7.22 (Claude $4.05, luna $3.17).
+The default `--budget 3` refuses it, so it needs the owner's `--budget 8`.

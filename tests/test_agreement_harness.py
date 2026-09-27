@@ -45,6 +45,7 @@ def test_the_default_plan_votes_openai_and_asks_claude_once():
     args = _plan_args()
     providers = harness.chosen_providers(args, {"anthropic": "-", "openai": "-"})
     assert harness.run_plan(args, providers) == {"anthropic": (1, 1), "openai": (2, 3)}
+    assert all(p.openai_max_retries == 0 for p in providers)
 
 
 @pytest.mark.parametrize("flag, left", [("claude_only", "anthropic"), ("no_claude", "openai")])

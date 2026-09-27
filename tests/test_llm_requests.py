@@ -78,7 +78,7 @@ class _FakeOpenAI:
 
 def _patch(monkeypatch, provider_module, factory):
     pytest.importorskip(provider_module)
-    monkeypatch.setattr(llm, f"_{provider_module}_client", lambda api_key: factory)
+    monkeypatch.setattr(llm, f"_{provider_module}_client", lambda api_key, *_: factory)
 
 
 @pytest.mark.parametrize("provider_module", ["anthropic", "openai"])
@@ -91,6 +91,13 @@ def test_real_clients_are_built_with_a_short_connect_and_the_call_timeout(provid
     timeout = getattr(llm, f"_{provider_module}_client")("sk-test").timeout
     assert timeout.read == llm.CALL_TIMEOUT
     assert timeout.connect == 5.0
+
+
+def test_openai_retries_are_the_sdk_default_unless_the_provider_sets_them():
+    """The app keeps the SDK's resend; the harness turns it off (`openai_max_retries=0`)."""
+    openai = pytest.importorskip("openai")
+    assert llm._openai_client("sk-test").max_retries == openai.DEFAULT_MAX_RETRIES
+    assert llm._openai_client("sk-test", 0).max_retries == 0
 
 
 def test_real_anthropic_client_has_the_streaming_helper():

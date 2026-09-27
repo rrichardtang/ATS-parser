@@ -28,7 +28,8 @@ the run and prints the same tables a live run does.
 Nothing is sent until the run's worst case (every reply at its token cap, every
 live call repaired, no cache hits) fits `--budget`, $3 by default; `--dry-run`
 prints the same check, counting every OpenAI try (samples x votes) and its repair
-and timeout retries. OpenAI's price is not known here, so a run that includes it
+call. The harness sends OpenAI no SDK retries, so a timed-out try is lost, not
+billed twice. OpenAI's price is not known here, so a run that includes it
 needs `--openai-price IN,OUT` (gpt-6-luna: 0.10,0.50, per its pricing on 22
 September 2026) or `--claude-only`. `--max-tokens` lowers Claude's
 output cap for this run, which fits more documents under the budget; a reply that
@@ -179,9 +180,10 @@ def select_targets(args) -> tuple[list[tuple[str, str]], list[str]]:
 
 def chosen_providers(args, keys: dict[str, str] | None = None) -> list:
     """The providers the keys give, less the one --claude-only or --no-claude leaves
-    out, at Claude's cap."""
+    out, at Claude's cap, and with no OpenAI SDK retries: a timed-out try is lost, not
+    resent and billed again, and the vote absorbs it."""
     left_out = "openai" if args.claude_only else "anthropic" if args.no_claude else ""
-    return [replace(p, anthropic_max_tokens=args.max_tokens)
+    return [replace(p, anthropic_max_tokens=args.max_tokens, openai_max_retries=0)
             for p in providers_from(keys or {}) if p.name != left_out]
 
 

@@ -73,6 +73,10 @@ class Provider:
     # Claude's output cap; the agreement harness lowers it per run (--max-tokens).
     # OpenAI requests always send MAX_TOKENS.
     anthropic_max_tokens: int = ANTHROPIC_MAX_TOKENS
+    # OpenAI's SDK resends a timed-out request, and each abandoned generation may be
+    # billed. None keeps the SDK's default (the app); the harness sends 0, so a lost
+    # try just shrinks its own vote (`passes.vote_samples`).
+    openai_max_retries: int | None = None
 
     @property
     def label(self) -> str:
@@ -152,11 +156,12 @@ def _anthropic_client(api_key: str):
     )
 
 
-def _openai_client(api_key: str):
+def _openai_client(api_key: str, max_retries: int | None = None):
     import openai
 
     return openai.OpenAI(
-        api_key=api_key, timeout=openai.Timeout(CALL_TIMEOUT, connect=5.0)
+        api_key=api_key, timeout=openai.Timeout(CALL_TIMEOUT, connect=5.0),
+        max_retries=openai.DEFAULT_MAX_RETRIES if max_retries is None else max_retries,
     )
 
 
@@ -202,7 +207,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
         return anthropic_text(provider, response)
 
     if provider.name == "openai":
-        client = _openai_client(provider.api_key)
+        client = _openai_client(provider.api_key, provider.openai_max_retries)
         legacy = bool(LEGACY_OPENAI.match(provider.model))
         request: dict[str, Any] = {
             "model": provider.model,

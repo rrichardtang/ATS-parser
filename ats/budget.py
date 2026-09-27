@@ -47,9 +47,14 @@ def _rates(provider: Provider, batch: bool, openai_price: tuple[float, float] | 
         )
     import openai
 
-    # OpenAI does not stream: a reply slower than `llm.CALL_TIMEOUT` times out and the
-    # SDK resends it (default max_retries), and each abandoned generation may be billed.
-    attempts = LIVE_ATTEMPTS * (1 + openai.DEFAULT_MAX_RETRIES)
+    # OpenAI does not stream: a reply slower than `llm.CALL_TIMEOUT` times out, and each
+    # abandoned generation may be billed. The SDK resends it `openai_max_retries` times
+    # (its default when None); the harness sets 0, so a harness try is at most its
+    # generation and its JSON repair.
+    retries = provider.openai_max_retries
+    if retries is None:
+        retries = openai.DEFAULT_MAX_RETRIES
+    attempts = LIVE_ATTEMPTS * (1 + retries)
     return (*openai_price, llm.MAX_TOKENS, attempts)
 
 
