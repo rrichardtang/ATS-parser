@@ -19,6 +19,10 @@ test against two providers on documents nobody wrote to pass it. Four of five ju
 categories fail the band rule, mostly through judges not repeating themselves. What to
 change is the other map's; see 09 and *Not yet specified*.
 
+**Status, 27 September: the finish line is set.** The owner set a fixed acceptance bar
+for the 30-document run instead of another wording round — see rubric-grounding 15,
+"Decided, 27 September (the owner): the finish line".
+
 **This map decides nothing about what the rubric should be.** Every rubric question
 was settled by the other map; where a decision is missing, this map raises it there or
 records that it was forced by a code fact. What is open here is sequencing, safety and

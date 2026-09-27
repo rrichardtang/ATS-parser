@@ -190,3 +190,28 @@ provider flipped. They are one lower than the flip counts above wherever both pr
 flipped on the same document (`12-returning-rag` on C2, `08-junior-mixed-quality` on C4,
 `24-forward-deployed-senior` on `resume-craft/C2`, `18-terse-data-senior` on
 `resume-craft/C3`). Then this ticket closes.
+
+## Decided, 27 September (the owner): the finish line
+
+**Why.** Three 5-resume runs (26 September) each ended in "maybe". Every ruling moved the
+line and new borderline resumes landed on it. The flips that remained after the 26
+September rulings are mostly the same quote read two ways, or a `no` given without a
+quote where the other sample found one. Zero flips can't be reached with a judge whose
+sampling can't be fixed (temperature doesn't reach current models).
+
+**Finish line, decided before the run.** On all 30 documents of the acceptance set
+(`corpus/resumes`, rubric-migration 08), with both providers and 2 samples:
+
+- The composite spread between judges ("as built") is ≤ 5 on at least 27 of the 30
+  documents.
+- No category has a "far" band split, i.e. two judges two or more bands apart.
+- Band instability within a judge is reported, not failed. This replaces the stricter
+  band pass rule for this acceptance decision.
+
+**What follows.** A pass closes ticket 15 and both maps' destinations. A fail means
+building one majority-of-3 vote per judge and rerunning the same 30 documents once.
+There will be no further wording rounds.
+
+**Run settings.** Claude effort medium, cached system prompt, `--batch --max-tokens
+25000 --openai-price 0.20,1.20 --budget 16` (worst case $15.59, a one-off raise of the
+$3 test budget approved by the owner).

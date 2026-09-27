@@ -22,6 +22,10 @@ five are the same proxy — a deterministic judge against one recorded model jud
 documents written to exercise the rubric. The real number is
 [rubric-migration 09](../rubric-migration/tickets/09-run-the-acceptance-test.md).
 
+**Status, 27 September: the finish line is set.** See ticket 15, "Decided, 27 September
+(the owner): the finish line" — a fixed acceptance bar for the 30-document run, in place
+of another wording round.
+
 ## Spec so far
 
 - [production-ownership-criteria.md](production-ownership-criteria.md) — the first
