@@ -3,9 +3,15 @@
 MAP.md's acceptance test is a claim about judges, not resumes: per category they
 must land in the same place, and the composite must not move more than 5 points
 between them (above 8 fails). Nothing could apply that test, because the pipeline
-folds every disagreement away before a score is reported. This runs each resume
-past each provider twice with the samples kept apart, so sampling noise shows up
-as its own column rather than as the disagreement it is easily mistaken for.
+folds every disagreement away before a score is reported.
+
+It tests what the app does (ticket 15, 27 September). OpenAI, the app judge, gives
+`--samples` answers per resume (default 2), each one majority-voted from `--votes`
+tries (default: weights.toml's content_votes, 3), so its self-consistency is measured
+between two voted answers. Claude is the audit judge: `--claude-samples` answers
+(default 1) of one try each, best sent with `--batch`. With one Claude answer there is
+no Claude self-consistency number; the between-judge tables compare OpenAI's voted
+answer with Claude's single one.
 
     .venv/bin/python scripts/agreement_harness.py --dry-run
     .venv/bin/python scripts/agreement_harness.py --acceptance-set --only ""
@@ -21,14 +27,16 @@ the run and prints the same tables a live run does.
 
 Nothing is sent until the run's worst case (every reply at its token cap, every
 live call repaired, no cache hits) fits `--budget`, $3 by default; `--dry-run`
-prints the same check. OpenAI's price is not known here, so a run that includes it
-needs `--openai-price IN,OUT` or `--claude-only`. `--max-tokens` lowers Claude's
+prints the same check, counting every OpenAI try (samples x votes) and its repair
+and timeout retries. OpenAI's price is not known here, so a run that includes it
+needs `--openai-price IN,OUT` (gpt-6-luna: 0.10,0.50, per its pricing on 22
+September 2026) or `--claude-only`. `--max-tokens` lowers Claude's
 output cap for this run, which fits more documents under the budget; a reply that
 hits it is recorded as a failed call.
 
 Keys come from ANTHROPIC_API_KEY and OPENAI_API_KEY. Both are wanted: with one
-the only real number is the within-judge noise floor, since between-judge
-agreement is the thing being measured.
+(`--claude-only`, `--no-claude`) the only real number is the within-judge noise
+floor, since between-judge agreement is the thing being measured.
 
 The run is saved whole (raw replies, not just the tables) so the next rubric
 change is judged on a diff rather than on a remembered number, and so a change to
@@ -87,14 +95,13 @@ def acceptance_targets() -> list[tuple[str, Path]]:
     return sorted(build_all().items())
 
 
-def run_notes(providers, samples: int, temperature: float) -> list[str]:
+def run_notes(providers, plan: agreement.Plan, temperature: float) -> list[str]:
     """Everything about how this run sampled that would make its numbers mean less."""
-    notes = []
-    if samples < 2:
-        notes.append(
-            f"{samples} sample per provider: sampling noise cannot be separated from "
-            "provider disagreement without at least two."
-        )
+    notes = [
+        f"{p.label} answered once per resume: its self-consistency is not measured, and "
+        "its sampling noise cannot be separated from provider disagreement."
+        for p in providers if plan[p.name][0] < 2
+    ]
     modern = [p.label for p in providers if not LEGACY_OPENAI.match(p.model)]
     if modern and temperature:
         notes.append(
@@ -171,10 +178,17 @@ def select_targets(args) -> tuple[list[tuple[str, str]], list[str]]:
 
 
 def chosen_providers(args, keys: dict[str, str] | None = None) -> list:
-    """The providers the keys give, less OpenAI under --claude-only, at Claude's cap."""
+    """The providers the keys give, less the one --claude-only or --no-claude leaves
+    out, at Claude's cap."""
+    left_out = "openai" if args.claude_only else "anthropic" if args.no_claude else ""
     return [replace(p, anthropic_max_tokens=args.max_tokens)
-            for p in providers_from(keys or {})
-            if p.name == "anthropic" or not args.claude_only]
+            for p in providers_from(keys or {}) if p.name != left_out]
+
+
+def run_plan(args, providers) -> agreement.Plan:
+    """Claude answers alone; OpenAI's samples are voted as the app votes them."""
+    return {p.name: (args.claude_samples, 1) if p.name == "anthropic"
+            else (args.samples, args.votes) for p in providers}
 
 
 def prompt_tokens(targets) -> list[int]:
@@ -214,7 +228,7 @@ def _write(path: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
-def submit_batch(providers, targets, samples: int, temperature: float,
+def submit_batch(providers, targets, plan: agreement.Plan, temperature: float,
                  notes: list[str]) -> Path:
     """Submit Claude's content calls as one batch; run any other provider live now.
 
@@ -226,12 +240,12 @@ def submit_batch(providers, targets, samples: int, temperature: float,
         raise SystemExit("--batch needs ANTHROPIC_API_KEY: only Claude's calls are batched")
     live = [p for p in providers if p is not claude]
     prepared = [agreement.prepare(name, path) for name, path in targets]
-    requests = agreement_batch.requests(claude, prepared, samples)
+    requests = agreement_batch.requests(claude, prepared, plan[claude.name][0])
     if not requests:
         raise SystemExit("every target was skipped; there is nothing to batch")
 
     run = agreement.HarnessRun(
-        meta=agreement.run_meta(providers, samples, temperature,
+        meta=agreement.run_meta(providers, plan, temperature,
                                 notes + [agreement_batch.NOTE]),
         resumes=[resume_run for resume_run, _, _ in prepared],
     )
@@ -248,7 +262,7 @@ def submit_batch(providers, targets, samples: int, temperature: float,
           f"saved to {_shown(out)}")
     if live:
         for index, (resume_run, resume, text) in enumerate(prepared):
-            agreement.judge(live, resume_run, resume, text, samples, temperature)
+            agreement.judge(live, resume_run, resume, text, plan, temperature)
             save(live_done=index == len(prepared) - 1)
             print(f"  {resume_run.name}: {len(resume_run.judgments)} live replies",
                   flush=True)
@@ -293,7 +307,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--samples", type=_positive, default=2,
-                        help="samples per provider per resume (default 2)")
+                        help="OpenAI's answers per resume, each voted from --votes tries "
+                             "(default 2)")
+    parser.add_argument("--votes", type=_positive,
+                        default=int(config.ensemble_settings()["content_votes"]),
+                        help="tries per OpenAI answer, majority-voted as the app votes "
+                             "(default: weights.toml's content_votes)")
+    parser.add_argument("--claude-samples", type=_positive, default=1,
+                        help="Claude's answers per resume, one try each (default 1)")
     parser.add_argument("--resume", help="the real resume PDF, the 8th input")
     parser.add_argument("--only", default="",
                         help="comma-separated fixture names, instead of all seven")
@@ -318,8 +339,11 @@ def main() -> None:
                         help="finish a --batch run from its runs/agreement-batch-*.json")
     parser.add_argument("--dry-run", action="store_true",
                         help="print the plan, its calls and its worst-case cost, then stop")
-    parser.add_argument("--claude-only", action="store_true",
-                        help="leave OpenAI out even when OPENAI_API_KEY is set")
+    one_judge = parser.add_mutually_exclusive_group()
+    one_judge.add_argument("--claude-only", action="store_true",
+                           help="leave OpenAI out even when OPENAI_API_KEY is set")
+    one_judge.add_argument("--no-claude", action="store_true",
+                           help="leave Claude out even when ANTHROPIC_API_KEY is set")
     parser.add_argument("--budget", type=float, default=3.0,
                         help="refuse, before sending anything, a run whose worst case "
                              "costs more dollars than this (default 3.0)")
@@ -328,7 +352,7 @@ def main() -> None:
                              f"(default {llm.ANTHROPIC_MAX_TOKENS})")
     parser.add_argument("--openai-price", type=_price, metavar="IN,OUT",
                         help="OpenAI's $ per million input and output tokens; needed "
-                             "to budget a run that includes OpenAI")
+                             "to budget a run that includes OpenAI (gpt-6-luna: 0.10,0.50)")
     args = parser.parse_args()
     logging.basicConfig(level=logging.WARNING, format="%(name)s: %(message)s")
     logging.getLogger("ats.llm").setLevel(logging.INFO)
@@ -353,18 +377,21 @@ def main() -> None:
         temperature = float(config.ensemble_settings()["temperature"])
 
     providers = chosen_providers(args)
-    calls = agreement.planned_calls(targets, len(providers), args.samples)
-    print(f"{len(targets)} resume(s) x {len(providers)} provider(s) x {args.samples} "
-          f"sample(s) = up to {calls} content calls "
+    # A keyless dry run is costed as if both keys were set.
+    costed = providers or chosen_providers(args, {"anthropic": "-", "openai": "-"})
+    plan = run_plan(args, costed)
+    per_resume = ", ".join(f"{name} {samples} x {votes}"
+                           for name, (samples, votes) in plan.items())
+    print(f"{len(targets)} resume(s) x ({per_resume}) sample(s) x vote(s) = up to "
+          f"{agreement.planned_calls(targets, plan)} content calls "
           "(a resume with no text layer is skipped before any call)")
     for name, path in targets:
         print(f"  {name:<18} {path}")
     labels = ", ".join(p.label for p in providers)
     print(f"  providers: {labels or 'none -- set ANTHROPIC_API_KEY, OPENAI_API_KEY'}")
 
-    # A keyless dry run is costed as if both keys were set.
-    costed = providers or chosen_providers(args, {"anthropic": "-", "openai": "-"})
-    fits, report = budget.verdict(costed, prompt_tokens(targets), args.samples,
+    calls = {name: samples * votes for name, (samples, votes) in plan.items()}
+    fits, report = budget.verdict(costed, prompt_tokens(targets), calls,
                                   args.batch, args.openai_price, args.budget)
     print(report)
     if args.dry_run:
@@ -374,9 +401,9 @@ def main() -> None:
     if not fits:
         raise SystemExit("over budget; nothing was sent")
 
-    notes = run_notes(providers, args.samples, temperature) + coverage
+    notes = run_notes(providers, plan, temperature) + coverage
     if args.batch:
-        submit_batch(providers, targets, args.samples, temperature, notes)
+        submit_batch(providers, targets, plan, temperature, notes)
         return
     shown = _shown(out)
     print(f"\nSaving after every resume to {shown}; a stopped run keeps what it paid for.")
@@ -394,7 +421,7 @@ def main() -> None:
         print(f"  [{len(run.resumes)}/{len(targets)}] {latest.name}: {state}  "
               f"({(time.monotonic() - started) / 60:.1f} min)", flush=True)
 
-    run = agreement.collect(providers, targets, args.samples, temperature, notes,
+    run = agreement.collect(providers, targets, plan, temperature, notes,
                             after_each=after_each)
     print()
 

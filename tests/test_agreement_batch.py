@@ -77,7 +77,7 @@ def client(monkeypatch, tmp_path):
 
 def _submit(fixtures, samples=2):
     targets = [("strong", str(fixtures["strong"])), ("scanned", str(fixtures["scanned"]))]
-    return harness.submit_batch([CLAUDE], targets, samples, 0.7, [])
+    return harness.submit_batch([CLAUDE], targets, {"anthropic": (samples, 1)}, 0.7, [])
 
 
 def test_custom_id_round_trips():
@@ -85,7 +85,7 @@ def test_custom_id_round_trips():
 
 
 def test_a_batch_request_is_the_request_a_live_call_streams(client, fixtures):
-    agreement.judge_resume([CLAUDE], "strong", str(fixtures["strong"]), 1, 0.0)
+    agreement.judge_resume([CLAUDE], "strong", str(fixtures["strong"]), {"anthropic": (1, 1)}, 0.0)
     _submit(fixtures, samples=1)
 
     assert [r["params"] for r in client.created] == client.streamed
@@ -94,7 +94,7 @@ def test_a_batch_request_is_the_request_a_live_call_streams(client, fixtures):
 
 
 def test_collect_builds_the_judgments_a_live_run_does(client, fixtures, tmp_path):
-    live = agreement.judge_resume([CLAUDE], "strong", str(fixtures["strong"]), 2, 0.7)
+    live = agreement.judge_resume([CLAUDE], "strong", str(fixtures["strong"]), {"anthropic": (2, 1)}, 0.7)
     saved = _submit(fixtures)
     out = tmp_path / "run.json"
     harness.collect_batch(saved, out, [])
@@ -112,7 +112,7 @@ def test_collect_uses_the_saved_text_not_the_path_on_disk(client, fixtures, tmp_
     strong_copy = tmp_path / "strong.pdf"
     strong_copy.write_bytes(fixtures["strong"].read_bytes())
     targets = [("strong", str(strong_copy)), ("scanned", str(fixtures["scanned"]))]
-    saved = harness.submit_batch([CLAUDE], targets, 2, 0.7, [])
+    saved = harness.submit_batch([CLAUDE], targets, {"anthropic": (2, 1)}, 0.7, [])
     strong_copy.unlink()  # gone by the time collect runs, e.g. a rebuilt tests/fixtures/
 
     out = tmp_path / "run.json"
@@ -184,7 +184,7 @@ def test_failed_truncated_and_unparseable_results_are_recorded_errors(fixtures):
 def test_a_run_over_budget_is_refused_before_anything_is_sent(client, monkeypatch, mode):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.setattr("sys.argv", ["agreement_harness", "--only", "strong",
-                                     "--budget", "0.5", *mode])
+                                     "--budget", "0.05", *mode])
     with pytest.raises(SystemExit, match="over budget"):
         harness.main()
     assert not client.created and not client.streamed
@@ -201,6 +201,7 @@ def test_openai_without_a_price_is_refused_before_anything_is_sent(client, monke
 def test_claude_only_and_max_tokens_reach_the_batch(client, monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "k")
     monkeypatch.setattr("sys.argv", ["agreement_harness", "--only", "strong", "--batch",
-                                     "--claude-only", "--max-tokens", "20000"])
+                                     "--claude-only", "--max-tokens", "20000",
+                                     "--claude-samples", "2"])
     harness.main()
     assert [r["params"]["max_tokens"] for r in client.created] == [20000, 20000]

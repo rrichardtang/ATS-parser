@@ -166,40 +166,49 @@ def content_prompt(run: ResumeRun, resume: Resume, text: str) -> tuple[str, str]
     return passes.content_prompt(resume, text, "", run.deterministic, config.jd_digest())
 
 
+# Provider name -> (samples, votes): each sample is one answer voted from `votes` tries,
+# as the app votes its judge (`passes.vote_samples`). One vote is a single try.
+Plan = dict[str, tuple[int, int]]
+
+
 def judge(
     providers: list[Provider], run: ResumeRun, resume: Resume, text: str,
-    samples: int, temperature: float,
+    plan: Plan, temperature: float,
 ) -> None:
-    """Put every provider's `samples` replies on a prepared, unskipped run."""
+    """Put every provider's voted samples on a prepared, unskipped run."""
     if run.skipped:
         return
-    run.judgments, run.errors = passes.content_judgments(
-        providers, resume, text, "", run.deterministic,
-        {p.name: samples for p in providers}, temperature, config.jd_digest(),
+    tries = {p.name: plan[p.name][0] * plan[p.name][1] for p in providers}
+    raw, run.errors = passes.content_judgments(
+        providers, resume, text, "", run.deterministic, tries, temperature,
+        config.jd_digest(),
     )
+    run.judgments = passes.vote_samples(
+        raw, resume, {name: votes for name, (_samples, votes) in plan.items()})
 
 
 def judge_resume(
     providers: list[Provider],
     name: str,
     pdf_path: str,
-    samples: int,
+    plan: Plan,
     temperature: float,
 ) -> ResumeRun:
-    """Run one resume past every provider `samples` times, keeping the replies apart."""
+    """Run one resume past every provider as `plan` says, keeping the samples apart."""
     run, resume, text = prepare(name, pdf_path)
-    judge(providers, run, resume, text, samples, temperature)
+    judge(providers, run, resume, text, plan, temperature)
     return run
 
 
 def run_meta(
-    providers: list[Provider], samples: int, temperature: float,
+    providers: list[Provider], plan: Plan, temperature: float,
     notes: list[str] | None = None,
 ) -> dict:
     return {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "providers": [p.label for p in providers],
-        "samples_per_provider": samples,
+        "samples_per_provider": {name: samples for name, (samples, _v) in plan.items()},
+        "votes_per_sample": {name: votes for name, (_s, votes) in plan.items()},
         "temperature": temperature,
         "notes": list(notes or []),
     }
@@ -208,7 +217,7 @@ def run_meta(
 def collect(
     providers: list[Provider],
     targets: list[tuple[str, str]],
-    samples: int,
+    plan: Plan,
     temperature: float,
     notes: list[str] | None = None,
     after_each: Callable[[HarnessRun], None] | None = None,
@@ -218,17 +227,17 @@ def collect(
     `after_each` is called with the run so far after every resume, so a caller can
     report progress and save what has been paid for before the sweep ends.
     """
-    run = HarnessRun(meta=run_meta(providers, samples, temperature, notes))
+    run = HarnessRun(meta=run_meta(providers, plan, temperature, notes))
     for name, path in targets:
-        run.resumes.append(judge_resume(providers, name, path, samples, temperature))
+        run.resumes.append(judge_resume(providers, name, path, plan, temperature))
         if after_each:
             after_each(run)
     return run
 
 
-def planned_calls(targets: list[tuple[str, str]], providers: int, samples: int) -> int:
+def planned_calls(targets: list[tuple[str, str]], plan: Plan) -> int:
     """An upper bound: a resume with no text layer is skipped before any call."""
-    return len(targets) * providers * samples
+    return len(targets) * sum(samples * votes for samples, votes in plan.values())
 
 
 # --------------------------------------------------------------------------
@@ -614,15 +623,29 @@ def analyse(run: HarnessRun, band_order: list[str] | None = None) -> AgreementRe
     notes.extend(sorted(f"alpha: {note}" for note in undefined))
 
     # A sweep that lost calls has fewer judges than it looks like it has, so the
-    # failures belong beside the numbers rather than in the terminal scrollback.
-    failures: dict[str, int] = defaultdict(int)
-    for resume in run.resumes:
-        for error in resume.errors:
-            failures[error] += 1
-    notes.extend(
-        f"{count} call(s) failed: {error}" for error, count in sorted(failures.items())
-    )
+    # failures belong beside the numbers, under the resume they cost, rather than in
+    # the terminal scrollback.
+    notes.extend(f"{r.name}: call failed: {error}" for r in run.resumes for error in r.errors)
+    notes.extend(_missing_composites(live, scored, providers))
     return report
+
+
+def _missing_composites(
+    live: list[ResumeRun], scored: dict[str, list[Scored]], providers: list[str],
+) -> list[str]:
+    """Each resume a judge gave no composite for, and why, so a missing judge is never
+    only a `-` in the composite table."""
+    notes = []
+    for run in live:
+        replied = {j.provider for j in run.judgments}
+        composed = {s.provider for s in scored.get(run.name, [])}
+        for provider in providers:
+            if provider in composed:
+                continue
+            why = ("its reply answered no category completely" if provider in replied
+                   else "no reply was recorded")
+            notes.append(f"{run.name}: no composite from {provider}: {why}")
+    return notes
 
 
 def _categories(live: list[ResumeRun], read: Callable[[str, dict], Any]) -> list[str]:

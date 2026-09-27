@@ -43,7 +43,7 @@ def _rates(provider: Provider, batch: bool, openai_price: tuple[float, float] | 
     if openai_price is None:
         raise PriceUnknown(
             f"{provider.label}'s price is not known here: pass --openai-price IN,OUT "
-            "($ per million tokens) or --claude-only."
+            "($ per million tokens; gpt-6-luna is 0.10,0.50) or --claude-only."
         )
     import openai
 
@@ -53,17 +53,19 @@ def _rates(provider: Provider, batch: bool, openai_price: tuple[float, float] | 
     return (*openai_price, llm.MAX_TOKENS, attempts)
 
 
-def worst_case(providers: list[Provider], prompt_tokens: list[int], samples: int,
+def worst_case(providers: list[Provider], prompt_tokens: list[int], calls: dict[str, int],
                batch: bool, openai_price: tuple[float, float] | None) -> dict[str, float]:
-    """Dollars per provider label; `prompt_tokens` has one entry per judged document.
+    """Dollars per provider label; `prompt_tokens` has one entry per judged document and
+    `calls` is each provider name's calls per document (samples x votes).
 
-    Raises ValueError on a negative sample count or price, or a cap below 1: any of
+    Raises ValueError on a negative call count or price, or a cap below 1: any of
     them makes a negative cost that would hide another provider's real one.
     """
-    if samples < 0:
-        raise ValueError(f"samples must not be negative, got {samples}")
     costs = {}
     for provider in providers:
+        samples = calls[provider.name]
+        if samples < 0:
+            raise ValueError(f"calls must not be negative, got {samples}")
         in_rate, out_rate, cap, attempts = _rates(provider, batch, openai_price)
         if cap < 1 or in_rate < 0 or out_rate < 0:
             raise ValueError(f"{provider.label}: cap {cap} or price "
@@ -73,12 +75,12 @@ def worst_case(providers: list[Provider], prompt_tokens: list[int], samples: int
     return costs
 
 
-def verdict(providers: list[Provider], prompt_tokens: list[int], samples: int,
+def verdict(providers: list[Provider], prompt_tokens: list[int], calls: dict[str, int],
             batch: bool, openai_price: tuple[float, float] | None,
             budget: float) -> tuple[bool, str]:
     """Whether the run fits `budget`, and a line or two saying so."""
     try:
-        costs = worst_case(providers, prompt_tokens, samples, batch, openai_price)
+        costs = worst_case(providers, prompt_tokens, calls, batch, openai_price)
     except PriceUnknown as exc:
         return False, str(exc)
     total = sum(costs.values())
@@ -87,17 +89,18 @@ def verdict(providers: list[Provider], prompt_tokens: list[int], samples: int,
     if total <= budget:
         return True, summary + ": fits."
     return False, summary + ": over.\n" + _what_fits(
-        providers, len(prompt_tokens), samples, batch, total, budget)
+        providers, len(prompt_tokens), calls, batch, total, budget)
 
 
-def _what_fits(providers, documents, samples, batch, total, budget) -> str:
+def _what_fits(providers, documents, calls, batch, total, budget) -> str:
     """The largest Claude output cap under which the same run would fit."""
     claude = next((p for p in providers if p.name == "anthropic"), None)
     fitting = 0
     if claude and documents:
         _, out_rate, cap, attempts = _rates(claude, batch, None)
-        per_cap_token = samples * attempts * documents * out_rate / 1e6
+        per_cap_token = calls[claude.name] * attempts * documents * out_rate / 1e6
         fitting = math.floor((budget - total) / per_cap_token) + cap
     if fitting < 1:
-        return "No --max-tokens fits: judge fewer documents (--docs) or take fewer --samples."
+        return ("No --max-tokens fits: judge fewer documents (--docs), take fewer "
+                "samples or votes, or raise --budget.")
     return f"The largest --max-tokens that fits these documents is {fitting}."

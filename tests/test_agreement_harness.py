@@ -34,3 +34,21 @@ def test_out_of_range_values_are_rejected_by_the_parser(monkeypatch, flags):
     with pytest.raises(SystemExit) as stopped:
         harness.main()
     assert stopped.value.code == 2
+
+
+def _plan_args(**overrides):
+    return Namespace(**{"claude_only": False, "no_claude": False, "max_tokens": 25000,
+                        "samples": 2, "votes": 3, "claude_samples": 1, **overrides})
+
+
+def test_the_default_plan_votes_openai_and_asks_claude_once():
+    args = _plan_args()
+    providers = harness.chosen_providers(args, {"anthropic": "-", "openai": "-"})
+    assert harness.run_plan(args, providers) == {"anthropic": (1, 1), "openai": (2, 3)}
+
+
+@pytest.mark.parametrize("flag, left", [("claude_only", "anthropic"), ("no_claude", "openai")])
+def test_one_judge_flags_leave_the_other_out(flag, left):
+    providers = harness.chosen_providers(_plan_args(**{flag: True}),
+                                         {"anthropic": "-", "openai": "-"})
+    assert [p.name for p in providers] == [left]

@@ -50,14 +50,23 @@ def _judged_line(report: AgreementReport) -> list[str]:
             "returned nothing for any resume"]
 
 
+def _sampling(meta: dict) -> str:
+    """Per provider since the app judge votes; a run recorded before that has one count."""
+    samples = meta.get("samples_per_provider", "?")
+    if not isinstance(samples, dict):
+        return f"{samples} samples per provider"
+    votes = meta.get("votes_per_sample") or {}
+    return ", ".join(f"{name} {count} sample(s) x {votes.get(name, 1)} voted tries"
+                     for name, count in samples.items())
+
+
 def render(report: AgreementReport) -> str:
     meta = report.meta
     out: list[str] = [
         "Inter-judge agreement",
         f"  providers   {', '.join(meta.get('providers') or ['none'])}",
         *_judged_line(report),
-        f"  sampling    {meta.get('samples_per_provider', '?')} samples per provider, "
-        f"temperature {meta.get('temperature', '?')}",
+        f"  sampling    {_sampling(meta)}, temperature {meta.get('temperature', '?')}",
         f"  generated   {meta.get('generated', 'unknown')}",
         "",
     ]
@@ -140,13 +149,13 @@ def render(report: AgreementReport) -> str:
         )
         tally = defaultdict(int)
         for row in report.composites:
-            if row.comparable:
-                tally[verdict(row.spread_no_deduct)] += 1
+            tally[verdict(row.spread_no_deduct) if row.comparable else None] += 1
         out += [
             "",
             "  as built   today's code: the model's number blended in AND its findings deducting",
             "  no deduct  ticket 03: model findings are evidence, not a deduction",
-            f"  no-deduct tally: {tally[PASS]} pass, {tally[LOOK]} look, {tally[FAIL]} FAIL",
+            f"  no-deduct tally: {tally[PASS]} pass, {tally[LOOK]} look, {tally[FAIL]} FAIL, "
+            f"{tally[None]} with one judge (see Notes)",
         ]
         if any(row.capped for row in report.composites):
             out.append(

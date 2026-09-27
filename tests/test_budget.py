@@ -10,33 +10,37 @@ OPENAI = Provider("openai", "k", "gpt-6-luna")
 TEN_DOCUMENTS = [5600] * 10
 
 
+def _calls(n):
+    return {"anthropic": n, "openai": n}
+
+
 def test_ten_documents_batched_at_the_default_cap_are_refused():
-    costs = budget.worst_case([CLAUDE], TEN_DOCUMENTS, 2, True, None)
+    costs = budget.worst_case([CLAUDE], TEN_DOCUMENTS, _calls(2), True, None)
     assert costs[CLAUDE.label] == pytest.approx(6.40 + 20 * 5600 * 1.25 / 1e6)
 
-    fits, report = budget.verdict([CLAUDE], TEN_DOCUMENTS, 2, True, None, 3.0)
+    fits, report = budget.verdict([CLAUDE], TEN_DOCUMENTS, _calls(2), True, None, 3.0)
     assert not fits
     assert "largest --max-tokens that fits these documents is 28600" in report
 
 
 def test_a_lowered_cap_fits_the_same_run():
     lowered = Provider("anthropic", "k", "claude-sonnet-5", 25000)
-    fits, report = budget.verdict([lowered], TEN_DOCUMENTS, 2, True, None, 3.0)
+    fits, report = budget.verdict([lowered], TEN_DOCUMENTS, _calls(2), True, None, 3.0)
     assert fits, report
     assert "$2.64" in report
 
 
 def test_live_costs_double_batch_twice_over_for_price_and_repair():
-    live = budget.worst_case([CLAUDE], TEN_DOCUMENTS, 2, False, None)[CLAUDE.label]
-    batched = budget.worst_case([CLAUDE], TEN_DOCUMENTS, 2, True, None)[CLAUDE.label]
+    live = budget.worst_case([CLAUDE], TEN_DOCUMENTS, _calls(2), False, None)[CLAUDE.label]
+    batched = budget.worst_case([CLAUDE], TEN_DOCUMENTS, _calls(2), True, None)[CLAUDE.label]
     assert live == pytest.approx(4 * batched)
 
 
 def test_openai_is_refused_without_a_price_and_costed_with_one():
-    fits, report = budget.verdict([CLAUDE, OPENAI], [3000], 1, True, None, 100.0)
+    fits, report = budget.verdict([CLAUDE, OPENAI], [3000], _calls(1), True, None, 100.0)
     assert not fits and "--openai-price" in report and "--claude-only" in report
 
-    costs = budget.worst_case([OPENAI], [3000], 1, True, (1.0, 8.0))
+    costs = budget.worst_case([OPENAI], [3000], _calls(1), True, (1.0, 8.0))
     # Repair retry x (1 + the SDK's timeout retries): OpenAI does not stream.
     attempts = 2 * (1 + openai.DEFAULT_MAX_RETRIES)
     assert costs[OPENAI.label] == pytest.approx(
@@ -52,8 +56,15 @@ def test_openai_is_refused_without_a_price_and_costed_with_one():
 def test_a_negative_cap_price_or_sample_count_is_refused(providers, samples, price):
     """Any of them makes a negative cost that would offset another provider's."""
     with pytest.raises(ValueError):
-        budget.verdict(providers, [5000] * 7, samples, True, price, 3.0)
+        budget.verdict(providers, [5000] * 7, _calls(samples), True, price, 3.0)
 
 
 def test_skipped_documents_cost_nothing():
-    assert budget.worst_case([CLAUDE], [], 2, False, None) == {CLAUDE.label: 0.0}
+    assert budget.worst_case([CLAUDE], [], _calls(2), False, None) == {CLAUDE.label: 0.0}
+
+
+def test_openai_votes_multiply_its_calls():
+    """The harness's luna samples are voted: 2 samples x 3 votes is 6 real calls."""
+    voted = budget.worst_case([OPENAI], [3000], {"openai": 6}, True, (0.10, 0.50))
+    single = budget.worst_case([OPENAI], [3000], {"openai": 1}, True, (0.10, 0.50))
+    assert voted[OPENAI.label] == pytest.approx(6 * single[OPENAI.label])

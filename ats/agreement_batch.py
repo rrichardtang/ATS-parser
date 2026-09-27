@@ -68,6 +68,8 @@ def merge(run: HarnessRun, provider: Provider, results: Iterable, texts: list[st
     change what a batched judgement is scored against.
     """
     samples = run.meta.get("samples_per_provider", 0)
+    if isinstance(samples, dict):  # per provider since the app judge votes; before, one count
+        samples = samples.get(provider.name, 0)
     expected = {custom_id(document, sample)
                 for document, r in enumerate(run.resumes) if not r.skipped
                 for sample in range(samples)}
