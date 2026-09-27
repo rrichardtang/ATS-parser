@@ -244,14 +244,14 @@ costs about $0.11 per live check; the OpenAI judge costs about $0.01.
 - `ats/llm.py`: `OPENAI_MODEL = "gpt-6-luna"`, still Chat Completions with a JSON-object
   `response_format`. Current models get `reasoning_effort="medium"` and no temperature.
 - The vote is `ensemble.vote`. Within one provider, each criterion gets one answer from
-  that provider's N tries. `yes` needs more than half of the N tries that returned a reply
-  (2 of 3). Anything else is `no`, including no majority (1 yes, 1 no, 1 abstain; or 1
-  yes and 2 abstain). Criteria are monotone, so `no` can only hold a band down. If no try
-  answered, the criterion stays unanswered. Scoped criteria vote on their derived answers.
-  A voted item copies the evidence, locator and why of the first try that voted with the
-  majority. It records every try's answer under `votes`. A `no` that no try gave quotes
-  nothing, so it files as an unmet criterion. `passes.vote_samples` groups try `i` into
-  sample `i // votes`, so a failed try shrinks only its own vote. The lower-band rule
+  that provider's tries, by majority among the tries that answered it. An abstention is
+  not a `no`, so it does not count against `yes`: 1 yes and 2 abstentions is `yes`. A tie
+  is `no` (1 yes, 1 no, 1 abstain): criteria are monotone, so `no` can only hold a band
+  down. If no try answered, the criterion stays unanswered. Scoped criteria vote on their
+  derived answers. A voted item copies the evidence, locator and why of a try that voted
+  with the majority: the first one with a quote and a place, else the first. It records
+  every try's answer under `votes`. `passes.vote_samples` groups try `i` into sample
+  `i // votes`, so a failed try shrinks only its own vote. The lower-band rule
   (`combine_bands`) now applies across providers only.
 - The app (`weights.toml`): `content_votes = 3` (economy 1, thorough 3) and
   `use_claude = false`. `pipeline.app_providers` is the one provider list every pass

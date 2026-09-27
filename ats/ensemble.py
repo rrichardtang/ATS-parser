@@ -169,14 +169,15 @@ def vote(answers: list[bool | None]) -> bool | None:
     """One criterion's answer from one provider's tries: a majority vote (ticket 15).
 
     `answers` holds one entry per try that returned a reply, None where that try gave no
-    readable answer. `yes` needs more than half of all the tries; anything else is `no`,
-    including no majority at all (1 yes, 1 no, 1 abstain). Criteria are monotone, so a
+    readable answer. The majority is taken among the tries that answered, because an
+    abstention is not a `no` (`passes._met`). A tie is `no`: criteria are monotone, so a
     `no` can only hold a band down, which is the lower-band rule's conservatism applied
     within one provider. None only when no try answered.
     """
-    if all(answer is None for answer in answers):
+    answered = [answer for answer in answers if answer is not None]
+    if not answered:
         return None
-    return answers.count(True) > len(answers) // 2
+    return answered.count(True) > len(answered) / 2
 
 
 def combine_bands(spec: dict, answer_sets: list[dict[str, bool]]) -> JudgedCategory | None:

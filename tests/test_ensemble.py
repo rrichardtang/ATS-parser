@@ -296,11 +296,14 @@ def test_a_future_finishing_between_the_take_loop_and_the_late_count_is_classifi
     ([True, True, False], True),
     ([False, False, True], False),
     ([True, False, None], False),
-    ([True, None, None], False),
+    ([True, None, None], True),
+    ([True, None], True),
+    ([True, True, None], True),
+    ([False, None, None], False),
     ([None, None, None], None),
     ([True], True),
     ([False], False),
     ([None], None),
 ])
-def test_a_provider_s_tries_vote_by_majority_and_no_majority_is_no(answers, voted):
+def test_tries_vote_by_majority_of_those_that_answered_and_a_tie_is_no(answers, voted):
     assert ensemble.vote(answers) is voted

@@ -799,9 +799,18 @@ def test_a_voted_answer_carries_a_majority_try_s_evidence_and_every_vote():
     assert items["C3"]["answer"] == "yes"
     # Nobody answered C4: it stays unanswered rather than becoming a `no`.
     assert "C4" not in items
-    # 1 yes and 2 abstentions is no majority, so `no`, with no quote to place.
-    assert items["C5"]["answer"] == "no" and items["C5"]["evidence"] == ""
+    # An abstention is not a `no`: the one try that answered C5 carries it.
+    assert items["C5"]["answer"] == "yes" and items["C5"]["evidence"] == "try 0"
     assert items["C5"]["votes"] == ["yes", "abstain", "abstain"]
+
+
+def test_a_voted_answer_prefers_a_majority_try_with_a_quote_and_a_place():
+    unquoted, quoted, dissent = _try(0, "no"), _try(1, "no"), _try(2, "yes")
+    unquoted.categories["Production ownership"]["criteria"][0].update(
+        evidence="", locator="")
+    items = _voted(unquoted, quoted, dissent)
+    assert items["C1"]["answer"] == "no" and items["C1"]["evidence"] == "try 1"
+    assert items["C1"]["locator"] == "exp[0].bullet[0]"
 
 
 def test_a_try_that_failed_shrinks_its_own_vote_and_one_try_passes_through():

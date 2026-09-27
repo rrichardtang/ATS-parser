@@ -453,9 +453,9 @@ def voted_judgment(
     """One provider's tries, voted criterion by criterion (`ensemble.vote`).
 
     Scoped criteria vote on the answers `derive_scoped` already made. A voted item is
-    copied from the first try that voted with the majority, so its evidence, locator and
-    why are ones a judge gave, and it carries every try's answer under "votes". A `no`
-    that no try gave (no majority formed) quotes nothing and files as unmet.
+    copied from a try that voted with the majority -- the first one with a quote and a
+    place, else the first -- so its evidence, locator and why are ones a judge gave, and
+    it carries every try's answer under "votes".
     """
     if len(tries) == 1:
         return replace(tries[0], sample=sample)
@@ -463,8 +463,8 @@ def voted_judgment(
     categories: dict[str, dict] = {}
     for name in dict.fromkeys(name for t in tries for name in t.categories):
         _slug, criteria = criteria_index()[Category(name)]
-        voted = (_voted_item(cid, [_answered_item(t.categories.get(name), cid)
-                                   for t in tries]) for cid in criteria)
+        voted = (_voted_item([_answered_item(t.categories.get(name), cid)
+                                for t in tries]) for cid in criteria)
         categories[name] = {"criteria": [item for item in voted if item]}
     findings, unmet = place(criterion_answers(categories), resume, provider)
     return ContentJudgment(provider, sample, categories, findings, unmet)
@@ -478,16 +478,19 @@ def _answered_item(entry, cid: str) -> dict | None:
                  and _met(item.get("answer")) is not None), None)
 
 
-def _voted_item(cid: str, items: list[dict | None]) -> dict | None:
+def _voted_item(items: list[dict | None]) -> dict | None:
     answers = [None if item is None else _met(item["answer"]) for item in items]
     met = ensemble.vote(answers)
     if met is None:
         return None
-    majority = next((item for item, answer in zip(items, answers) if answer is met),
-                    None) or _derived_no({"id": cid}, "")
+    # `vote` only returns an answer some try gave, so the majority is never empty. A
+    # quoted, placed try is preferred: it is what lets a `no` file as a placed finding.
+    majority = [item for item, answer in zip(items, answers) if answer is met]
+    item = next((i for i in majority if i.get("evidence") and i.get("locator")),
+                majority[0])
     votes = ["abstain" if answer is None else "yes" if answer else "no"
              for answer in answers]
-    return {**majority, "answer": "yes" if met else "no", "votes": votes}
+    return {**item, "answer": "yes" if met else "no", "votes": votes}
 
 
 def content_pass(
