@@ -6,7 +6,7 @@ from ats import budget, llm
 from ats.llm import Provider
 
 CLAUDE = Provider("anthropic", "k", "claude-sonnet-5")
-OPENAI = Provider("openai", "k", "gpt-5.6-luna")
+OPENAI = Provider("openai", "k", "gpt-6-luna")
 TEN_DOCUMENTS = [5600] * 10
 
 

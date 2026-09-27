@@ -12,7 +12,7 @@ from ats import llm
 from ats.llm import LLMError, Provider
 
 ANTHROPIC = Provider("anthropic", "k", "claude-sonnet-5")
-OPENAI = Provider("openai", "k", "gpt-5.6-luna")
+OPENAI = Provider("openai", "k", "gpt-6-luna")
 
 
 class _Block:
@@ -139,6 +139,7 @@ def test_openai_sends_max_completion_tokens_and_no_temperature(monkeypatch):
     assert sent[0]["max_completion_tokens"] == llm.MAX_TOKENS
     assert "max_tokens" not in sent[0]
     assert "temperature" not in sent[0]
+    assert sent[0]["reasoning_effort"] == "medium"
 
 
 def test_openai_legacy_model_keeps_the_old_spelling(monkeypatch):
@@ -148,6 +149,7 @@ def test_openai_legacy_model_keeps_the_old_spelling(monkeypatch):
     llm.call(Provider("openai", "k", "gpt-4o"), "sys", "user", 0.7)
     assert sent[0]["max_tokens"] == llm.MAX_TOKENS
     assert sent[0]["temperature"] == 0.7
+    assert "reasoning_effort" not in sent[0]
 
 
 def test_a_rejected_parameter_surfaces_instead_of_being_papered_over(monkeypatch):

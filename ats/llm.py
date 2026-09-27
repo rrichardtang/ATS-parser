@@ -16,7 +16,7 @@ from typing import Any
 log = logging.getLogger("ats.llm")
 
 ANTHROPIC_MODEL = "claude-sonnet-5"
-OPENAI_MODEL = "gpt-5.6-luna"
+OPENAI_MODEL = "gpt-6-luna"
 
 # Sized for a whole pass of findings/rewrites. Too small and the model is cut off
 # mid-object, which reads downstream as "unparseable JSON" -- a truncation bug
@@ -34,6 +34,10 @@ ANTHROPIC_MAX_TOKENS = 64000
 # max_tokens for the reply itself. The live app and the batch harness both send it, so
 # the harness measures the judge the app actually runs.
 ANTHROPIC_EFFORT = "medium"
+
+# Sent explicitly rather than left to the model's default, for the same reason: the app
+# judge's cost and its self-consistency are measured at this setting (ticket 15).
+OPENAI_EFFORT = "medium"
 
 # Seconds per attempt. For Claude, which streams, this is the read timeout between
 # chunks -- an inactivity bound, not a wall clock -- so a long healthy reply outlasts
@@ -211,6 +215,8 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
         }
         if legacy:
             request["temperature"] = temperature
+        else:
+            request["reasoning_effort"] = OPENAI_EFFORT
         response = client.chat.completions.create(**request)
         choice = response.choices[0]
         _truncated(provider.label, getattr(choice, "finish_reason", None), MAX_TOKENS)
