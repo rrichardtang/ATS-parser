@@ -290,3 +290,17 @@ def test_a_future_finishing_between_the_take_loop_and_the_late_count_is_classifi
     monkeypatch.setattr(ensemble.concurrent.futures, "as_completed", deadline)
 
     assert gather([lambda: 1], timeout=1) == ([], ["timed out after 1s"])
+
+
+@pytest.mark.parametrize("answers, voted", [
+    ([True, True, False], True),
+    ([False, False, True], False),
+    ([True, False, None], False),
+    ([True, None, None], False),
+    ([None, None, None], None),
+    ([True], True),
+    ([False], False),
+    ([None], None),
+])
+def test_a_provider_s_tries_vote_by_majority_and_no_majority_is_no(answers, voted):
+    assert ensemble.vote(answers) is voted

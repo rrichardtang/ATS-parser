@@ -284,7 +284,7 @@ def _answers(*items):
 def _one_content_pass(monkeypatch, reply, resume):
     monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: reply))
     return passes.content_pass(
-        [Provider("anthropic", "k", "m")], resume, "text", "", [], samples=1,
+        [Provider("anthropic", "k", "m")], resume, "text", "", [], votes=1,
         temperature=0.0,
     )
 
@@ -414,7 +414,7 @@ def test_two_judges_reporting_one_defect_collide_on_kind_and_place(monkeypatch):
     monkeypatch.setattr(llm, "_dispatch", dispatch)
     result = passes.content_pass(
         [Provider("anthropic", "k", "m"), Provider("openai", "k", "m")],
-        _resume(), "text", "", [], samples=1, temperature=0.0,
+        _resume(), "text", "", [], votes=1, temperature=0.0,
     )
 
     assert len(result.data) == 1
@@ -443,7 +443,7 @@ def test_two_judges_splitting_on_a_criterion_produce_a_contested_category(monkey
     monkeypatch.setattr(llm, "_dispatch", dispatch)
     result = passes.content_pass(
         [Provider("anthropic", "k", "m"), Provider("openai", "k", "m")],
-        _resume(), "text", "", [], samples=1, temperature=0.0,
+        _resume(), "text", "", [], votes=1, temperature=0.0,
     )
 
     judged = result.judged[Category.PRODUCTION_OWNERSHIP]
@@ -748,3 +748,68 @@ def test_every_scope_is_one_the_prompt_can_ask():
         for criterion in rubric.load_spec(slug)["criteria"]:
             if "scope" in criterion:
                 assert criterion["scope"] in prompts.PER_PLACE, f"{slug}/{criterion['id']}"
+
+
+def _try(sample, *answers):
+    """One provider's try at `Production ownership`, C1..C5 answered in order."""
+    items = [{"id": f"C{i}", "answer": a, "evidence": f"try {sample}",
+              "locator": "exp[0].bullet[0]", "why": f"try {sample} said {a}"}
+             for i, a in enumerate(answers, 1) if a is not None]
+    categories = {"Production ownership": {"criteria": items}}
+    return passes.ContentJudgment("openai", sample, categories, [], [])
+
+
+def _voted(*tries):
+    voted = passes.vote_samples(list(tries), _resume(), {"openai": 3})
+    assert len(voted) == 1
+    return {item["id"]: item for item in voted[0].categories["Production ownership"]["criteria"]}
+
+
+def test_a_voted_answer_carries_a_majority_try_s_evidence_and_every_vote():
+    items = _voted(_try(0, "no", "yes", "yes", None, "yes"),
+                   _try(1, "yes", "no", "yes", None, None),
+                   _try(2, "yes", "no", None, None, None))
+    assert items["C1"]["answer"] == "yes" and items["C1"]["evidence"] == "try 1"
+    assert items["C1"]["votes"] == ["no", "yes", "yes"]
+    assert items["C2"]["answer"] == "no" and items["C2"]["evidence"] == "try 1"
+    # 2 yes and 1 abstention is still a majority of the three tries.
+    assert items["C3"]["answer"] == "yes"
+    # Nobody answered C4: it stays unanswered rather than becoming a `no`.
+    assert "C4" not in items
+    # 1 yes and 2 abstentions is no majority, so `no`, with no quote to place.
+    assert items["C5"]["answer"] == "no" and items["C5"]["evidence"] == ""
+    assert items["C5"]["votes"] == ["yes", "abstain", "abstain"]
+
+
+def test_a_try_that_failed_shrinks_its_own_vote_and_one_try_passes_through():
+    tries = [_try(0, "yes"), _try(1, "no"), _try(3, "no")]
+    voted = passes.vote_samples(tries, _resume(), {"openai": 3})
+    assert [j.sample for j in voted] == [0, 1]
+    assert voted[0].categories["Production ownership"]["criteria"][0]["answer"] == "no"
+    assert voted[1].categories == tries[2].categories
+
+
+def test_the_app_votes_each_provider_before_banding(monkeypatch):
+    """Three tries, two `yes` on C3: the voted band is C, not the worst try's D."""
+    replies = iter(["yes", "yes", "no"])
+
+    def dispatch(provider, system, user, temperature):
+        c3 = {"exp[0].bullet[0]"} if next(replies) == "yes" else set()
+        bullets = ["exp[0].bullet[0]", "exp[0].bullet[1]"]
+        owned = {"answer": "yes", "evidence": "Owned GLIDE-ME end to end",
+                 "locator": "exp[0].bullet[0]"}
+        return json.dumps({"categories": {"Production ownership": {"criteria": [
+            {"id": "C1", **owned},
+            _per_place("C2", yes={"exp[0].bullet[0]"}, places=bullets),
+            _per_place("C3", yes=c3, places=bullets),
+            _per_place("C4", places=bullets),
+            {"id": "C5", **owned},
+        ]}}})
+
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    result = passes.content_pass(
+        [Provider("openai", "k", "m")], _resume(), "text", "", [], votes=3,
+        temperature=0.0,
+    )
+    judged = result.judged[Category.PRODUCTION_OWNERSHIP]
+    assert (judged.band, judged.judges, judged.contested) == ("C", 1, False)

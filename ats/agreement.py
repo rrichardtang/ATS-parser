@@ -174,8 +174,8 @@ def judge(
     if run.skipped:
         return
     run.judgments, run.errors = passes.content_judgments(
-        providers, resume, text, "", run.deterministic, samples, temperature,
-        config.jd_digest(),
+        providers, resume, text, "", run.deterministic,
+        {p.name: samples for p in providers}, temperature, config.jd_digest(),
     )
 
 
