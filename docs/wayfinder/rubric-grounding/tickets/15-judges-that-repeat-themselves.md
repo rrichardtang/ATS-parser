@@ -215,3 +215,70 @@ There will be no further wording rounds.
 **Run settings.** Claude effort medium, cached system prompt, `--batch --max-tokens
 25000 --openai-price 0.20,1.20 --budget 16` (worst case $15.59, a one-off raise of the
 $3 test budget approved by the owner).
+
+## Decided, 27 September (the owner): cut the cost, vote the app judge
+
+**The run failed the finish line.** The 30-document acceptance run (both providers, 2
+samples, batch) measured 28 documents. 25 of the 28 had a composite spread of 5 or less;
+the three over were `12-returning-rag` 8.0, `13-eval-quality-promoted` 6.7 and
+`29-returning-agentic-corporate` 5.2. `02-analyst-toward-ml` and `14-applied-ml-mid` had
+no Claude composite, and the printed report did not say why. There were "far" band splits
+in Evaluation rigour and Production ownership. Claude cost about $3.90. Claude Sonnet 5
+costs about $0.11 per live check; the OpenAI judge costs about $0.01.
+
+**Decisions.**
+
+1. **The app judge is OpenAI `gpt-6-luna`, three tries, majority vote.** Claude is off in
+   the app by default. It stays in the code and is switched on only by `weights.toml`'s
+   `[ensemble] use_claude = true`. A Claude key alone, from the form or
+   `ANTHROPIC_API_KEY`, does not turn it on.
+2. **Test runs use the voted luna judge, with Claude as an audit judge.** Claude answers each
+   resume once (1 sample, 1 try), through `--batch`.
+3. **Finish line for the next acceptance run**, set before the run: on all 30
+   acceptance-set documents, the luna-voted composite is within 5 points of Claude's on at
+   least 27 of 30, and no category has a "far" band split (two or more bands) between
+   them. The run has not happened.
+
+**Built.**
+
+- `ats/llm.py`: `OPENAI_MODEL = "gpt-6-luna"`, still Chat Completions with a JSON-object
+  `response_format`. Current models get `reasoning_effort="medium"` and no temperature.
+- The vote is `ensemble.vote`. Within one provider, each criterion gets one answer from
+  that provider's N tries. `yes` needs more than half of the N tries that returned a reply
+  (2 of 3). Anything else is `no`, including no majority (1 yes, 1 no, 1 abstain; or 1
+  yes and 2 abstain). Criteria are monotone, so `no` can only hold a band down. If no try
+  answered, the criterion stays unanswered. Scoped criteria vote on their derived answers.
+  A voted item copies the evidence, locator and why of the first try that voted with the
+  majority. It records every try's answer under `votes`. A `no` that no try gave quotes
+  nothing, so it files as an unmet criterion. `passes.vote_samples` groups try `i` into
+  sample `i // votes`, so a failed try shrinks only its own vote. The lower-band rule
+  (`combine_bands`) now applies across providers only.
+- The app (`weights.toml`): `content_votes = 3` (economy 1, thorough 3) and
+  `use_claude = false`. `pipeline.app_providers` is the one provider list every pass
+  reads, so slop, rewrite, judge and polish cannot reach Claude either. A single provider
+  no longer marks the report partial.
+- Calls per resume check, keys for both providers present, default mode:
+
+  | pass | before | after |
+  |---|---|---|
+  | content | Claude 1, OpenAI 1 | OpenAI 3 (voted) |
+  | slop | Claude 3, OpenAI 3 | OpenAI 3 |
+  | score total | 8 (4 Claude) | 6 (0 Claude) |
+  | rewrites, only on request | 3 objectives × 2 providers + judge 1 + polish 1 = 8 | 3 + 1 + 1 = 5, all OpenAI |
+
+  Each live call may add one JSON-repair call.
+- The harness: OpenAI gives `--samples` (default 2) answers, each voted from `--votes`
+  tries (default `content_votes`, 3), so 6 luna calls per resume. Claude gives
+  `--claude-samples` (default 1) single-try answers, 1 call per resume. `--claude-only`
+  and the new `--no-claude` leave one judge out. Claude's self-consistency is not
+  claimed at 1 sample; the run notes say so. `ats/budget.py` counts every try, times
+  the existing repair and SDK-retry multipliers. `--openai-price` is still required;
+  gpt-6-luna's is `0.10,0.50`.
+- The report names each resume's failed calls (`<resume>: call failed: ...`). It also
+  names each resume where a judge gave no composite (`<resume>: no composite from
+  <provider>: ...`), and the composite tally counts rows with one judge.
+
+**Next run.** All 30 documents, `--docs` listing them, `--batch --max-tokens 25000
+--openai-price 0.10,0.50`. The dry-run worst case is $13.55 (Claude $4.05, luna $9.50).
+Most of luna's worst case is the six-attempt multiplier: repair × (1 + the SDK's two
+retries). The default `--budget 3` refuses it, so it needs the owner's `--budget 14`.

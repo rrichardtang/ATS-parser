@@ -26,6 +26,8 @@ documents written to exercise the rubric. The real number is
 (the owner): the finish line" — a fixed acceptance bar for the 30-document run, in place
 of another wording round.
 
+**Status, 27 September: that run failed; the app judge is now OpenAI, voted 3 ways, with Claude as an audit judge.** See rubric-grounding 15, "cut the cost, vote the app judge".
+
 ## Spec so far
 
 - [production-ownership-criteria.md](production-ownership-criteria.md) — the first
