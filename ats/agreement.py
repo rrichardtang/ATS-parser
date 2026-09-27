@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import functools
 from collections import defaultdict
+from itertools import combinations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Iterable
@@ -432,25 +433,30 @@ class BandAgreement:
     def verdict(self) -> str:
         """MAP.md's restated per-category test, applied per resume then totalled.
 
-        One wobble across the corpus is a pass that wants another look; more than
-        one, or any non-adjacent miss, is a failure of the rubric.
+        One adjacent miss across the corpus is a pass that wants another look; more
+        than one, or any far miss, is a failure of the rubric.
 
-        A judge that named two bands for the same resume on a rerun counts as a
-        wobble too: it has failed the same test from the other direction, and
-        leaving it out would let a category read `pass` on a rubric no judge can
-        apply twice running.
+        A judge that named two bands for the same resume on a rerun is still compared
+        (`_band_tables` takes the worst of its samples against the other judge), so its
+        wobble is already in `adjacent` or `far` wherever another judge answered.
+        `unstable` alone therefore only ever asks for a look.
         """
-        wobbles = self.adjacent + self.unstable
-        if self.far or wobbles > 1:
+        if self.far or self.adjacent > 1:
             return FAIL
-        return LOOK if wobbles else PASS
+        return LOOK if self.adjacent or self.unstable else PASS
 
 
 @dataclass
 class CompositeRow:
+    """`as_built` and `no_deduct` are each judge's mean, for display. The spreads are
+    the worst gap between a sample of one judge and a sample of another (`_worst_gap`),
+    because the app reports one voted answer, not the mean of two."""
+
     resume: str
     as_built: dict[str, float]
     no_deduct: dict[str, float]
+    spread_as_built: float
+    spread_no_deduct: float
     # A composite held down by the fraud or unreadable cap is the same number
     # whatever the judges said, so its spread is not evidence they agreed.
     capped: bool = False
@@ -462,14 +468,6 @@ class CompositeRow:
         the absence of a measurement rather than agreement, so nothing downstream
         may read it as a pass."""
         return len(self.as_built) > 1
-
-    @property
-    def spread_as_built(self) -> float:
-        return _spread(self.as_built.values())
-
-    @property
-    def spread_no_deduct(self) -> float:
-        return _spread(self.no_deduct.values())
 
 
 FINDING_KEYS = ("kind+locator", "locator", "evidence")
@@ -757,33 +755,26 @@ def _band_tables(live: list[ResumeRun], order: list[str] | None) -> list[BandAgr
             by_provider = _per_provider(run, category, band_of)
             if not by_provider:
                 continue
-            # A provider that names two different bands for the same resume has
-            # not stated a judgement to compare, so it is excluded rather than
-            # arbitrarily reduced to one of them -- and counted, because that
-            # instability is itself a rubric failure.
-            stable = {p: v[0] for p, v in by_provider.items() if len(set(v)) == 1}
-            if len(stable) < len(by_provider):
-                resumes += 1
-                unstable += 1
-                continue
-            if len(stable) < 2:
+            # A provider that names two different bands for the same resume is
+            # counted as unstable, and still compared: the app reports one of its
+            # samples, not both, so each sample is held against the other judge and
+            # the worst gap is the resume's. Skipping it would hide a far split behind
+            # the wobble.
+            wobbled = any(len(set(v)) > 1 for v in by_provider.values())
+            unstable += wobbled
+            if len(by_provider) < 2:
                 # One judge's band matches itself by construction. Counting that
                 # as agreement is the same false pass as printing a zero spread
                 # for a lone judge.
+                resumes += wobbled
                 continue
             resumes += 1
-            units.append(list(stable.values()))
-            labels = sorted(set(stable.values()))
-            ranks = [rank[label] for label in labels if label in rank]
-            if len(labels) <= 1:
-                exact += 1
-            elif len(labels) == 2 and len(ranks) == 2 and abs(ranks[0] - ranks[1]) == 1:
-                adjacent += 1
-            else:
-                # Two bands the declared order does not place are not "far" for a
-                # measured reason, but counting them as adjacent would be a guess
-                # in the rubric's favour.
-                far += 1
+            if not wobbled:
+                units.append([v[0] for v in by_provider.values()])
+            gap = _worst_gap(by_provider, lambda a, b: _band_gap(a, b, rank))
+            exact += gap == 0
+            adjacent += gap == 1
+            far += gap > 1
 
         tables.append(BandAgreement(
             category=category,
@@ -814,9 +805,34 @@ def _composite_rows(
             resume=run.name,
             as_built={p: round(_mean(v), 1) for p, v in as_built.items()},
             no_deduct={p: round(_mean(v), 1) for p, v in no_deduct.items()},
+            spread_as_built=round(_worst_gap(as_built, _distance), 1),
+            spread_no_deduct=round(_worst_gap(no_deduct, _distance), 1),
             capped=all(e.capped for e in entries),
         ))
     return rows
+
+
+def _worst_gap(by_provider: dict[str, list], gap: Callable[[Any, Any], float]) -> float:
+    """The largest gap between any sample of one judge and any sample of another, 0.0
+    with one judge. Each of luna's voted samples is what the app could report, so each
+    is held against Claude, and the resume is only as close as its worst pairing."""
+    return max((gap(a, b) for left, right in combinations(by_provider.values(), 2)
+                for a in left for b in right), default=0.0)
+
+
+def _distance(a: float, b: float) -> float:
+    return abs(a - b)
+
+
+def _band_gap(a: str, b: str, rank: dict[str, int]) -> int:
+    """Bands apart. Two different bands the declared order does not place count as far:
+    not for a measured reason, but calling them adjacent would be a guess in the
+    rubric's favour."""
+    if a == b:
+        return 0
+    if a in rank and b in rank:
+        return abs(rank[a] - rank[b])
+    return 2
 
 
 def _findings_rows(live: list[ResumeRun]) -> list[FindingsRow]:

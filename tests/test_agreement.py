@@ -297,8 +297,9 @@ def test_a_lone_judge_never_counts_as_band_agreement():
     assert report.bands[0].exact == 0
 
 
-def test_an_unstable_judge_costs_the_category_its_verdict():
-    """A rubric no judge can apply twice running has not passed anything."""
+def test_an_unstable_judge_cannot_hide_a_far_split():
+    """The app reports one of a judge's samples, so a wobble is still compared: here
+    one anthropic sample is two bands from openai, and that is a far split."""
     wobbly = [
         passes.ContentJudgment("anthropic", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
         passes.ContentJudgment("anthropic", 1, {Category.PRODUCTION_OWNERSHIP.value: {"band": "strong"}}, []),
@@ -307,8 +308,36 @@ def test_an_unstable_judge_costs_the_category_its_verdict():
     ]
     run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], wobbly)])
     row = agreement.analyse(run, band_order=["absent", "thin", "solid", "strong"]).bands[0]
-    assert (row.unstable, row.exact) == (1, 0)
+    assert (row.unstable, row.exact, row.far) == (1, 0, 1)
+    assert row.verdict == agreement.FAIL
+
+
+def _band(provider, sample, band):
+    return passes.ContentJudgment(
+        provider, sample, {Category.PRODUCTION_OWNERSHIP.value: {"band": band}}, [])
+
+
+def test_a_wobble_one_band_from_the_other_judge_is_adjacent_and_unstable():
+    judgments = [_band("openai", 0, "thin"), _band("openai", 1, "solid"),
+                 _band("anthropic", 0, "thin")]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    row = agreement.analyse(run, band_order=["absent", "thin", "solid", "strong"]).bands[0]
+    assert (row.resumes, row.unstable, row.adjacent, row.far) == (1, 1, 1, 0)
     assert row.verdict == agreement.LOOK
+
+
+def test_the_composite_spread_is_each_voted_sample_against_the_other_judge():
+    """luna's two voted samples differ and Claude matches the lower one. Their mean is
+    half the gap from Claude, but the app could report the higher, so the resume's
+    spread is the whole gap."""
+    judgments = [_numeric("openai", 0, dict.fromkeys(CATEGORIES, 60)),
+                 _numeric("openai", 1, dict.fromkeys(CATEGORIES, 80)),
+                 _numeric("anthropic", 0, dict.fromkeys(CATEGORIES, 60))]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    [row] = agreement.analyse(run).composites
+    luna, claude = row.no_deduct["openai"], row.no_deduct["anthropic"]
+    assert row.spread_no_deduct > abs(luna - claude) + 0.5
+    assert row.spread_no_deduct == pytest.approx(2 * abs(luna - claude), abs=0.2)
 
 
 def _numeric(provider, sample, scores):

@@ -127,8 +127,10 @@ def render(report: AgreementReport) -> str:
         )
         out += [
             "",
-            "  exact/adjacent/far  how far apart the two judges' bands were",
-            "  unstable            one provider named two bands for the same resume",
+            "  exact/adjacent/far  the worst gap between any sample of one judge and any of",
+            "                      the other's (each luna voted sample against Claude)",
+            "  unstable            one provider named two bands for the same resume; still",
+            "                      compared above, so a wobble never hides a far split",
             "",
         ]
 
@@ -152,6 +154,8 @@ def render(report: AgreementReport) -> str:
             tally[verdict(row.spread_no_deduct) if row.comparable else None] += 1
         out += [
             "",
+            "  spread     the worst gap between any sample of one judge and any of the other's:",
+            "             each luna voted sample against Claude, since the app reports one",
             "  as built   today's code: the model's number blended in AND its findings deducting",
             "  no deduct  ticket 03: model findings are evidence, not a deduction",
             f"  no-deduct tally: {tally[PASS]} pass, {tally[LOOK]} look, {tally[FAIL]} FAIL, "
@@ -164,7 +168,7 @@ def render(report: AgreementReport) -> str:
                 "spread is not evidence of agreement"
             )
         out.append("")
-        out += ["Composite by judge (as built)", ""]
+        out += ["Composite by judge (as built, mean of its samples)", ""]
         out += _table(
             ["resume", *report.providers],
             [
