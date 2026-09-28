@@ -30,6 +30,8 @@ of another wording round.
 
 **Status, 28 September: the judge is now scored against the owner's answer key, not against Claude.** Luna and Claude each agreed with themselves and still disagreed, so the owner labelled the disagreements (`corpus/resumes/answer_key.json`). See rubric-grounding 15, "the answer key".
 
+**Status, 28 September: the finish line is set.** gpt-6-luna (medium effort, 3-try vote) must match the answer key on at least 32 of 36 entries, on each of its two voted samples, over the 24 keyed documents; a missing answer is a miss, and Claude is not part of the test. See rubric-grounding 15, "the answer key".
+
 ## Spec so far
 
 - [production-ownership-criteria.md](production-ownership-criteria.md) — the first

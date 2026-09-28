@@ -322,9 +322,11 @@ are); "Agentic AI engineer." (title only).
   are `yes`. A method rather than a result ("an LLM judge calibrated against 500 human
   labels") is `no`.
 - `production-ownership/C4`: fixing a live system, monitoring it, and rework that the
-  neighbouring bullets place after launch are `yes`. An incident that was merely caught
-  is `no` (it is C3's operational fact), and so is "A small serving benchmark I run each
-  release". This is consistent with the 25 and 26 September rulings: staying on or
+  neighbouring bullets place after launch are `yes`, and so is operating it when that
+  produced a named artefact ("It was kept running afterwards and the runbook came out of
+  that"). An incident that was merely caught is `no` (it is C3's operational fact), and
+  so are "A small serving benchmark I run each release" and "We kept the loops running
+  after the grant ended" (staying, with no work named). This is consistent with the 25 and 26 September rulings: staying on or
   still-in-use with no work named stays `no`.
 
 **The key.** `corpus/resumes/answer_key.json`, committed, holds 36 entries. Each entry
@@ -339,38 +341,57 @@ places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
 
 - `scripts/agreement_harness.py --key PATH`, which defaults to the committed key. After
   the agreement tables, every report (live, `--collect` or `--from`, with or without
-  Claude) prints each provider sample's items matched out of those scored. It then lists
-  every mismatch as doc / criterion / locator / key answer vs judge answer. A scoped
-  item is compared at its keyed place in the item's `places` list, not on the derived
-  answer. A missing answer, including a sample that has no judgement on a judged
-  document, is a mismatch marked `missing`.
+  Claude) prints each provider sample's items matched out of every key entry (`N/36`),
+  including a planned sample that answered nothing. It then lists every mismatch as
+  doc / criterion / locator / key answer vs judge answer. A missing answer is a mismatch
+  marked `missing`: a document the run skipped or never judged, or a criterion the
+  sample left unanswered. A scoped item is compared at its keyed place, not on the
+  derived answer. A voted sample keeps every try's per-place answers under
+  `try_places`, and the keyed place is voted across them with `ensemble.vote`. A run
+  saved before that has only the copied try's `places`, which is read instead.
 - The headline under the contact details is now citable. On five resumes luna refused
   to cite lines such as "Agentic AI engineer." because "that line has no locator in
-  PLACES". When there is no summary section, `ats.sections.parse` now reads the header
-  lines after the name as the summary, leaving out any line with an email, phone,
-  URL or location. So `prompts.places`, `passes.resolvable_locators` and the scoped
+  PLACES". When there is no summary section, `ats.sections.parse` reads one header line
+  as the summary: the second line with no contact details on it, since the first is the
+  name. Emails, phones, URLs and places ("Boston, MA", "London, United Kingdom",
+  "Remote") count as contact details. A header with a date range in it, or more than
+  four lines, has no headline; that is a career block under a heading the parser does
+  not know. So `prompts.places`, `passes.resolvable_locators` and the scoped
   `any_place` count all see it as `summary`.
 - The probe's `identity` check (`scripts/criteria_probe.py`) now needs a level
   (`LEVEL_RE`) as well as a title.
 - Wrapped bullets stay whole. The parser used to open a fake role when a bullet's next
   line started with a digit or a capital letter, because PDF text keeps no indent. This
   hit 06, 16, 18, 28 ("Grafana, 14 dashboards.") and 29 ("19% fewer failed reviews."),
-  so both judges saw "…were monitored in" cut off. Now only a date range opens a role
-  after the first one. "VOLUNTEERING" is a known section, and an unknown all-caps line
-  is not joined to a bullet. Bullet counts and years of experience did not change,
-  because the fake roles had no dates. The key's locators were regenerated through the
-  parser, none moved, and 28's quote is now the whole bullet. Runs from before this fix,
-  including 27 September, saw the split bullets.
+  so both judges saw "…were monitored in" cut off. After a bullet, a line that starts
+  lowercase continues it. A heading-shaped line opens a role: every word capitalised
+  and no digit ("Open Source Contributions", "VOLUNTEERING"). If a date range follows
+  it, it becomes the first half of that role's heading instead ("Corvus Labs" over "ML
+  Engineer  Jan 2022 - Jun 2023"). Anything else continues the bullet. Projects are
+  parsed on their own: an undated name opens a project, and project bullets with no
+  name go under a "Projects" role, not under the last job (02, 09, 15, 16, 17, 22 and
+  26). "VOLUNTEERING" is a known section. Bullet texts, bullet counts and years of
+  experience did not change; the fake roles had no dates. The key's locators were
+  regenerated through the parser. Only 09's benchmark bullet moved, from
+  `exp[2].bullet[3]` to `exp[3].bullet[0]`, and 28's quote is now the whole bullet.
+  Runs from before this fix, including 27 September, saw the split bullets.
+  (ponytail: the heading test is a word-shape heuristic. A wrapped line made only of
+  capitalised names, such as "Kubernetes Engine", reads as a heading. Under PROJECTS, a
+  wrapped line that starts with a capital and is followed by a bullet reads as a
+  project name.)
 
 **Known gaps.**
 
 - The probe cannot see part (c) of the C1 bar, what the candidate builds. It says `yes`
-  to "GenAI product engineer, two years.". `scan/no-identity-above-fold` still checks
+  to "AI engineer, eight years.". `scan/no-identity-above-fold` still checks
   the title only.
 - The probe's `evaluation-rigour/C4` aliases (`from N`, `N to M`) don't match a relative
   change such as "22% fewer". They were not changed here.
-- For a voted luna sample, the per-place answers come from the one try the vote copied,
-  not from a per-place vote.
+- A voted luna sample whose tries all abstain on the derived answer drops the item,
+  and the keyed place with it, so it scores `missing` even if some tries answered that
+  place.
 
-**Next finish line.** Luna against the key, not against Claude. The owner sets the
-exact threshold before the run.
+**Next finish line.** Luna against the key, not against Claude. Finish line, set by the
+owner before the run: gpt-6-luna (medium effort, 3-try vote) matches the answer key on
+at least 32 of 36 entries, on each of its two voted samples, over the 24 keyed
+documents. A missing answer counts as a miss. Claude is not part of this test.
