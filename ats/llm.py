@@ -149,8 +149,7 @@ def _truncated(label: str, reason: str | None, cap: int) -> None:
         raise LLMError(
             f"{label}: response hit the {cap}-token cap and was cut off "
             "mid-JSON; raise the cap (ats.llm, or the harness's --max-tokens or "
-            "--openai-max-tokens) "
-            "or narrow the prompt"
+            "--openai-max-tokens) or narrow the prompt"
         )
 
 
