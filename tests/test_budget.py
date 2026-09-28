@@ -83,3 +83,11 @@ def test_an_openai_worst_case_uses_the_cap_the_provider_sends():
     costs = budget.worst_case([raised], [3000], {"openai": 1}, True, (1.0, 8.0))
     assert costs[raised.label] == pytest.approx(
         budget.LIVE_ATTEMPTS * (3000 * 1.0 + 24000 * 8.0) / 1e6)
+
+
+def test_an_openai_only_run_over_budget_is_not_told_about_claudes_cap():
+    fits, report = budget.verdict([OPENAI], TEN_DOCUMENTS, {"openai": 6}, False,
+                                  (0.10, 0.50), 0.01)
+    assert not fits
+    assert "--openai-max-tokens" in report and "--max-tokens" not in report.replace(
+        "--openai-max-tokens", "")

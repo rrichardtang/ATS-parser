@@ -97,10 +97,14 @@ def verdict(providers: list[Provider], prompt_tokens: list[int], calls: dict[str
 
 
 def _what_fits(providers, documents, calls, batch, total, budget) -> str:
-    """The largest Claude output cap under which the same run would fit."""
+    """The largest Claude output cap under which the same run would fit; with no
+    Claude in the run, what else to cut."""
     claude = next((p for p in providers if p.name == "anthropic"), None)
+    if claude is None:
+        return ("Lower --openai-max-tokens, judge fewer documents (--docs), take fewer "
+                "samples or votes, or raise --budget.")
     fitting = 0
-    if claude and documents:
+    if documents:
         _, out_rate, cap, attempts = _rates(claude, batch, None)
         per_cap_token = calls[claude.name] * attempts * documents * out_rate / 1e6
         fitting = math.floor((budget - total) / per_cap_token) + cap
