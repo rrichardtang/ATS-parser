@@ -42,6 +42,7 @@ PHONE_RE = re.compile(r"(?:\+?\d{1,2}[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4
 LINKEDIN_RE = re.compile(r"linkedin\.com/[\w/-]+", re.IGNORECASE)
 GITHUB_RE = re.compile(r"github\.(?:com|io)/[\w/-]+", re.IGNORECASE)
 URL_RE = re.compile(r"(?:https?://|www\.)[\w./-]+", re.IGNORECASE)
+LOCATION_RE = re.compile(r"\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*),\s*([A-Z]{2})\b")
 
 BULLET_RE = re.compile(r"^\s*(?:[•\-–*‣·o]|\d+[.)])\s+")
 
@@ -193,7 +194,7 @@ def parse(text: str) -> Resume:
     resume.contact = _parse_contact(header_blob or text[:400])
     resume.summary = " ".join(
         l.strip() for l in resume.sections.get("summary", []) if l.strip()
-    )
+    ) or _headline(resume)
     resume.skills_text = " ".join(
         l.strip() for l in resume.sections.get("skills", []) if l.strip()
     )
@@ -201,6 +202,20 @@ def parse(text: str) -> Resume:
         resume.sections.get("experience", []) + resume.sections.get("projects", [])
     )
     return resume
+
+
+CONTACT_RES = (EMAIL_RE, PHONE_RE, LINKEDIN_RE, GITHUB_RE, URL_RE, LOCATION_RE)
+
+
+def _headline(resume: Resume) -> str:
+    """The line under the name that says what the person is -- "Agentic AI engineer." --
+    read as the summary when there is no summary section, so a judge can cite it.
+    The name (the first line) and any line carrying contact details are left out. With
+    no section heading at all the header is the whole document, so there is none."""
+    if not resume.section_order:
+        return ""
+    lines = [l.strip() for l in resume.sections["header"] if l.strip()][1:]
+    return " ".join(l for l in lines if not any(r.search(l) for r in CONTACT_RES))
 
 
 def _parse_contact(blob: str) -> Contact:
@@ -218,7 +233,7 @@ def _parse_contact(blob: str) -> Contact:
         if "linkedin" not in url.lower() and "github" not in url.lower():
             contact.website = url
             break
-    if m := re.search(r"\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*),\s*([A-Z]{2})\b", blob):
+    if m := LOCATION_RE.search(blob):
         contact.location = m.group(0)
     return contact
 

@@ -1,8 +1,11 @@
 """Section segmentation and date arithmetic."""
 from datetime import date
+from pathlib import Path
 
 import pytest
 
+from ats.passes import resolvable_locators
+from ats.prompts import places
 from ats.sections import parse, parse_date_range
 
 RESUME = """Riley Tang
@@ -60,3 +63,26 @@ def test_gap_detection():
     gaps = r.gaps(6)
     assert len(gaps) == 1
     assert gaps[0][0] == date(2023, 6, 1)
+
+
+SYNTHETIC = Path(__file__).resolve().parents[1] / "corpus" / "resumes" / "synthetic"
+
+
+@pytest.mark.parametrize("prefix,headline", [
+    ("07", "Data engineer, analytics platform."),
+    ("10", "New graduate, agentic systems."),
+    ("11", "Agentic AI engineer."),
+    ("23", "GenAI product engineer."),
+    ("30", "GenAI product engineer, two years."),
+])
+def test_the_headline_above_the_first_role_is_a_citable_place(prefix, headline):
+    """The line under the contact details is what Luna refused to cite on 27 September."""
+    resume = parse(next(SYNTHETIC.glob(f"{prefix}-*.txt")).read_text(encoding="utf-8"))
+    assert resume.summary == headline
+    assert "summary" in resolvable_locators(resume)
+    assert f"summary: {headline}" in places(resume)
+
+
+def test_a_header_with_only_a_name_and_contact_details_has_no_headline():
+    resume = parse(RESUME.replace("SUMMARY\nAI Engineer, 3 years. LLM serving and evaluation.\n", ""))
+    assert resume.summary == ""
