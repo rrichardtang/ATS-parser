@@ -39,6 +39,10 @@ Keys come from ANTHROPIC_API_KEY and OPENAI_API_KEY. Both are wanted: with one
 (`--claude-only`, `--no-claude`) the only real number is the within-judge noise
 floor, since between-judge agreement is the thing being measured.
 
+Every report (live, `--collect`, `--from`) ends with each judge sample scored against
+the owner's answer key (`--key`, default corpus/resumes/answer_key.json): items matched
+out of those scored, and every mismatch. Ticket 15, 28 September.
+
 The run is saved whole (raw replies, not just the tables) so the next rubric
 change is judged on a diff rather than on a remembered number, and so a change to
 how agreement is measured can be re-run against calls already paid for. It holds
@@ -59,7 +63,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from ats import agreement, agreement_batch, budget, config, llm  # noqa: E402
+from ats import agreement, agreement_batch, answer_key, budget, config, llm  # noqa: E402
 from ats.agreement_table import render  # noqa: E402
 from ats.llm import LEGACY_OPENAI, providers_from  # noqa: E402
 
@@ -273,7 +277,16 @@ def submit_batch(providers, targets, plan: agreement.Plan, temperature: float,
     return out
 
 
-def collect_batch(saved_path: Path, out: Path, band_order: list[str]) -> None:
+def print_report(run: agreement.HarnessRun, band_order: list[str], key: Path | None) -> None:
+    """The agreement tables, then each judge against the owner's answer key."""
+    print(render(agreement.analyse(run, band_order)))
+    if key:
+        entries = answer_key.load(key)
+        print("\n" + answer_key.render(answer_key.score(run, entries), entries, key))
+
+
+def collect_batch(saved_path: Path, out: Path, band_order: list[str],
+                  key: Path | None = None) -> None:
     """Finish a `--batch` run: merge Claude's results and save the run in full.
 
     Exits non-zero, without waiting, while the batch is still processing.
@@ -301,7 +314,7 @@ def collect_batch(saved_path: Path, out: Path, band_order: list[str]) -> None:
                                 batches.results(saved["batch_id"]), saved["texts"])
     # Saved before analyse(), for the reason `after_each` gives in main().
     _write(out, run.to_dict())
-    print(render(agreement.analyse(run, band_order)))
+    print_report(run, band_order, key)
     print(f"Raw judgements saved to {_shown(out)}")
 
 
@@ -332,6 +345,10 @@ def main() -> None:
                         help="band order, worst first, once ticket 05 lands them "
                              "(e.g. --bands absent,thin,solid,strong)")
     parser.add_argument("--out", help=f"where to save the run (default {DEFAULT_OUT}/)")
+    parser.add_argument("--key", type=Path,
+                        default=answer_key.KEY if answer_key.KEY.exists() else None,
+                        help="the owner's answer key each judge is scored against "
+                             f"(default {_shown(answer_key.KEY)} when it exists)")
     parser.add_argument("--from", dest="replay",
                         help="re-render a saved run; makes no API calls")
     parser.add_argument("--batch", action="store_true",
@@ -360,16 +377,18 @@ def main() -> None:
     logging.getLogger("ats.llm").setLevel(logging.INFO)
 
     band_order = [b.strip() for b in args.bands.split(",") if b.strip()]
+    if args.key and not args.key.exists():
+        raise SystemExit(f"no such answer key: {args.key}")
 
     if args.replay:
         run = agreement.HarnessRun.from_dict(
             json.loads(Path(args.replay).read_text(encoding="utf-8"))
         )
-        print(render(agreement.analyse(run, band_order)))
+        print_report(run, band_order, args.key)
         return
     out = Path(args.out) if args.out else _stamped("agreement")
     if args.collect:
-        collect_batch(Path(args.collect), out, band_order)
+        collect_batch(Path(args.collect), out, band_order, args.key)
         return
 
     targets, coverage = select_targets(args)
@@ -427,7 +446,7 @@ def main() -> None:
                             after_each=after_each)
     print()
 
-    print(render(agreement.analyse(run, band_order)))
+    print_report(run, band_order, args.key)
     print(f"Raw judgements saved to {shown}")
 
 
