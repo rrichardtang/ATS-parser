@@ -5,7 +5,7 @@ import pytest
 
 from ats.agreement import HarnessRun, ResumeRun
 from ats.answer_key import KEY, MISSING, judge_answer, load, score
-from ats.passes import ContentJudgment, criteria_index, voted_judgment
+from ats.passes import ContentJudgment, criteria_index, criterion_answers, voted_judgment
 from ats.sections import parse
 from scripts import agreement_harness as harness
 
@@ -123,3 +123,21 @@ def test_a_voted_sample_votes_the_keyed_place_across_every_try():
             locator="exp[0].bullet[0]", evidence="Shipped the fraud service.")
     voted = voted_judgment(tries, resume, 0)
     assert judge_answer(voted.categories, SCOPED) == "no"
+
+
+def test_a_keyed_place_is_still_voted_when_every_try_abstains_on_the_derived_answer():
+    """09's shape: each try answers no at the keyed place but leaves another place
+    unanswered, so every try abstains on C4. The keyed place still scores no, and the
+    kept item adds no answer anywhere else."""
+    resume = parse("Riley Tang\nriley@example.com\n\nEXPERIENCE\n"
+                   "AI Engineer, Northwind Data    Mar 2024 - Present\n"
+                   "• Shipped the fraud service.\n• Ran a benchmark.\n")
+    tries = [_judgment("openai", i, places=[{"locator": "exp[0].bullet[1]", "answer": "no"}])
+             for i in range(3)]
+    for t in tries:
+        t.categories["Production ownership"]["criteria"][0]["answer"] = None
+    voted = voted_judgment(tries, resume, 0)
+    assert judge_answer(voted.categories, SCOPED) == "no"
+    assert "production-ownership/C4" not in {
+        a.criterion_id for a in criterion_answers(voted.categories)}
+    assert not voted.findings and not voted.unmet

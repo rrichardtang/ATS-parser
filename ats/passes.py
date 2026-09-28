@@ -463,8 +463,8 @@ def voted_judgment(
     categories: dict[str, dict] = {}
     for name in dict.fromkeys(name for t in tries for name in t.categories):
         _slug, criteria = criteria_index()[Category(name)]
-        voted = (_voted_item([_answered_item(t.categories.get(name), cid)
-                                for t in tries], _try_places(tries, name, cid))
+        voted = (_voted_item(cid, [_answered_item(t.categories.get(name), cid)
+                                     for t in tries], _try_places(tries, name, cid))
                  for cid in criteria)
         categories[name] = {"criteria": [item for item in voted if item]}
     findings, unmet = place(criterion_answers(categories), resume, provider)
@@ -492,11 +492,15 @@ def _try_places(tries: list[ContentJudgment], name: str, cid: str) -> list[list]
     return lists if any(lists) else None
 
 
-def _voted_item(items: list[dict | None], try_places: list[list] | None) -> dict | None:
+def _voted_item(
+    cid: str, items: list[dict | None], try_places: list[list] | None,
+) -> dict | None:
     answers = [None if item is None else _met(item["answer"]) for item in items]
     met = ensemble.vote(answers)
     if met is None:
-        return None
+        # No answer, so `criterion_answers` skips it; kept only so the answer key can
+        # still vote a keyed place across the tries.
+        return {"id": cid, "try_places": try_places} if try_places else None
     # `vote` only returns an answer some try gave, so the majority is never empty. A
     # quoted, placed try is preferred: it is what lets a `no` file as a placed finding.
     majority = [item for item, answer in zip(items, answers) if answer is met]
