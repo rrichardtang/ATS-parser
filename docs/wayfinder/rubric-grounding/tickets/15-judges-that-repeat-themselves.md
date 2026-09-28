@@ -363,9 +363,12 @@ places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
 - Wrapped bullets stay whole. The parser used to open a fake role when a bullet's next
   line started with a digit or a capital letter, because PDF text keeps no indent. This
   hit 06, 16, 18, 28 ("Grafana, 14 dashboards.") and 29 ("19% fewer failed reviews."),
-  so both judges saw "…were monitored in" cut off. After a bullet, a line that starts
-  lowercase continues it. A heading-shaped line opens a role: every word capitalised
-  and no digit ("Open Source Contributions", "VOLUNTEERING"). If a date range follows
+  so both judges saw "…were monitored in" cut off. After a bullet, a line continues it
+  when it starts lowercase, or when the bullet stops mid-sentence: it ends with a comma
+  or with a word such as "to", "with" or "on" ("…from on-prem Hadoop to" / "Google
+  Cloud Platform"). Otherwise a heading-shaped line opens a role: every word
+  capitalised, no digit and no closing full stop ("Open Source Contributions",
+  "VOLUNTEERING"). If a date range follows
   it, it becomes the first half of that role's heading instead ("Corvus Labs" over "ML
   Engineer  Jan 2022 - Jun 2023"). Anything else continues the bullet. Projects are
   parsed on their own: an undated name opens a project, and project bullets with no
@@ -374,11 +377,11 @@ places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
   experience did not change; the fake roles had no dates. The key's locators were
   regenerated through the parser. Only 09's benchmark bullet moved, from
   `exp[2].bullet[3]` to `exp[3].bullet[0]`, and 28's quote is now the whole bullet.
-  Runs from before this fix, including 27 September, saw the split bullets.
-  (ponytail: the heading test is a word-shape heuristic. A wrapped line made only of
-  capitalised names, such as "Kubernetes Engine", reads as a heading. Under PROJECTS, a
-  wrapped line that starts with a capital and is followed by a bullet reads as a
-  project name.)
+  Runs from before this fix, including 27 September, saw the split bullets. Replays of
+  runs from before 6e23724 answered 09's benchmark bullet at `exp[2].bullet[3]`, so
+  they score that key entry `missing`.
+- The headline's length limit counts only lines without contact details: a header with
+  more than four other lines, or with a date range, has no headline.
 
 **Known gaps.**
 
@@ -387,9 +390,18 @@ places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
   the title only.
 - The probe's `evaluation-rigour/C4` aliases (`from N`, `N to M`) don't match a relative
   change such as "22% fewer". They were not changed here.
-- A voted luna sample whose tries all abstain on the derived answer drops the item,
-  and the keyed place with it, so it scores `missing` even if some tries answered that
-  place.
+- A voted luna sample whose tries all abstain on the derived answer drops the item and
+  its `try_places`, so the keyed place scores `missing` even if some tries answered it.
+  It changes the score only for the four `no`-keyed places. A try that says `yes` at a
+  place derives `yes` and does not abstain, and a `yes`-keyed place that was answered
+  `no` is a miss either way.
+- The heading test is a word-shape heuristic. After a bullet that ends a sentence, a
+  wrapped line made only of capitalised names (such as "Kubernetes Engine") reads as a
+  heading. Under PROJECTS, a wrapped line that starts with a capital and is followed by
+  a bullet reads as a project name.
+- A "Tech: Python, PyTorch" line under a bullet is appended to that bullet.
+- A company line under a dated title line is dropped. The parser did this before this
+  ticket too.
 
 **Next finish line.** Luna against the key, not against Claude. Finish line, set by the
 owner before the run: gpt-6-luna (medium effort, 3-try vote) matches the answer key on
