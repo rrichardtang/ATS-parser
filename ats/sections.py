@@ -199,9 +199,8 @@ def parse(text: str) -> Resume:
     resume.skills_text = " ".join(
         l.strip() for l in resume.sections.get("skills", []) if l.strip()
     )
-    resume.roles = _parse_roles(
-        resume.sections.get("experience", []) + resume.sections.get("projects", [])
-    )
+    resume.roles = (_parse_roles(resume.sections.get("experience", []))
+                    + _parse_roles(resume.sections.get("projects", []), projects=True))
     return resume
 
 
@@ -239,33 +238,66 @@ def _parse_contact(blob: str) -> Contact:
     return contact
 
 
-def _parse_roles(lines: list[str]) -> list[Role]:
+def _parse_roles(lines: list[str], projects: bool = False) -> list[Role]:
+    """Roles and their bullets. PDF text keeps no indent, so a wrapped bullet's next line
+    looks like any other line: after a bullet, a line opens a role only when it is
+    heading-shaped, or -- under PROJECTS -- when a bullet follows it. A heading-shaped
+    line with a date range under it is the first half of that role's heading. Anything
+    else continues the bullet."""
     roles: list[Role] = []
+    pending = ""
     for index, line in enumerate(lines):
         stripped = line.strip()
         if not stripped:
             continue
         if BULLET_RE.match(line):
+            if not roles and projects:
+                roles.append(Role(heading="Projects", title="Projects", line_index=index))
             if roles:
                 roles[-1].bullets.append(BULLET_RE.sub("", line).strip())
             continue
         parsed = parse_date_range(stripped)
-        looks_like_heading = parsed is not None or (
-            len(stripped) < 90 and not stripped.endswith(".") and index + 1 < len(lines)
-        )
+        following = _next_line(lines, index)
         if parsed is not None:
             title, company = _split_title_company(stripped)
+            # A heading split over two lines: "Corvus Labs", then "ML Engineer  Jan 2022 - ...".
+            title, company = title or pending, company or (pending if title else "")
             start, end, current = parsed
             roles.append(
                 Role(heading=stripped, title=title, company=company, start=start,
                      end=end, is_current=current, line_index=index)
             )
-        elif looks_like_heading and not roles:
+            pending = ""
+        elif roles and roles[-1].bullets and stripped[0].islower():
+            roles[-1].bullets[-1] += " " + stripped
+        elif _heading_shaped(stripped) and parse_date_range(following):
+            pending = stripped
+        elif not roles:
+            if len(stripped) < 90 and not stripped.endswith(".") and following:
+                title, company = _split_title_company(stripped)
+                roles.append(Role(heading=stripped, title=title, company=company,
+                                  line_index=index))
+        elif not roles[-1].bullets:
+            continue
+        elif _heading_shaped(stripped) or (projects and BULLET_RE.match(following)):
             title, company = _split_title_company(stripped)
             roles.append(Role(heading=stripped, title=title, company=company, line_index=index))
-        elif roles and roles[-1].bullets and not stripped.isupper():
-            # A wrapped bullet's next line, whatever it starts with: after the first
-            # role only a date range opens a new one, and an unknown all-caps heading
-            # is not bullet text.
+        else:
             roles[-1].bullets[-1] += " " + stripped
     return roles
+
+
+def _next_line(lines: list[str], index: int) -> str:
+    return next((l for l in lines[index + 1:] if l.strip()), "")
+
+
+HEADING_WORD_RE = re.compile(r"(?:[A-Z][\w'&.-]*,?|&|and|of|for|the|in|at|to|[|—–-])")
+
+
+def _heading_shaped(line: str) -> bool:
+    """"VOLUNTEERING", "Open Source Contributions", "AI Engineer, Corvus Labs": every word
+    capitalised and no digit. A wrapped line that happens to be all names -- "Kubernetes Engine" --
+    reads as a heading.
+    ponytail: word-shape heuristic, a layout-aware parser (indent, font) if it misfires."""
+    return not re.search(r"\d", line) and all(
+        HEADING_WORD_RE.fullmatch(w) for w in line.rstrip(":").split())

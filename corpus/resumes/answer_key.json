@@ -188,7 +188,7 @@
       "doc": "09-llm-platform-career-change",
       "category": "production-ownership",
       "criterion": "C4",
-      "locator": "exp[2].bullet[3]",
+      "locator": "exp[3].bullet[0]",
       "answer": "no",
       "quote": "A small serving benchmark I run each release, published as a repo.",
       "date": "2026-09-28"

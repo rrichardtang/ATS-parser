@@ -107,3 +107,41 @@ Coach, junior robotics league.
     assert [text for _, text in resume.bullets] == [
         "Drift and cost were monitored in Grafana, 14 dashboards.",
         "Improved retrieval, 19% fewer failed reviews."]
+
+
+JOB = """Riley Tang
+riley@example.com
+
+EXPERIENCE
+AI Engineer, Northwind Data    Mar 2024 - Present
+• Shipped the fraud service.
+"""
+
+
+def test_a_heading_split_over_two_lines_opens_one_role_and_leaves_the_bullet_alone():
+    resume = parse(JOB + "Corvus Labs\nML Engineer    Jan 2022 - Jun 2023\n• Built the eval harness.\n")
+    assert [text for _, text in resume.bullets] == ["Shipped the fraud service.",
+                                                   "Built the eval harness."]
+    assert [(r.title, r.company) for r in resume.roles][1] == ("ML Engineer", "Corvus Labs")
+
+
+def test_undated_project_names_open_projects_of_their_own():
+    resume = parse(JOB + "\nPROJECTS\nPond\n• A tiny job queue in Go.\nLedger\n"
+                         "• An audit-log reader for agent runs.\n")
+    assert [(r.heading, r.bullets) for r in resume.roles[1:]] == [
+        ("Pond", ["A tiny job queue in Go."]),
+        ("Ledger", ["An audit-log reader for agent runs."])]
+    assert resume.roles[0].bullets == ["Shipped the fraud service."]
+
+
+def test_project_bullets_with_no_name_are_not_filed_under_the_last_job():
+    resume = parse(JOB + "\nPROJECTS\n• A KV-cache sizing calculator.\n")
+    assert [(r.heading, r.bullets) for r in resume.roles] == [
+        ("AI Engineer, Northwind Data    Mar 2024 - Present", ["Shipped the fraud service."]),
+        ("Projects", ["A KV-cache sizing calculator."])]
+
+
+def test_an_unknown_title_case_heading_is_not_glued_into_a_bullet():
+    resume = parse(JOB + "Open Source Contributions\n• Fixed a vLLM scheduler bug.\n")
+    assert resume.roles[0].bullets == ["Shipped the fraud service."]
+    assert resume.roles[1].heading == "Open Source Contributions"
