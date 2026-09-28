@@ -41,7 +41,8 @@ floor, since between-judge agreement is the thing being measured.
 
 Every report (live, `--collect`, `--from`) ends with each judge sample scored against
 the owner's answer key (`--key`, default corpus/resumes/answer_key.json): items matched
-out of those scored, and every mismatch. Ticket 15, 28 September.
+out of every key entry, and every mismatch -- a document the run skipped or never judged
+is a missing answer. Ticket 15, 28 September.
 
 The run is saved whole (raw replies, not just the tables) so the next rubric
 change is judged on a diff rather than on a remembered number, and so a change to

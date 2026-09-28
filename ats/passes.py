@@ -464,21 +464,35 @@ def voted_judgment(
     for name in dict.fromkeys(name for t in tries for name in t.categories):
         _slug, criteria = criteria_index()[Category(name)]
         voted = (_voted_item([_answered_item(t.categories.get(name), cid)
-                                for t in tries]) for cid in criteria)
+                                for t in tries], _try_places(tries, name, cid))
+                 for cid in criteria)
         categories[name] = {"criteria": [item for item in voted if item]}
     findings, unmet = place(criterion_answers(categories), resume, provider)
     return ContentJudgment(provider, sample, categories, findings, unmet)
 
 
+def criterion_items(entry, cid: str) -> list[dict]:
+    """Every item a category entry holds for criterion `cid`, readable or not."""
+    items = entry.get("criteria") if isinstance(entry, dict) else None
+    return [item for item in items or [] if isinstance(item, dict)
+            and str(item.get("id") or "").strip().upper() == cid]
+
+
 def _answered_item(entry, cid: str) -> dict | None:
     """The item `criterion_answers` would read for `cid`: the first readable one."""
-    items = entry.get("criteria") if isinstance(entry, dict) else None
-    return next((item for item in items or [] if isinstance(item, dict)
-                 and str(item.get("id") or "").strip().upper() == cid
-                 and _met(item.get("answer")) is not None), None)
+    return next((item for item in criterion_items(entry, cid)
+                 if _met(item.get("answer")) is not None), None)
 
 
-def _voted_item(items: list[dict | None]) -> dict | None:
+def _try_places(tries: list[ContentJudgment], name: str, cid: str) -> list[list] | None:
+    """Every try's per-place answers for a scoped criterion, so a place can be voted on
+    as well as the derived answer. None for a criterion no try answered place by place."""
+    firsts = (next(iter(criterion_items(t.categories.get(name), cid)), {}) for t in tries)
+    lists = [i.get("places") if isinstance(i.get("places"), list) else [] for i in firsts]
+    return lists if any(lists) else None
+
+
+def _voted_item(items: list[dict | None], try_places: list[list] | None) -> dict | None:
     answers = [None if item is None else _met(item["answer"]) for item in items]
     met = ensemble.vote(answers)
     if met is None:
@@ -490,7 +504,8 @@ def _voted_item(items: list[dict | None]) -> dict | None:
                 majority[0])
     votes = ["abstain" if answer is None else "yes" if answer else "no"
              for answer in answers]
-    return {**item, "answer": "yes" if met else "no", "votes": votes}
+    voted = {**item, "answer": "yes" if met else "no", "votes": votes}
+    return {**voted, "try_places": try_places} if try_places else voted
 
 
 def content_pass(

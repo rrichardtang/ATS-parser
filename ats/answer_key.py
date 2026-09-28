@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import passes
+from . import ensemble, passes
 from .agreement import HarnessRun
 
 KEY = Path(__file__).resolve().parents[1] / "corpus" / "resumes" / "answer_key.json"
@@ -34,44 +34,62 @@ class Score:
         return self.matched + len(self.mismatches)
 
 
-def _item(categories: dict, entry: dict) -> dict | None:
+def _item(categories: dict, entry: dict) -> dict:
     for name, body in categories.items():
         category = passes._category(name)
-        if not category or passes.criteria_index()[category][0] != entry["category"]:
-            continue
-        items = body.get("criteria") if isinstance(body, dict) else None
-        return next((i for i in items or [] if isinstance(i, dict)
-                     and str(i.get("id") or "").strip().upper() == entry["criterion"]), None)
-    return None
+        if category and passes.criteria_index()[category][0] == entry["category"]:
+            return next(iter(passes.criterion_items(body, entry["criterion"])), {})
+    return {}
+
+
+def _place_answer(places: list | None, locator: str) -> bool | None:
+    found = passes._place_answers(places or [], {locator}).get(locator, {})
+    return passes._met(found.get("answer"))
 
 
 def judge_answer(categories: dict, entry: dict) -> str:
-    """"yes", "no", or `MISSING` when the judge gave no readable answer there."""
-    item = _item(categories, entry) or {}
-    if "locator" in entry:
-        places = item.get("places") if isinstance(item.get("places"), list) else []
-        item = passes._place_answers(places, {entry["locator"]}).get(entry["locator"], {})
-    met = passes._met(item.get("answer"))
+    """"yes", "no", or `MISSING` when the judge gave no readable answer there.
+
+    A voted sample keeps every try's per-place answers under "try_places", and the keyed
+    place is voted across them as the criterion was. A run saved before that carries
+    only the copied try's "places"."""
+    item = _item(categories, entry)
+    if "locator" not in entry:
+        met = passes._met(item.get("answer"))
+    elif "try_places" in item:
+        met = ensemble.vote([_place_answer(p, entry["locator"]) for p in item["try_places"]])
+    else:
+        met = _place_answer(item.get("places"), entry["locator"])
     return MISSING if met is None else "yes" if met else "no"
 
 
+def _samples(run: HarnessRun) -> list[tuple[str, int]]:
+    """Every (provider, sample) the run planned, so one that answered nothing anywhere
+    still gets its line. A run saved before samples were counted per provider names
+    only the samples it has judgements for."""
+    planned = run.meta.get("samples_per_provider")
+    seen = {(j.provider, j.sample) for r in run.resumes for j in r.judgments}
+    if isinstance(planned, dict):
+        seen |= {(name, i) for name, count in planned.items() for i in range(count)}
+    return sorted(seen)
+
+
 def score(run: HarnessRun, entries: list[dict]) -> list[Score]:
-    """One score per provider sample. A sample with no judgement on a judged document
-    answered none of its key items, so each counts as a missing answer."""
-    samples = sorted({(j.provider, j.sample) for r in run.resumes for j in r.judgments})
-    scores = {s: Score(f"{s[0]} sample {s[1]}") for s in samples}
-    for resume in run.resumes:
-        if resume.skipped:
-            continue
-        judged = {(j.provider, j.sample): j.categories for j in resume.judgments}
-        for entry in (e for e in entries if e["doc"] == resume.name):
-            for sample, result in scores.items():
-                answer = judge_answer(judged.get(sample, {}), entry)
-                if answer == entry["answer"]:
-                    result.matched += 1
-                else:
-                    result.mismatches.append((entry, answer))
-    return list(scores.values())
+    """One score per provider sample, over every key entry. An entry whose document the
+    run skipped or never judged, or that a sample left unanswered, is `MISSING`."""
+    judged = {(r.name, j.provider, j.sample): j.categories
+              for r in run.resumes if not r.skipped for j in r.judgments}
+    scores = []
+    for provider, sample in _samples(run):
+        result = Score(f"{provider} sample {sample}")
+        for entry in entries:
+            answer = judge_answer(judged.get((entry["doc"], provider, sample), {}), entry)
+            if answer == entry["answer"]:
+                result.matched += 1
+            else:
+                result.mismatches.append((entry, answer))
+        scores.append(result)
+    return scores
 
 
 def render(scores: list[Score], entries: list[dict], path: Path) -> str:
