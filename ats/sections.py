@@ -216,13 +216,13 @@ def _headline(resume: Resume) -> str:
     read as the summary when there is no summary section, so a judge can cite it.
 
     It is the second line that carries no contact details; the first is the name,
-    wherever the contact lines sit. A header that holds a date range or runs past
-    HEADER_MAX_LINES is a career block under a heading the parser does not know, or a
-    document with no headings at all, so there is no headline to read."""
+    wherever the contact lines sit. A header that holds a date range, or more than
+    HEADER_MAX_LINES lines besides contact details, is a career block under a heading the
+    parser does not know, or a document with no headings at all: no headline to read."""
     header = [l.strip() for l in resume.sections["header"] if l.strip()]
-    if len(header) > HEADER_MAX_LINES or any(DATE_RANGE_RE.search(l) for l in header):
-        return ""
     plain = [l for l in header if not any(r.search(l) for r in CONTACT_RES)]
+    if len(plain) > HEADER_MAX_LINES or any(DATE_RANGE_RE.search(l) for l in header):
+        return ""
     return plain[1] if len(plain) > 1 else ""
 
 
@@ -276,7 +276,8 @@ def _parse_roles(lines: list[str], projects: bool = False) -> list[Role]:
                      end=end, is_current=current, line_index=index)
             )
             pending = ""
-        elif roles and roles[-1].bullets and stripped[0].islower():
+        elif roles and roles[-1].bullets and (stripped[0].islower()
+                                              or _unfinished(roles[-1].bullets[-1])):
             roles[-1].bullets[-1] += " " + stripped
         elif _heading_shaped(stripped) and parse_date_range(following):
             pending = stripped
@@ -299,13 +300,21 @@ def _next_line(lines: list[str], index: int) -> str:
     return next((l for l in lines[index + 1:] if l.strip()), "")
 
 
+# Words a sentence cannot end on: a bullet ending with one, or with a comma, wraps.
+OPEN_ENDINGS = {"to", "with", "on", "in", "of", "and", "for", "the", "a", "an", "from",
+                "via", "using", "by", "at", "into"}
+
+
+def _unfinished(bullet: str) -> bool:
+    return bullet.endswith(",") or bullet.rsplit(None, 1)[-1].lower() in OPEN_ENDINGS
+
+
 HEADING_WORD_RE = re.compile(r"(?:[A-Z][\w'&.-]*,?|&|and|of|for|the|in|at|to|[|—–-])")
 
 
 def _heading_shaped(line: str) -> bool:
     """"VOLUNTEERING", "Open Source Contributions", "AI Engineer, Corvus Labs": every word
-    capitalised and no digit. A wrapped line that happens to be all names -- "Kubernetes Engine" --
-    reads as a heading.
-    ponytail: word-shape heuristic, a layout-aware parser (indent, font) if it misfires."""
-    return not re.search(r"\d", line) and all(
+    capitalised, no digit, no closing full stop. A wrapped line made only of names reads
+    as a heading unless the bullet above it stops mid-sentence (`_unfinished`)."""
+    return not re.search(r"\d", line) and not line.endswith(".") and all(
         HEADING_WORD_RE.fullmatch(w) for w in line.rstrip(":").split())

@@ -162,3 +162,27 @@ def test_a_career_block_under_an_unknown_heading_is_not_a_headline():
     text = ("Riley Tang\nriley@example.com\n\nCAREER HISTORY\n"
             "AI Engineer, Northwind Data    Mar 2024 - Present\n• Shipped it.\n\nSKILLS\nPython\n")
     assert parse(text).summary == ""
+
+
+@pytest.mark.parametrize("wrapped,after", [
+    ("• Migrated the warehouse from on-prem Hadoop to\nGoogle Cloud Platform\n", "• Cut cost 30%.\n"),
+    ("• Built retrieval with\nLangChain, Pinecone and OpenAI Embeddings.\n", "• Cut cost 30%.\n"),
+    ("• Served the ranking model on\nGoogle Kubernetes Engine\n",
+     "ML Engineer, Corvus Labs    Jan 2022 - Jun 2023\n• Cut cost 30%.\n"),
+])
+def test_a_wrapped_line_of_product_names_continues_an_unfinished_bullet(wrapped, after):
+    resume = parse(JOB.replace("• Shipped the fraud service.\n", wrapped) + after)
+    first = resume.roles[0].bullets[0]
+    assert first.endswith(("Platform", "Embeddings.", "Engine")) and "\n" not in first
+    assert all(r.start for r in resume.roles)
+
+
+@pytest.mark.parametrize("header", [
+    "Riley Tang\nSenior AI Engineer, 5 years, LLM serving\nriley@example.com\n(415) 555-0142\n"
+    "linkedin.com/in/rileytang",
+    "Riley Tang\nSenior AI Engineer, 5 years, LLM serving\nLondon, United Kingdom\n"
+    "riley@example.com\nRemote, open to relocation",
+])
+def test_contact_lines_do_not_count_against_the_header_length(header):
+    assert parse(header + "\n\nEXPERIENCE\nAI Engineer, Northwind Data    Mar 2024 - Present\n"
+                          "• Shipped it.\n").summary == "Senior AI Engineer, 5 years, LLM serving"
