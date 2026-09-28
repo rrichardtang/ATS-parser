@@ -54,8 +54,12 @@ production traffic, or named raters — the provenance of the number, not only i
 **Is the number compared with something — a baseline, a prior model, a before and
 after, a target?**
 
+*Yes* needs the other end of the comparison. A relative change states its own
+baseline, "before" (ticket 15, 28 September): "22% fewer escalations", "halved recall",
+"4 points of F1" and "19% fewer failed reviews" are `yes`.
 *No* looks like: a single standalone number. "0.87 F1" is unreadable without knowing
-what 0.87 replaced or beat.
+what 0.87 replaced or beat. A method rather than a result ("an LLM judge calibrated
+against 500 human labels") is `no`.
 
 ### C5 — Could have returned a negative answer
 **Does any bullet show the measurement was capable of coming back bad — and say what

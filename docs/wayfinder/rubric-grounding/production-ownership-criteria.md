@@ -54,10 +54,17 @@ size.
 **Does any bullet describe work done to a system that was already live?**
 
 *Yes* needs operating, monitoring, debugging, tuning, migrating, porting, replacing,
-profiling or iterating on something already running.
+profiling or iterating on something already running. From ticket 15, 28 September:
+fixing a live system ("I got the consumer group configuration wrong and we replayed
+three days of events"), monitoring ("Drift, hallucination rate … were monitored in
+Grafana"), and rework the neighbouring bullets place after launch ("We rewrote the
+caching layer twice in the process" after "We stayed on all three afterwards"; "Cut
+generation cost 40% by caching lore chunks" after "Shipped 3 client titles with it").
 *No* looks like: every bullet ends at the launch. Also "The eval suite has been run on
 every release since, 40 releases" -- it says the suite is still used, not what the
-candidate did to it.
+candidate did to it. An incident that was merely caught ("An embedding version mismatch
+made results incoherent for a week before it was caught") is C3's operational fact, not
+work; "A small serving benchmark I run each release" is `no` too.
 
 ### C5 — First-person ownership
 **Is the shipped work attributed to this candidate rather than to a team, and without
