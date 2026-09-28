@@ -163,7 +163,7 @@
       "criterion": "C4",
       "locator": "exp[2].bullet[0]",
       "answer": "yes",
-      "quote": "Drift, hallucination rate, cost per request and token usage were monitored in",
+      "quote": "Drift, hallucination rate, cost per request and token usage were monitored in Grafana, 14 dashboards.",
       "date": "2026-09-28"
     },
     {

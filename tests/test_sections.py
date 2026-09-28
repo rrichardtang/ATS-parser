@@ -86,3 +86,24 @@ def test_the_headline_above_the_first_role_is_a_citable_place(prefix, headline):
 def test_a_header_with_only_a_name_and_contact_details_has_no_headline():
     resume = parse(RESUME.replace("SUMMARY\nAI Engineer, 3 years. LLM serving and evaluation.\n", ""))
     assert resume.summary == ""
+
+
+def test_a_wrapped_bullet_line_starting_with_a_capital_or_digit_stays_in_the_bullet():
+    """PDF text keeps no indent, so "Grafana, 14 dashboards." once opened a fake role."""
+    resume = parse("""Riley Tang
+riley@example.com
+
+EXPERIENCE
+Engineer, Meridian Energy Retail    Jan 2022 - Mar 2025
+• Drift and cost were monitored in
+Grafana, 14 dashboards.
+• Improved retrieval,
+19% fewer failed reviews.
+
+VOLUNTEERING
+Coach, junior robotics league.
+""")
+    assert len(resume.roles) == 1
+    assert [text for _, text in resume.bullets] == [
+        "Drift and cost were monitored in Grafana, 14 dashboards.",
+        "Improved retrieval, 19% fewer failed reviews."]

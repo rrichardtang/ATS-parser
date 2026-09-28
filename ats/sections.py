@@ -22,6 +22,7 @@ SECTION_SYNONYMS: dict[str, tuple[str, ...]] = {
     "certifications": ("certifications", "certificates", "licenses"),
     "awards": ("awards", "honors", "achievements"),
     "interests": ("interests", "hobbies", "activities"),
+    "volunteering": ("volunteering", "volunteer experience", "volunteer work"),
 }
 
 _MONTHS = {
@@ -262,12 +263,9 @@ def _parse_roles(lines: list[str]) -> list[Role]:
         elif looks_like_heading and not roles:
             title, company = _split_title_company(stripped)
             roles.append(Role(heading=stripped, title=title, company=company, line_index=index))
-        elif roles and not BULLET_RE.match(line):
-            # Continuation of the previous bullet, or a date line under the heading.
-            if roles[-1].bullets and stripped[0].islower():
-                roles[-1].bullets[-1] += " " + stripped
-            elif parsed is None and len(stripped) < 90 and roles[-1].bullets:
-                title, company = _split_title_company(stripped)
-                roles.append(Role(heading=stripped, title=title, company=company,
-                                  line_index=index))
+        elif roles and roles[-1].bullets and not stripped.isupper():
+            # A wrapped bullet's next line, whatever it starts with: after the first
+            # role only a date range opens a new one, and an unknown all-caps heading
+            # is not bullet text.
+            roles[-1].bullets[-1] += " " + stripped
     return roles

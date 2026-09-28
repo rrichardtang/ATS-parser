@@ -352,6 +352,15 @@ places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
   `any_place` count all see it as `summary`.
 - The probe's `identity` check (`scripts/criteria_probe.py`) now needs a level
   (`LEVEL_RE`) as well as a title.
+- Wrapped bullets stay whole. The parser used to open a fake role when a bullet's next
+  line started with a digit or a capital letter, because PDF text keeps no indent. This
+  hit 06, 16, 18, 28 ("Grafana, 14 dashboards.") and 29 ("19% fewer failed reviews."),
+  so both judges saw "…were monitored in" cut off. Now only a date range opens a role
+  after the first one. "VOLUNTEERING" is a known section, and an unknown all-caps line
+  is not joined to a bullet. Bullet counts and years of experience did not change,
+  because the fake roles had no dates. The key's locators were regenerated through the
+  parser, none moved, and 28's quote is now the whole bullet. Runs from before this fix,
+  including 27 September, saw the split bullets.
 
 **Known gaps.**
 
@@ -362,11 +371,6 @@ places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
   change such as "22% fewer". They were not changed here.
 - For a voted luna sample, the per-place answers come from the one try the vote copied,
   not from a per-place vote.
-- A wrapped bullet whose continuation line starts with a digit or a capital letter
-  becomes a spurious role in the parser. "Grafana, 14 dashboards." in 28, "19% fewer
-  failed reviews." in 29, and also in 06, 16 and 18. It was not fixed here: fixing it
-  moves locators, which would put the key out of line with the 27 September run. The
-  key's entry for 28 quotes the truncated bullet the judges saw.
 
 **Next finish line.** Luna against the key, not against Claude. The owner sets the
 exact threshold before the run.
