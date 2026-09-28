@@ -176,3 +176,21 @@ def test_post_launch_work_aliases_do_not_hit_still_in_use():
 def test_resume_craft_c3_does_not_hit_for_enterprise_customers():
     hit = _find(_patterns(_criterion(RC_SPEC, "C3")), ["Built it for enterprise customers."])
     assert hit is None
+
+
+@pytest.mark.parametrize("headline,met", [
+    ("Applied AI Engineer with 3+ years shipping production LLM and agent systems.", True),
+    ("AI engineer.", False),
+    ("Engineer. Data platforms, some product work.", False),
+])
+def test_resume_craft_c1_needs_a_title_and_a_level(headline, met):
+    text = f"""Riley Tang
+riley@example.com
+
+{headline}
+
+EXPERIENCE
+AI Engineer, Northwind Data                        Mar 2024 - Present
+• Shipped the fraud detection service to production.
+"""
+    assert deterministic_verdict(_doc(text), RC_SPEC).answers["C1"] is met

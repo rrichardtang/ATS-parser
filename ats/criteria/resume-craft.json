@@ -10,9 +10,9 @@
     {
       "id": "C1",
       "name": "says what it is",
-      "question": "Does the resume say what this person is, above the first role, rather than leaving the reader to infer it from a job title?",
-      "yes_requires": "A quote above the first role naming the discipline -- a summary line or a role line. 'AI Engineer, 3 yrs -- LLM serving and evals.'",
-      "no_looks_like": "A name, an email, and straight into a job. The reader has to read a bullet before knowing what they are looking at.",
+      "question": "Does a line above the first role state the target role title, the experience level (years or seniority), and what the candidate builds or specialises in?",
+      "yes_requires": "All three, quoted from above the first role. 'Applied AI Engineer with 3+ years shipping production LLM and agent systems.' A named project or product is a bonus, not required.",
+      "no_looks_like": "Any of the three missing. 'Agentic AI engineer.' (title only); 'GenAI product engineer, two years.' (not what they build); 'Engineer. Data platforms, some product work.' (no level, vague); 'Seeking a senior full-stack role...' (a wish, not what they are). Nothing above the first role is no too.",
       "aliases": [],
       "deterministic": {
         "kind": "identity"

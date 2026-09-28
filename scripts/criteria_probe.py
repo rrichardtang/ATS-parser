@@ -63,6 +63,13 @@ PROBES_DIR = MEASUREMENT_DIR / "probes"
 
 NUMBER_RE = re.compile(r"\d")
 
+# Resume craft C1's experience level: years, or a seniority word.
+LEVEL_RE = re.compile(
+    r"(?i)\b(\d+\+?\s*(?:years?|yrs?)|(?:one|two|three|four|five|six|seven|eight|nine|ten|"
+    r"eleven|twelve|thirteen|fourteen|fifteen|twenty)\s+years?|junior|senior|staff|"
+    r"principal|lead|new grad(?:uate)?)\b"
+)
+
 # C5's "your part, not the team's". ats.invariants already owns the team-subject half;
 # this is the hedge half -- a verb that concedes the work was someone else's.
 HEDGE_RE = re.compile(
@@ -302,15 +309,19 @@ def _says_what_it_is(doc: Doc) -> tuple[bool, str]:
     `scan/no-identity-above-fold` runs `ROLE_IDENTITY_RE` over the top third of page
     one, measured from real word boxes. The band probes are text with no geometry, so
     the same regex runs over the summary and everything above the first role -- the
-    text a fold would contain.
+    text a fold would contain -- and `LEVEL_RE` must hit there too. The bar's third
+    part, what the candidate builds, has no rule channel: a title and a level alone
+    still read `yes` here, where the judge says `no`.
     """
     resume = doc.resume
     header = resume.summary or ""
     if resume.roles:
         head = doc.text.split(resume.roles[0].heading)[0]
         header = f"{header} {head}"
-    match = ROLE_IDENTITY_RE.search(header)
-    return (True, f"{match.group(0)!r} above the first role") if match else (False, "")
+    title, level = ROLE_IDENTITY_RE.search(header), LEVEL_RE.search(header)
+    if not (title and level):
+        return False, ""
+    return True, f"{title.group(0)!r} and {level.group(0)!r} above the first role"
 
 
 def _outcome_in_every_role(doc: Doc) -> tuple[bool, str]:

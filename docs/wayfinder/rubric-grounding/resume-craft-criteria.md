@@ -61,12 +61,25 @@ combination, not a second charge (07 §3).
 ## What the judge answers
 
 ### C1 — Says what it is
-**Does the resume say what this person is, above the first role, rather than leaving the
-reader to infer it from a job title?**
+**Does a line above the first role state the target role title, the experience level
+(years or seniority), and what the candidate builds or specialises in?**
 
-*Yes* needs a quote above the first role naming the discipline — a summary line or a
-role line.
-*No* looks like: a name, an email, and straight into a job.
+The bar was raised on 28 September (ticket 15): the owner found every line that passed
+the old one ("names the discipline") to be poor.
+
+*Yes* needs all three: "Applied AI Engineer with 3+ years shipping production LLM and
+agent systems." A named project or product ("including YunHai.io, a live AI travel
+planner, in beta") is a bonus, not required.
+*No* looks like any of the three missing: "Agentic AI engineer." (title only); "GenAI
+product engineer, two years." (not what they build); "Engineer. Data platforms, some
+product work." (no level, vague); "Seeking a senior full-stack role with room to work
+closer to the model layer." (a wish, not what they are). A name, an email and straight
+into a job is `no` too.
+
+The deterministic judge (`identity` in `scripts/criteria_probe.py`) checks the title and
+the level (`ROLE_IDENTITY_RE`, `LEVEL_RE`) but not what the candidate builds, which has
+no rule channel; so it says `yes` to "GenAI product engineer, two years." where the model
+says `no`. `scan/no-identity-above-fold` still checks the title only.
 
 ### C2 — Names what changed
 **Does every role have at least one bullet naming something that is different because of
