@@ -413,8 +413,8 @@ documents. A missing answer counts as a miss. Claude is not part of this test.
 **The medium result.** The 28 September run (gpt-6-luna, medium effort, 3-try vote, the
 24 keyed documents; `runs/agreement-20260928T201346Z.json`, on the owner's machine)
 matched the key on 30 of 36 entries on both voted samples. The bar was 32, so it
-failed. Every miss was the key saying `yes` and the judge saying `no` or giving no
-answer; none went the other way.
+failed. On each sample, five of the six misses were a keyed `yes` that the judge
+answered `no` or left `missing`. The sixth was the abstain gap on 09, now closed.
 
 - `evaluation-rigour/C4`: 04 and 27, missed in both samples.
 - `production-ownership/C4`: 15 `exp[0].bullet[3]` and 16 `exp[0].bullet[2]` in both
