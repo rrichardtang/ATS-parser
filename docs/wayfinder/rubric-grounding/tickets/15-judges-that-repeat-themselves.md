@@ -287,3 +287,86 @@ costs about $0.11 per live check; the OpenAI judge costs about $0.01.
 **Next run.** All 30 documents, `--docs` listing them, `--batch --max-tokens 25000
 --openai-price 0.10,0.50`. The dry-run worst case is $7.22 (Claude $4.05, luna $3.17).
 The default `--budget 3` refuses it, so it needs the owner's `--budget 8`.
+
+## Decided, 28 September (the owner): the answer key
+
+**Why.** The 27 September audit ran all 30 acceptance documents: luna voted from 3 tries,
+against one Claude try (`runs/agreement-20260927T043041Z.json`, on the owner's machine).
+It failed the finish line. The composite was within 5 points on 14 of 28 documents, and
+there were 17 far band splits. Luna now agrees with itself: flips fell from 73 to 28. But
+it scored lower than Claude on 26 of 28 resumes, by about 5 points on average. When two
+judges are each consistent and still disagree, agreement can't say which one is right.
+So the owner labelled the disagreements, and from now on the judge is scored against
+those labels, not against Claude.
+
+**The new `resume-craft/C1` bar.** The owner found every line that passed the old bar
+("names the discipline") to be poor. A line above the first role must now state three
+things: (a) the target role title, (b) the experience level, in years or seniority, and
+(c) what the candidate builds or specialises in. All three are needed for `yes`. A
+named project or product is a bonus and not required. The owner's `yes`: "Applied AI
+Engineer with 3+ years shipping production LLM and agent systems. Builds independently
+outside of work, including YunHai.io, a live AI travel planner, in beta." The `no`
+examples: "Engineer. Data platforms, some product work." (no level, vague); "GenAI
+product engineer, two years." (doesn't say what they build); "Seeking a senior
+full-stack role with room to work closer to the model layer." (a wish, not what they
+are); "Agentic AI engineer." (title only).
+
+**The rulings**, now worked examples in the specs and the criteria docs:
+
+- `agentic-systems/C1`: defining how an agent is evaluated is `no`. Designing agent
+  behaviour without saying it was built is `no`, as in `resume-craft/C2`'s "design
+  alone doesn't count". An agentic system that was built or shipped is `yes`, even in
+  the passive voice; voice is C5's concern.
+- `evaluation-rigour/C4`: a relative change states its own baseline, "before", so "22%
+  fewer escalations", "halved recall", "4 points of F1" and "19% fewer failed reviews"
+  are `yes`. A method rather than a result ("an LLM judge calibrated against 500 human
+  labels") is `no`.
+- `production-ownership/C4`: fixing a live system, monitoring it, and rework that the
+  neighbouring bullets place after launch are `yes`. An incident that was merely caught
+  is `no` (it is C3's operational fact), and so is "A small serving benchmark I run each
+  release". This is consistent with the 25 and 26 September rulings: staying on or
+  still-in-use with no work named stays `no`.
+
+**The key.** `corpus/resumes/answer_key.json`, committed, holds 36 entries. Each entry
+has the doc, the category slug, the criterion id, the owner's answer, the exact quote
+and the date. Single-answer criteria are keyed per document. `production-ownership/C4`
+(`any_bullet`) is keyed per place: its locators were resolved with `ats.sections.parse`,
+and `tests/test_answer_key.py` fails if a parser change moves one. The entries are
+`agentic-systems/C1` ×10, `evaluation-rigour/C4` ×5, `production-ownership/C4` ×11
+places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
+
+**Built.**
+
+- `scripts/agreement_harness.py --key PATH`, which defaults to the committed key. After
+  the agreement tables, every report (live, `--collect` or `--from`, with or without
+  Claude) prints each provider sample's items matched out of those scored. It then lists
+  every mismatch as doc / criterion / locator / key answer vs judge answer. A scoped
+  item is compared at its keyed place in the item's `places` list, not on the derived
+  answer. A missing answer, including a sample that has no judgement on a judged
+  document, is a mismatch marked `missing`.
+- The headline under the contact details is now citable. On five resumes luna refused
+  to cite lines such as "Agentic AI engineer." because "that line has no locator in
+  PLACES". When there is no summary section, `ats.sections.parse` now reads the header
+  lines after the name as the summary, leaving out any line with an email, phone,
+  URL or location. So `prompts.places`, `passes.resolvable_locators` and the scoped
+  `any_place` count all see it as `summary`.
+- The probe's `identity` check (`scripts/criteria_probe.py`) now needs a level
+  (`LEVEL_RE`) as well as a title.
+
+**Known gaps.**
+
+- The probe cannot see part (c) of the C1 bar, what the candidate builds. It says `yes`
+  to "GenAI product engineer, two years.". `scan/no-identity-above-fold` still checks
+  the title only.
+- The probe's `evaluation-rigour/C4` aliases (`from N`, `N to M`) don't match a relative
+  change such as "22% fewer". They were not changed here.
+- For a voted luna sample, the per-place answers come from the one try the vote copied,
+  not from a per-place vote.
+- A wrapped bullet whose continuation line starts with a digit or a capital letter
+  becomes a spurious role in the parser. "Grafana, 14 dashboards." in 28, "19% fewer
+  failed reviews." in 29, and also in 06, 16 and 18. It was not fixed here: fixing it
+  moves locators, which would put the key out of line with the 27 September run. The
+  key's entry for 28 quotes the truncated bullet the judges saw.
+
+**Next finish line.** Luna against the key, not against Claude. The owner sets the
+exact threshold before the run.

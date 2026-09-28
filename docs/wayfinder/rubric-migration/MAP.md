@@ -25,6 +25,8 @@ for the 30-document run instead of another wording round — see rubric-groundin
 
 **Status, 27 September: that run failed; the app judge is now OpenAI, voted 3 ways, with Claude as an audit judge.** See rubric-grounding 15, "cut the cost, vote the app judge".
 
+**Status, 28 September: the judge is now scored against the owner's answer key, not against Claude.** Luna and Claude each agreed with themselves and still disagreed, so the owner labelled the disagreements (`corpus/resumes/answer_key.json`). See rubric-grounding 15, "the answer key".
+
 **This map decides nothing about what the rubric should be.** Every rubric question
 was settled by the other map; where a decision is missing, this map raises it there or
 records that it was forced by a code fact. What is open here is sequencing, safety and
