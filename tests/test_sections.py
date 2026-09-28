@@ -145,3 +145,20 @@ def test_an_unknown_title_case_heading_is_not_glued_into_a_bullet():
     resume = parse(JOB + "Open Source Contributions\n• Fixed a vLLM scheduler bug.\n")
     assert resume.roles[0].bullets == ["Shipped the fraud service."]
     assert resume.roles[1].heading == "Open Source Contributions"
+
+
+@pytest.mark.parametrize("header,headline", [
+    ("Riley Tang\nriley@example.com\nLondon, United Kingdom\nAgentic AI engineer.", "Agentic AI engineer."),
+    ("Riley Tang\nriley@example.com\nRemote / open to relocation\nAgentic AI engineer.", "Agentic AI engineer."),
+    ("riley@example.com | (415) 555-0142\nRiley Tang\nAgentic AI engineer.", "Agentic AI engineer."),
+    ("Riley Tang\nriley@example.com\nAgentic AI engineer.\nOpen to hybrid work.", "Agentic AI engineer."),
+])
+def test_the_headline_is_one_line_and_never_a_name_or_a_place(header, headline):
+    assert parse(header + "\n\nEXPERIENCE\nAI Engineer, Northwind Data    Mar 2024 - Present\n"
+                          "• Shipped it.\n").summary == headline
+
+
+def test_a_career_block_under_an_unknown_heading_is_not_a_headline():
+    text = ("Riley Tang\nriley@example.com\n\nCAREER HISTORY\n"
+            "AI Engineer, Northwind Data    Mar 2024 - Present\n• Shipped it.\n\nSKILLS\nPython\n")
+    assert parse(text).summary == ""

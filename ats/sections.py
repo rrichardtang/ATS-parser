@@ -204,18 +204,26 @@ def parse(text: str) -> Resume:
     return resume
 
 
-CONTACT_RES = (EMAIL_RE, PHONE_RE, LINKEDIN_RE, GITHUB_RE, URL_RE, LOCATION_RE)
+# "London, United Kingdom" and "Remote / open to relocation" say where, not what.
+PLACE_LINE_RE = re.compile(
+    r"^[A-Z][a-z]+(?:\s[A-Z][a-z]+)*,\s*[A-Z][a-z]+(?:\s[A-Z][a-z]+)*$|(?i:\bremote\b|relocat)")
+CONTACT_RES = (EMAIL_RE, PHONE_RE, LINKEDIN_RE, GITHUB_RE, URL_RE, LOCATION_RE, PLACE_LINE_RE)
+HEADER_MAX_LINES = 4
 
 
 def _headline(resume: Resume) -> str:
     """The line under the name that says what the person is -- "Agentic AI engineer." --
     read as the summary when there is no summary section, so a judge can cite it.
-    The name (the first line) and any line carrying contact details are left out. With
-    no section heading at all the header is the whole document, so there is none."""
-    if not resume.section_order:
+
+    It is the second line that carries no contact details; the first is the name,
+    wherever the contact lines sit. A header that holds a date range or runs past
+    HEADER_MAX_LINES is a career block under a heading the parser does not know, or a
+    document with no headings at all, so there is no headline to read."""
+    header = [l.strip() for l in resume.sections["header"] if l.strip()]
+    if len(header) > HEADER_MAX_LINES or any(DATE_RANGE_RE.search(l) for l in header):
         return ""
-    lines = [l.strip() for l in resume.sections["header"] if l.strip()][1:]
-    return " ".join(l for l in lines if not any(r.search(l) for r in CONTACT_RES))
+    plain = [l for l in header if not any(r.search(l) for r in CONTACT_RES)]
+    return plain[1] if len(plain) > 1 else ""
 
 
 def _parse_contact(blob: str) -> Contact:
