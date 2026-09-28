@@ -58,6 +58,10 @@ mode = "default"          # economy | default | thorough
 # against ~$0.01). A Claude key, from the form or ANTHROPIC_API_KEY, is ignored unless
 # this is true, and then every pass below runs on both providers.
 use_claude = false
+# OpenAI's reasoning effort (none, minimal, low, medium, high, xhigh, max). Reasoning
+# tokens count against its output cap (ats/llm.py MAX_TOKENS). Ticket 15 measured the
+# judge at "medium" and tries "high" next.
+openai_effort = "medium"
 # Tries per provider in the content pass, majority-voted per criterion into one answer
 # (ats/ensemble.py vote); the lower-band rule then applies across providers only.
 content_votes = 3

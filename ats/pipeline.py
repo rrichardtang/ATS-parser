@@ -6,7 +6,7 @@ deterministic half still produces a complete report, marked partial.
 from __future__ import annotations
 
 import concurrent.futures
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from . import config, human, keywords, passes, rules, slop
 from .extract import ExtractedDoc, ExtractionError, extract
@@ -58,12 +58,14 @@ def deterministic(
 
 def app_providers(keys: dict[str, str], models: dict[str, str],
                   settings: dict) -> list[Provider]:
-    """The providers a check runs on: Claude only when `[ensemble] use_claude` is on.
+    """The providers a check runs on: Claude only when `[ensemble] use_claude` is on,
+    OpenAI at `[ensemble] openai_effort`.
 
     A key alone never turns Claude on. Every pass reads this one list, so the slop and
     rewrite passes cannot reach Claude by a route the content pass does not.
     """
-    return [p for p in providers_from(keys, models)
+    return [replace(p, openai_effort=settings["openai_effort"])
+            for p in providers_from(keys, models)
             if p.name != "anthropic" or settings["use_claude"]]
 
 

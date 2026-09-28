@@ -147,6 +147,21 @@ def test_a_claude_key_never_calls_claude_in_the_app(monkeypatch, stubbed, fixtur
     assert report.run_meta["providers"] == [f"openai:{llm.OPENAI_MODEL}"]
 
 
+def test_the_app_sends_weights_openai_effort(monkeypatch, stubbed, fixtures):
+    efforts = set()
+
+    def dispatch(provider, system, user, temperature):
+        efforts.add(provider.openai_effort)
+        return _router(system)
+
+    settings = config.ensemble_settings
+    monkeypatch.setattr(config, "ensemble_settings",
+                        lambda mode=None: {**settings(mode), "openai_effort": "high"})
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    analyze(RunInput(pdf_path=str(fixtures["slop"])))
+    assert efforts == {"high"}
+
+
 def test_unquotable_llm_finding_is_dropped(monkeypatch, fixtures):
     """A model claim with no matching text in the resume is not checkable."""
     fake = json.dumps({"findings": [{
