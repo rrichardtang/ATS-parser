@@ -60,13 +60,20 @@ def _sampling(meta: dict) -> str:
                      for name, count in samples.items())
 
 
+def _effort(meta: dict) -> str:
+    """Absent from a run recorded before 28 September."""
+    effort = meta.get("openai_effort")
+    return f", OpenAI effort {effort}" if effort else ""
+
+
 def render(report: AgreementReport) -> str:
     meta = report.meta
     out: list[str] = [
         "Inter-judge agreement",
         f"  providers   {', '.join(meta.get('providers') or ['none'])}",
         *_judged_line(report),
-        f"  sampling    {_sampling(meta)}, temperature {meta.get('temperature', '?')}",
+        f"  sampling    {_sampling(meta)}, temperature {meta.get('temperature', '?')}"
+        f"{_effort(meta)}",
         f"  generated   {meta.get('generated', 'unknown')}",
         "",
     ]

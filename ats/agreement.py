@@ -211,6 +211,8 @@ def run_meta(
         "samples_per_provider": {name: samples for name, (samples, _v) in plan.items()},
         "votes_per_sample": {name: votes for name, (_s, votes) in plan.items()},
         "temperature": temperature,
+        "openai_effort": next((p.openai_effort for p in providers if p.name == "openai"),
+                              None),
         "notes": list(notes or []),
     }
 

@@ -69,6 +69,8 @@ from ats.agreement_table import render  # noqa: E402
 from ats.llm import LEGACY_OPENAI, providers_from  # noqa: E402
 
 DEFAULT_OUT = ROOT / "runs"
+# openai 3.19.2's `ReasoningEffort` values.
+OPENAI_EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 
 
 def fixture_targets(only: list[str]) -> list[tuple[str, Path]]:
@@ -185,10 +187,12 @@ def select_targets(args) -> tuple[list[tuple[str, str]], list[str]]:
 
 def chosen_providers(args, keys: dict[str, str] | None = None) -> list:
     """The providers the keys give, less the one --claude-only or --no-claude leaves
-    out, at Claude's cap, and with no OpenAI SDK retries: a timed-out try is lost, not
-    resent and billed again, and the vote absorbs it."""
+    out, at each provider's cap and OpenAI's effort, and with no OpenAI SDK retries: a
+    timed-out try is lost, not resent and billed again, and the vote absorbs it."""
     left_out = "openai" if args.claude_only else "anthropic" if args.no_claude else ""
-    return [replace(p, anthropic_max_tokens=args.max_tokens, openai_max_retries=0)
+    return [replace(p, anthropic_max_tokens=args.max_tokens, openai_max_retries=0,
+                    openai_max_tokens=args.openai_max_tokens,
+                    openai_effort=args.openai_effort)
             for p in providers_from(keys or {}) if p.name != left_out]
 
 
@@ -370,6 +374,13 @@ def main() -> None:
     parser.add_argument("--max-tokens", type=_positive, default=llm.ANTHROPIC_MAX_TOKENS,
                         help="Claude's output cap for this run, thinking included "
                              f"(default {llm.ANTHROPIC_MAX_TOKENS})")
+    parser.add_argument("--openai-max-tokens", type=_positive, default=llm.MAX_TOKENS,
+                        help="OpenAI's output cap for this run, reasoning included "
+                             f"(default {llm.MAX_TOKENS})")
+    parser.add_argument("--openai-effort", choices=OPENAI_EFFORTS,
+                        default=config.ensemble_settings()["openai_effort"],
+                        help="OpenAI's reasoning effort (default: weights.toml's "
+                             "[ensemble] openai_effort)")
     parser.add_argument("--openai-price", type=_price, metavar="IN,OUT",
                         help="OpenAI's $ per million input and output tokens; needed "
                              "to budget a run that includes OpenAI (gpt-6-luna: 0.10,0.50)")

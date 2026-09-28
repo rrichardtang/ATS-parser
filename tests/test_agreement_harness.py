@@ -3,6 +3,8 @@ from argparse import Namespace
 
 import pytest
 
+from ats import agreement
+from ats.agreement_table import render
 from scripts import agreement_harness as harness
 
 
@@ -38,7 +40,18 @@ def test_out_of_range_values_are_rejected_by_the_parser(monkeypatch, flags):
 
 def _plan_args(**overrides):
     return Namespace(**{"claude_only": False, "no_claude": False, "max_tokens": 25000,
+                        "openai_max_tokens": 16000, "openai_effort": "medium",
                         "samples": 2, "votes": 3, "claude_samples": 1, **overrides})
+
+
+def test_openai_effort_and_cap_reach_the_provider_the_meta_and_the_sampling_line():
+    [luna] = harness.chosen_providers(
+        _plan_args(no_claude=True, openai_max_tokens=24000, openai_effort="high"),
+        {"openai": "-"})
+    assert (luna.openai_max_tokens, luna.openai_effort) == (24000, "high")
+    meta = agreement.run_meta([luna], {"openai": (2, 3)}, 0.7)
+    assert meta["openai_effort"] == "high"
+    assert "OpenAI effort high" in render(agreement.AgreementReport(meta=meta, providers=[luna.label]))
 
 
 def test_the_default_plan_votes_openai_and_asks_claude_once():
