@@ -36,7 +36,8 @@ ANTHROPIC_MAX_TOKENS = 64000
 ANTHROPIC_EFFORT = "medium"
 
 # Sent explicitly rather than left to the model's default, for the same reason: the app
-# judge's cost and its self-consistency are measured at this setting (ticket 15).
+# judge's cost and its self-consistency are measured at this setting (ticket 15). The
+# app sends weights.toml's `openai_effort`; this is only a bare Provider's default.
 OPENAI_EFFORT = "medium"
 
 # Seconds per attempt. For Claude, which streams, this is the read timeout between
@@ -71,8 +72,12 @@ class Provider:
     api_key: str
     model: str
     # Claude's output cap; the agreement harness lowers it per run (--max-tokens).
-    # OpenAI requests always send MAX_TOKENS.
     anthropic_max_tokens: int = ANTHROPIC_MAX_TOKENS
+    # OpenAI's cap, reasoning included; the harness sets it per run (--openai-max-tokens).
+    openai_max_tokens: int = MAX_TOKENS
+    # Not sent to legacy models. The app sets it from weights.toml, the harness from
+    # --openai-effort.
+    openai_effort: str = OPENAI_EFFORT
     # OpenAI's SDK resends a timed-out request, and each abandoned generation may be
     # billed. None keeps the SDK's default (the app); the harness sends 0, so a lost
     # try just shrinks its own vote (`passes.vote_samples`).
@@ -143,7 +148,8 @@ def _truncated(label: str, reason: str | None, cap: int) -> None:
     if reason in ("max_tokens", "length"):
         raise LLMError(
             f"{label}: response hit the {cap}-token cap and was cut off "
-            "mid-JSON; raise the cap (ats.llm, or the harness's --max-tokens) "
+            "mid-JSON; raise the cap (ats.llm, or the harness's --max-tokens or "
+            "--openai-max-tokens) "
             "or narrow the prompt"
         )
 
@@ -192,6 +198,16 @@ def anthropic_text(provider: Provider, message) -> str:
     )
 
 
+def _log_openai_usage(provider: Provider, usage, finish_reason: str | None) -> None:
+    if usage is None:
+        return
+    cached = getattr(usage.prompt_tokens_details, "cached_tokens", None) or 0
+    reasoning = getattr(usage.completion_tokens_details, "reasoning_tokens", None) or 0
+    log.info("%s used %s input (%s cached) and %s output tokens (%s reasoning) "
+             "(finish_reason=%s)", provider.label, usage.prompt_tokens, cached,
+             usage.completion_tokens, reasoning, finish_reason)
+
+
 def _dispatch(provider: Provider, system: str, user: str, temperature: float) -> str:
     if provider.name == "anthropic":
         client = _anthropic_client(provider.api_key)
@@ -211,7 +227,7 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
         legacy = bool(LEGACY_OPENAI.match(provider.model))
         request: dict[str, Any] = {
             "model": provider.model,
-            "max_tokens" if legacy else "max_completion_tokens": MAX_TOKENS,
+            "max_tokens" if legacy else "max_completion_tokens": provider.openai_max_tokens,
             "response_format": {"type": "json_object"},
             "messages": [
                 {"role": "system", "content": system},
@@ -221,10 +237,11 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
         if legacy:
             request["temperature"] = temperature
         else:
-            request["reasoning_effort"] = OPENAI_EFFORT
+            request["reasoning_effort"] = provider.openai_effort
         response = client.chat.completions.create(**request)
         choice = response.choices[0]
-        _truncated(provider.label, getattr(choice, "finish_reason", None), MAX_TOKENS)
+        _log_openai_usage(provider, response.usage, choice.finish_reason)
+        _truncated(provider.label, choice.finish_reason, provider.openai_max_tokens)
         return choice.message.content or ""
 
     raise LLMError(f"unknown provider {provider.name}")

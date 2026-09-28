@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import math
 
-from . import llm
 from .llm import Provider
 
 # Claude Sonnet 5, $ per million tokens (Anthropic pricing page, 2026-09-26): $2 in,
@@ -55,7 +54,7 @@ def _rates(provider: Provider, batch: bool, openai_price: tuple[float, float] | 
     if retries is None:
         retries = openai.DEFAULT_MAX_RETRIES
     attempts = LIVE_ATTEMPTS * (1 + retries)
-    return (*openai_price, llm.MAX_TOKENS, attempts)
+    return (*openai_price, provider.openai_max_tokens, attempts)
 
 
 def worst_case(providers: list[Provider], prompt_tokens: list[int], calls: dict[str, int],

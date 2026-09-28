@@ -73,7 +73,12 @@ class _FakeOpenAI:
         choice = type("Choice", (), {
             "message": message, "finish_reason": self.finish_reason,
         })()
-        return type("Response", (), {"choices": [choice]})()
+        usage = type("Usage", (), {
+            "prompt_tokens": 7, "completion_tokens": 42,
+            "prompt_tokens_details": type("Details", (), {"cached_tokens": 3})(),
+            "completion_tokens_details": type("Details", (), {"reasoning_tokens": 30})(),
+        })()
+        return type("Response", (), {"choices": [choice], "usage": usage})()
 
 
 def _patch(monkeypatch, provider_module, factory):
@@ -147,6 +152,35 @@ def test_openai_sends_max_completion_tokens_and_no_temperature(monkeypatch):
     assert "max_tokens" not in sent[0]
     assert "temperature" not in sent[0]
     assert sent[0]["reasoning_effort"] == "medium"
+
+
+def test_openai_sends_the_providers_effort_and_cap(monkeypatch):
+    sent = []
+    _patch(monkeypatch, "openai", _FakeOpenAI(sent))
+
+    llm.call(Provider("openai", "k", "gpt-6-luna", openai_max_tokens=24000,
+                      openai_effort="high"), "sys", "user")
+    assert sent[0]["max_completion_tokens"] == 24000
+    assert sent[0]["reasoning_effort"] == "high"
+
+
+def test_openai_usage_is_logged(monkeypatch, caplog):
+    _patch(monkeypatch, "openai", _FakeOpenAI([]))
+
+    with caplog.at_level("INFO", logger="ats.llm"):
+        llm.call(OPENAI, "sys", "user")
+    assert ("openai:gpt-6-luna used 7 input (3 cached) and 42 output tokens "
+            "(30 reasoning) (finish_reason=stop)") in caplog.text
+
+
+def test_a_truncated_openai_reply_fails_at_the_cap_it_was_sent(monkeypatch):
+    sent = []
+    _patch(monkeypatch, "openai", _FakeOpenAI(sent, finish_reason="length"))
+
+    with pytest.raises(LLMError, match="24000-token cap .* cut off"):
+        llm.call(Provider("openai", "k", "gpt-6-luna", openai_max_tokens=24000),
+                 "sys", "user")
+    assert len(sent) == 1
 
 
 def test_openai_legacy_model_keeps_the_old_spelling(monkeypatch):

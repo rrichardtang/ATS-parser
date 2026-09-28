@@ -75,3 +75,11 @@ def test_a_harness_openai_try_without_sdk_retries_is_two_attempts():
     costs = budget.worst_case([harness], [3000], {"openai": 1}, True, (1.0, 8.0))
     assert costs[harness.label] == pytest.approx(
         budget.LIVE_ATTEMPTS * (3000 * 1.0 + llm.MAX_TOKENS * 8.0) / 1e6)
+
+
+def test_an_openai_worst_case_uses_the_cap_the_provider_sends():
+    raised = Provider("openai", "k", "gpt-6-luna", openai_max_retries=0,
+                      openai_max_tokens=24000)
+    costs = budget.worst_case([raised], [3000], {"openai": 1}, True, (1.0, 8.0))
+    assert costs[raised.label] == pytest.approx(
+        budget.LIVE_ATTEMPTS * (3000 * 1.0 + 24000 * 8.0) / 1e6)
