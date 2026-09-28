@@ -32,6 +32,8 @@ of another wording round.
 
 **Status, 28 September: the finish line is set.** gpt-6-luna (medium effort, 3-try vote) must match the answer key on at least 32 of 36 entries, on each of its two voted samples, over the 24 keyed documents; a missing answer is a miss, and Claude is not part of the test. See rubric-grounding 15, "the answer key".
 
+**Status, 28 September: the medium run failed at 30/36 on both samples; one experiment at high effort is next.** The abstain gap is closed and the harness takes `--openai-effort` and `--openai-max-tokens`. If luna reaches 32/36 on both samples at `high`, the app's `openai_effort` becomes `high`. See rubric-grounding 15, "one experiment at high effort".
+
 ## Spec so far
 
 - [production-ownership-criteria.md](production-ownership-criteria.md) — the first

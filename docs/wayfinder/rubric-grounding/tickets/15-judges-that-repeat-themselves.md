@@ -394,7 +394,7 @@ places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
   its `try_places`, so the keyed place scores `missing` even if some tries answered it.
   It changes the score only for the four `no`-keyed places. A try that says `yes` at a
   place derives `yes` and does not abstain, and a `yes`-keyed place that was answered
-  `no` is a miss either way.
+  `no` is a miss either way. Closed; see "one experiment at high effort" below.
 - The heading test is a word-shape heuristic. After a bullet that ends a sentence, a
   wrapped line made only of capitalised names (such as "Kubernetes Engine") reads as a
   heading. Under PROJECTS, a wrapped line that starts with a capital and is followed by
@@ -407,3 +407,46 @@ places, and `resume-craft/C1` ×10 (all `no`, each checked against the new bar).
 owner before the run: gpt-6-luna (medium effort, 3-try vote) matches the answer key on
 at least 32 of 36 entries, on each of its two voted samples, over the 24 keyed
 documents. A missing answer counts as a miss. Claude is not part of this test.
+
+## Decided, 28 September (the owner): one experiment at high effort
+
+**The medium result.** The 28 September run (gpt-6-luna, medium effort, 3-try vote, the
+24 keyed documents; `runs/agreement-20260928T201346Z.json`, on the owner's machine)
+matched the key on 30 of 36 entries on both voted samples. The bar was 32, so it
+failed. Every miss was the key saying `yes` and the judge saying `no` or giving no
+answer; none went the other way.
+
+- `evaluation-rigour/C4`: 04 and 27, missed in both samples.
+- `production-ownership/C4`: 15 `exp[0].bullet[3]` and 16 `exp[0].bullet[2]` in both
+  samples (16 was `missing` in one of them); 21 `exp[0].bullet[3]` in sample 0; 08
+  `exp[0].bullet[3]` in sample 1.
+- 09 `exp[3].bullet[0]` (key `no`) was `missing` in both samples. This is the abstain
+  gap listed under the answer key's known gaps.
+
+**The experiment.** The same run at `high` reasoning effort: gpt-6-luna, 3-try vote, the
+same 24 keyed documents, the same key and the same bar. It must match at least 32 of 36
+entries on each of its two voted samples, and a missing answer counts as a miss. The
+abstain gap is closed first. If it passes, the app's `openai_effort` becomes `high`.
+
+**Built.**
+
+- The abstain gap is closed. When every try abstains on a scoped criterion's derived
+  answer, the voted sample keeps `{"id": ..., "try_places": ...}` with no answer, so
+  `answer_key.judge_answer` still votes the keyed place. `criterion_answers` skips an
+  item with no answer, and the bands, the per-criterion tables, placing and scoring all
+  read answers through it, so an abstention does not become an answer anywhere else.
+- `weights.toml` `[ensemble] openai_effort`, default `"medium"`. The app puts it on
+  every OpenAI `Provider` (`pipeline.app_providers`).
+- `scripts/agreement_harness.py --openai-effort {none,minimal,low,medium,high,xhigh,max}`
+  defaults to that setting. `--openai-max-tokens N` defaults to `llm.MAX_TOKENS`
+  (16000). Both are `Provider` fields, like `anthropic_max_tokens`. The run meta records
+  `openai_effort`, and the report's sampling line prints it.
+- Reasoning tokens count against OpenAI's cap, so a high-effort reply may be cut off.
+  The budget's worst case now uses the cap that is actually sent. A reply that stops at
+  the cap still raises and shows up as a failed call. Each OpenAI reply is logged on
+  `ats.llm`: input tokens, cached input, output tokens, reasoning tokens and
+  `finish_reason`, so the owner can see real output sizes.
+- Dry run for the experiment (`--no-claude --openai-price 0.10,0.50 --openai-effort
+  high`, the 24 keyed documents, 144 calls): the worst case is $2.55 at the default
+  16000 cap, and $3.70 at `--openai-max-tokens 24000`. That is over the default $3.00
+  `--budget`, so a 24000 run needs `--budget 4`.
