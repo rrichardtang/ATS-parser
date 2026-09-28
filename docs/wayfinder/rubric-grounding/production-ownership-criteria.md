@@ -59,12 +59,15 @@ fixing a live system ("I got the consumer group configuration wrong and we repla
 three days of events"), monitoring ("Drift, hallucination rate … were monitored in
 Grafana"), and rework the neighbouring bullets place after launch ("We rewrote the
 caching layer twice in the process" after "We stayed on all three afterwards"; "Cut
-generation cost 40% by caching lore chunks" after "Shipped 3 client titles with it").
+generation cost 40% by caching lore chunks" after "Shipped 3 client titles with it"),
+and operating it when that produced a named artefact ("It was kept running afterwards
+and the runbook came out of that").
 *No* looks like: every bullet ends at the launch. Also "The eval suite has been run on
 every release since, 40 releases" -- it says the suite is still used, not what the
 candidate did to it. An incident that was merely caught ("An embedding version mismatch
 made results incoherent for a week before it was caught") is C3's operational fact, not
-work; "A small serving benchmark I run each release" is `no` too.
+work; "A small serving benchmark I run each release" is `no` too, and so is "We kept
+the loops running after the grant ended": staying, with no work named.
 
 ### C5 — First-person ownership
 **Is the shipped work attributed to this candidate rather than to a team, and without

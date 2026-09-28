@@ -78,7 +78,7 @@ into a job is `no` too.
 
 The deterministic judge (`identity` in `scripts/criteria_probe.py`) checks the title and
 the level (`ROLE_IDENTITY_RE`, `LEVEL_RE`) but not what the candidate builds, which has
-no rule channel; so it says `yes` to "GenAI product engineer, two years." where the model
+no rule channel; so it says `yes` to "AI engineer, eight years." where the model
 says `no`. `scan/no-identity-above-fold` still checks the title only.
 
 ### C2 — Names what changed

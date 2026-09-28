@@ -182,6 +182,7 @@ def test_resume_craft_c3_does_not_hit_for_enterprise_customers():
     ("Applied AI Engineer with 3+ years shipping production LLM and agent systems.", True),
     ("AI engineer.", False),
     ("Engineer. Data platforms, some product work.", False),
+    ("AI engineer, eight years.", True),  # says nothing it builds: the probe's known gap
 ])
 def test_resume_craft_c1_needs_a_title_and_a_level(headline, met):
     text = f"""Riley Tang
