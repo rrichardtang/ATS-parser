@@ -12,7 +12,7 @@ from ats import config, llm, passes, prompts, rubric
 from ats.llm import Provider
 from ats.models import JUDGED_CATEGORIES, Category, Finding, Gate, Severity
 from ats.sections import Resume
-from ats.pipeline import RunInput, analyze, app_providers
+from ats.pipeline import RunInput, analyze, app_providers, non_content_providers
 
 # One judge's answers: a placed `no` (the resume says something and what it says is
 # the problem), an unplaced `no` (nothing to point at), and a `yes`.
@@ -147,26 +147,47 @@ def test_a_claude_key_never_calls_claude_in_the_app(monkeypatch, stubbed, fixtur
     assert report.run_meta["providers"] == [f"openai:{llm.OPENAI_MODEL}"]
 
 
-def test_the_app_sends_weights_openai_effort_and_cap(monkeypatch, stubbed, fixtures):
+def _openai_settings_by_pass(monkeypatch, overrides=None):
+    """(pass, effort, cap) for every call a full check with rewrites makes."""
     sent = set()
 
     def dispatch(provider, system, user, temperature):
-        sent.add((provider.openai_effort, provider.openai_max_tokens))
+        kind = "content" if system == prompts.content_system() else "other"
+        sent.add((kind, provider.openai_effort, provider.openai_max_tokens))
         return _router(system)
 
     settings = config.ensemble_settings
-    monkeypatch.setattr(config, "ensemble_settings", lambda mode=None: {
-        **settings(mode), "openai_effort": "low", "openai_max_tokens": 12345})
+    monkeypatch.setattr(config, "ensemble_settings",
+                        lambda mode=None: {**settings(mode), **(overrides or {})})
     monkeypatch.setattr(llm, "_dispatch", dispatch)
+    return sent
+
+
+def test_the_app_sends_each_pass_its_own_openai_effort_and_cap(monkeypatch, stubbed,
+                                                                fixtures):
+    sent = _openai_settings_by_pass(monkeypatch, {
+        "openai_effort": "low", "openai_max_tokens": 12345,
+        "openai_other_effort": "minimal", "openai_other_max_tokens": 6789})
     analyze(RunInput(pdf_path=str(fixtures["slop"])))
-    assert sent == {("low", 12345)}
+    assert sent == {("content", "low", 12345), ("other", "minimal", 6789)}
 
 
-def test_weights_run_the_app_at_ticket_15s_passing_settings():
-    """Ticket 15 passed at "high"; a high-effort reply ran to 17K tokens, so 32000."""
-    [luna] = app_providers({"openai": "k"}, {}, config.ensemble_settings())
-    assert luna.openai_effort == "high"
-    assert luna.openai_max_tokens >= 32000
+def test_only_the_content_pass_runs_at_ticket_15s_passing_settings(monkeypatch, stubbed,
+                                                                   fixtures):
+    """Ticket 15 measured the content judge alone at high and 32000; slop and rewrites
+    (generate, judge, polish) stay at medium and 16000."""
+    sent = _openai_settings_by_pass(monkeypatch)
+    analyze(RunInput(pdf_path=str(fixtures["slop"])))
+    assert sent == {("content", "high", 32000), ("other", "medium", 16000)}
+
+
+@pytest.mark.parametrize("mode", ["economy", "default", "thorough"])
+def test_every_mode_keeps_both_openai_settings(mode):
+    settings = config.ensemble_settings(mode)
+    [content] = app_providers({"openai": "k"}, {}, settings)
+    [other] = non_content_providers([content], settings)
+    assert (content.openai_effort, content.openai_max_tokens) == ("high", 32000)
+    assert (other.openai_effort, other.openai_max_tokens) == ("medium", 16000)
 
 
 def test_unquotable_llm_finding_is_dropped(monkeypatch, fixtures):

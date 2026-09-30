@@ -66,6 +66,11 @@ openai_effort = "high"
 # 11-17K tokens, so ticket 15 set the floor at 32000; the agreement harness's
 # --openai-max-tokens defaults to this, so the test run and the app agree.
 openai_max_tokens = 32000
+# The two settings above are the content pass's only: ticket 15 measured nothing else.
+# The slop and rewrite passes (generate, judge, polish) stay at medium and 16000 until
+# something measures them at high.
+openai_other_effort = "medium"
+openai_other_max_tokens = 16000
 # Tries per provider in the content pass, majority-voted per criterion into one answer
 # (ats/ensemble.py vote); the lower-band rule then applies across providers only.
 content_votes = 3

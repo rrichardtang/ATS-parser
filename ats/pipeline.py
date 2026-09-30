@@ -58,7 +58,7 @@ def deterministic(
 
 def app_providers(keys: dict[str, str], models: dict[str, str],
                   settings: dict) -> list[Provider]:
-    """The providers a check runs on: Claude only when `[ensemble] use_claude` is on,
+    """The content pass's providers: Claude only when `[ensemble] use_claude` is on,
     OpenAI at `[ensemble] openai_effort` and `openai_max_tokens`.
 
     A key alone never turns Claude on. Every pass reads this one list, so the slop and
@@ -68,6 +68,14 @@ def app_providers(keys: dict[str, str], models: dict[str, str],
                     openai_max_tokens=int(settings["openai_max_tokens"]))
             for p in providers_from(keys, models)
             if p.name != "anthropic" or settings["use_claude"]]
+
+
+def non_content_providers(providers: list[Provider], settings: dict) -> list[Provider]:
+    """The same providers for the slop and rewrite passes, with OpenAI at
+    `[ensemble] openai_other_effort` and `openai_other_max_tokens`."""
+    return [replace(p, openai_effort=settings["openai_other_effort"],
+                    openai_max_tokens=int(settings["openai_other_max_tokens"]))
+            for p in providers]
 
 
 def resolve_target_title(explicit: str) -> str:
@@ -88,6 +96,7 @@ def analyze(run: RunInput) -> Report:
 
     settings = config.ensemble_settings(run.ensemble_mode)
     providers = app_providers(run.keys, run.models, settings)
+    others = non_content_providers(providers, settings)
     notes: list[str] = []
     meta: dict = {
         "mode": settings["mode"],
@@ -134,7 +143,7 @@ def analyze(run: RunInput) -> Report:
             digest,
         )
         slop_future = pool.submit(
-            passes.slop_pass, providers, resume, caught,
+            passes.slop_pass, others, resume, caught,
             int(settings["slop_samples"]), int(settings["slop_vote_k"]),
             float(settings["temperature"]),
         )
@@ -156,7 +165,7 @@ def analyze(run: RunInput) -> Report:
         rewrite_result = _safe(
             None, "rewrite",
             fn=lambda: passes.rewrite_pass(
-                providers, resume, findings,
+                others, resume, findings,
                 int(settings["rewrite_objectives"]), int(settings["rewrite_samples"]),
                 bool(settings["rewrite_judge"]), float(settings["rewrite_margin"]),
                 float(settings["temperature"]), digest,
@@ -206,7 +215,7 @@ def generate_rewrites(
     parse_resume() returned when the report was first built.
     """
     settings = config.ensemble_settings(ensemble_mode)
-    providers = app_providers(keys, models, settings)
+    providers = non_content_providers(app_providers(keys, models, settings), settings)
     if not providers:
         report.notes.append(
             "No API key supplied for an enabled provider -- nothing to generate "
