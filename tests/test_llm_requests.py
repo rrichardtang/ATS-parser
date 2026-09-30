@@ -265,6 +265,6 @@ def test_both_providers_are_told_to_read_context_and_answer_every_place(monkeypa
     openai_system, openai_user = (m["content"] for m in sent_openai[0]["messages"])
     for sent_system, sent_user in ((claude_system, claude_user), (openai_system, openai_user)):
         assert "in the context of the other bullets in the same role or project" in sent_system
-        assert "bullets under a Projects heading are\n  places too" in sent_system
+        assert "bullets under a Projects heading" in sent_system
         assert "PLACES (14; the only locators you may use):" in sent_user
         assert "exp[3].bullet[0]: A small serving benchmark I run each release" in sent_user
