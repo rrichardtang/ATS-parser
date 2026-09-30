@@ -547,13 +547,23 @@ machine).
 
 **Switched on.**
 
-- `weights.toml` `[ensemble] openai_effort = "high"`.
-- `weights.toml` `[ensemble] openai_max_tokens = 32000`, new. `pipeline.app_providers`
-  puts it on every OpenAI `Provider` next to the effort, so the app sends
-  `max_completion_tokens` 32000. `llm.MAX_TOKENS` (16000) is now only a bare
-  `Provider`'s default; Claude has its own `ANTHROPIC_MAX_TOKENS`.
-- The harness's `--openai-max-tokens` defaults to that setting, so the test run and the
-  app agree. The flag stays.
+Only the content judge runs at high. This test measured the content pass alone, so the
+slop and rewrite passes (generate, judge, polish) stay at medium and 16000 until
+something measures them.
+
+- `weights.toml` `[ensemble] openai_effort = "high"` and `openai_max_tokens = 32000`,
+  new, are the content pass's. `pipeline.app_providers` puts both on the content pass's
+  OpenAI `Provider`, so it sends `max_completion_tokens` 32000.
+- `weights.toml` `[ensemble] openai_other_effort = "medium"` and
+  `openai_other_max_tokens = 16000`, new, are the slop and rewrite passes'.
+  `pipeline.non_content_providers` derives their providers from the content pass's
+  with those two values, which is what they sent before this change. Neither mode block
+  (`economy`, `thorough`) sets any of the four, so every mode inherits them.
+- `llm.MAX_TOKENS` (16000) is now only a bare `Provider`'s default; Claude has its own
+  `ANTHROPIC_MAX_TOKENS`.
+- The harness runs only the content pass, so its `--openai-effort` and
+  `--openai-max-tokens` default to the content settings, and the test run and the app
+  agree. Both flags stay.
 - `llm.CALL_TIMEOUT` is 300 s, up from 180. OpenAI does not stream, so this bounds a
   whole reply. At high effort a 17K-token reply took up to about 2 minutes (the harness
   ran 6 calls a resume in parallel in about 2 minutes), so a reply that runs to the
@@ -566,12 +576,13 @@ machine).
 already reads the cap each `Provider` sends. At $0.10/$0.50 per million tokens:
 
 - Worst case for one check (default mode, OpenAI only, rewrites off, as the app first
-  runs it): 3 content and 3 slop calls, each up to 6 attempts (a JSON repair times the
-  SDK's 2 retries) at 32000 output tokens. That is $0.58 of output and about $0.03 of
-  input, about $0.61. Rewrites asked for afterwards add 5 calls, about $0.50 more.
-- Realistic: about 15K output tokens per call. The 3 content votes cost about $0.023
-  of output and $0.003 of input (about 8.6K input tokens each). If the 3 slop calls ran
-  as long, a check would be about $0.05.
+  runs it). Each call gets up to 6 attempts, a JSON repair times the SDK's 2 retries.
+  The 3 content calls at 32000 output tokens come to $0.29, and the 3 slop calls at
+  16000 come to $0.14. With about $0.03 of input, a check is about $0.46. Rewrites asked
+  for afterwards add 5 calls at 16000, about $0.25 more.
+- Realistic: about 15K output tokens per content call. The 3 content votes cost about
+  $0.023 of output and $0.003 of input (about 8.6K input tokens each), so about $0.025.
+  The slop and rewrite calls at medium add to that; no run has measured their size.
 - Harness dry run with no `--openai-max-tokens` flag (`--no-claude --openai-price
   0.10,0.50 --openai-effort high --budget 5 --docs
   01-lab-to-industry-agents,04-fullstack-senior-inconsistent`, 12 calls): worst case
