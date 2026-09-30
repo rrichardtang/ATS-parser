@@ -450,3 +450,69 @@ abstain gap is closed first. If it passes, the app's `openai_effort` becomes `hi
   high`, the 24 keyed documents, 144 calls): the worst case is $2.55 at the default
   16000 cap, and $3.70 at `--openai-max-tokens 24000`. That is over the default $3.00
   `--budget`, so a 24000 run needs `--budget 4`.
+
+## Decided, 29 September (the owner): high effort failed at 31/32; misses sorted
+
+**The run.** gpt-6-luna at `high` effort, 3-try vote, the 24 keyed documents
+(`runs/agreement-20260929T002727Z.json`, on the owner's machine), with
+`--openai-max-tokens 32000`. At the default 16000 cap about 13 replies were cut off
+because reasoning filled the cap; each finished reply used 11-17K output tokens. Real
+spend was about $1.50.
+
+**The result.** Sample 0 matched 31 of 36 entries and sample 1 matched 32. The bar was
+32 on each sample, so the experiment FAILED. The result stands and is not rescored
+against the key as changed below.
+
+**The misses, with Luna's reason and the owner's verdict.**
+
+- 27 `evaluation-rigour/C4`, "4 points of F1": no in all 6 tries, "doesn't name the
+  baseline". Wording. `yes_requires` opened with "The other end of the comparison,
+  named", which contradicts its own relative-change examples, and Luna followed the
+  opening sentence.
+- 04 `evaluation-rigour/C4`, "22% fewer escalations": split, "not a model-quality
+  metric". Wording. The rubric never restricts C4 to model-quality metrics.
+- 21 `production-ownership/C4` `exp[0].bullet[3]`, "We rewrote the caching layer twice
+  in the process": no in 5 of 6 tries, although the line is a yes example in
+  `yes_requires`. Per-bullet context. Luna answered the bullet alone; the ruling depends
+  on "We stayed on all three afterwards" in the same role.
+- 09 `production-ownership/C4` `exp[3].bullet[0]`, the PROJECTS bullet: skipped in all 6
+  tries while all 13 job bullets were answered, so `_any_place` could not conclude and
+  the answer was empty. A skipped project place. This hurts the app as well: any resume
+  with a projects section can get no answer.
+- 16 `production-ownership/C4` `exp[0].bullet[2]`, "Our first topic layout was wrong and
+  we rebuilt it.": Luna said no against a keyed yes. The key changes to no: nothing in
+  the line says the system was live, and it is a weak bullet the checker should flag.
+  The change is effective from the next run only.
+
+**Built.**
+
+1. `evaluation-rigour` C4's `yes_requires` now leads with the rule that a relative
+   change on any metric, business outcomes such as escalations included, states its own
+   baseline and is yes. A named other end of the comparison stays as further yes. The
+   examples and `no_looks_like` are unchanged; no aliases or patterns were added.
+2. One general instruction in the content prompt (`ats/prompts.py`), not an edit per
+   criterion: a per-place answer reads the place in the context of the other bullets in
+   the same role or project, and the answer still belongs to that place. Both providers
+   receive the same system and user text.
+3. Every listed place must be answered. `PER_PLACE` now says "EVERY bullet in PLACES,
+   project bullets included" instead of "role bullet"; the prompt says bullets under a
+   Projects heading are places too; the PLACES header carries the count ("PLACES (14;
+   ..." on 09). The derivation is unchanged: an unanswered place still leaves the
+   criterion unanswered, not no. 09's parse still lists `exp[3].bullet[0]`.
+4. The key entry for 16 `exp[0].bullet[2]` is `no`, dated 2026-09-29, with a `note`.
+   The line is a no example in `production-ownership` C4's `no_looks_like`: rework with
+   no sign the system was already live.
+
+The prompt grows by about 620 characters, about 207 input tokens per call by the
+budget's 3-characters-per-token estimate, nearly all of it in the cached system prompt.
+Dry run (`--no-claude --openai-price 0.10,0.50 --openai-effort high
+--openai-max-tokens 32000 --budget 5`, the 24 keyed documents, 144 calls): worst case
+$4.86, which fits the $5.00 budget.
+
+**Next.** One rerun: the same 24 documents, the bar 32 of 36 on each sample, effort
+`high`, `--openai-max-tokens 32000`, `--budget 5`. On a pass, the app's `openai_effort`
+becomes `high` AND the app's OpenAI cap must be at least 32000. On a fail, the owner
+accepts Luna as it is and the tuning stops.
+
+**Caveat.** The rulings' examples come from these same keyed lines, so this rerun
+measures instruction-following, not generalisation.

@@ -34,6 +34,8 @@ of another wording round.
 
 **Status, 28 September: the medium run failed at 30/36 on both samples; one experiment at high effort is next.** The abstain gap is closed and the harness takes `--openai-effort` and `--openai-max-tokens`. If luna reaches 32/36 on both samples at `high`, the app's `openai_effort` becomes `high`. See rubric-grounding 15, "one experiment at high effort".
 
+**Status, 29 September: high effort failed at 31/32; one rerun is next, then the tuning stops.** The owner sorted the misses (two wordings, per-bullet context, a skipped project bullet, one key change to no) and they are built. One rerun at `high` with a 32000 cap and a $5 budget: a pass moves the app to `high` with a cap of at least 32000; a fail means Luna is accepted as it is. See rubric-grounding 15, "high effort failed at 31/32".
+
 ## Spec so far
 
 - [production-ownership-criteria.md](production-ownership-criteria.md) — the first
