@@ -36,6 +36,8 @@ of another wording round.
 
 **Status, 29 September: high effort failed at 31/32; one rerun is next, then the tuning stops.** The owner sorted the misses (two wordings, per-bullet context, a skipped project bullet, one key change to no) and they are built. One rerun at `high` with a 32000 cap and a $5 budget: a pass moves the app to `high` with a cap of at least 32000; a fail means Luna is accepted as it is. See rubric-grounding 15, "high effort failed at 31/32".
 
+**Status, 30 September: the rerun passed at 35/36 and 32/36; ticket 15 is closed.** The app now runs gpt-6-luna at `high` effort with a 32000-token OpenAI cap (`weights.toml` `openai_max_tokens`, which the harness also defaults to). Sample 1 sat exactly on the bar, 21 missed in both samples, and the rulings' examples come from the keyed lines, so this shows instruction-following, not generalisation; a check on unseen resumes is the natural next step. See rubric-grounding 15, "Passed, 30 September".
+
 ## Spec so far
 
 - [production-ownership-criteria.md](production-ownership-criteria.md) — the first

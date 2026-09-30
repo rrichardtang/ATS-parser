@@ -1,5 +1,5 @@
 type: decision + build
-status: open
+status: closed
 claimed: claude
 blocked-by: —
 
@@ -516,3 +516,63 @@ accepts Luna as it is and the tuning stops.
 
 **Caveat.** The rulings' examples come from these same keyed lines, so this rerun
 measures instruction-following, not generalisation.
+
+## Passed, 30 September: high effort, 35/36 and 32/36
+
+**The run.** gpt-6-luna at `high` effort, 3-try vote, `--openai-max-tokens 32000`,
+`--budget 5`, the same 24 keyed documents, and `answer_key.json` with 16
+`exp[0].bullet[2]` set to `no` (`runs/agreement-20260930T002011Z.json`, on the owner's
+machine).
+
+**The result.** Sample 0 matched 35 of 36 entries and sample 1 matched 32. The bar was
+32 on each sample, so the test PASSED.
+
+**The misses.**
+
+- Sample 0: 21 `production-ownership/C4` `exp[0].bullet[3]` (key yes, judge no).
+- Sample 1: 27 `evaluation-rigour/C4` (key yes, judge no); 15 `production-ownership/C4`
+  `exp[0].bullet[3]` (key yes, judge no); 21 `production-ownership/C4`
+  `exp[0].bullet[3]` (key yes, judge no); 23 `production-ownership/C4`
+  `exp[0].bullet[4]` (key yes, judge no).
+
+**Caveats.**
+
+- Sample 1 sits exactly on the bar.
+- The two samples differ by 3, so the vote is still noisy.
+- 15 and 23 were right in the 29 September run and missed in sample 1 here.
+- 21 missed in both samples, so the context instruction did not fix it reliably.
+- The ruling examples come from the keyed lines, so this measures instruction-following,
+  not generalisation. A later check on unseen resumes is the natural next step, and it
+  is not part of this ticket.
+
+**Switched on.**
+
+- `weights.toml` `[ensemble] openai_effort = "high"`.
+- `weights.toml` `[ensemble] openai_max_tokens = 32000`, new. `pipeline.app_providers`
+  puts it on every OpenAI `Provider` next to the effort, so the app sends
+  `max_completion_tokens` 32000. `llm.MAX_TOKENS` (16000) is now only a bare
+  `Provider`'s default; Claude has its own `ANTHROPIC_MAX_TOKENS`.
+- The harness's `--openai-max-tokens` defaults to that setting, so the test run and the
+  app agree. The flag stays.
+- `llm.CALL_TIMEOUT` is 300 s, up from 180. OpenAI does not stream, so this bounds a
+  whole reply. At high effort a 17K-token reply took up to about 2 minutes (the harness
+  ran 6 calls a resume in parallel in about 2 minutes), so a reply that runs to the
+  32000 cap needs about 4. `ensemble.gather`'s default wait, used by the slop and
+  rewrite passes, is now `CALL_TIMEOUT` instead of a separate 180. The content pass
+  keeps its 600 s, and `STREAM_DEADLINE` (540 s, Claude only) is unchanged. The web UI
+  sets no request timeout of its own.
+
+**Cost.** The app has no budget check; `ats/budget.py` costs harness runs only, and it
+already reads the cap each `Provider` sends. At $0.10/$0.50 per million tokens:
+
+- Worst case for one check (default mode, OpenAI only, rewrites off, as the app first
+  runs it): 3 content and 3 slop calls, each up to 6 attempts (a JSON repair times the
+  SDK's 2 retries) at 32000 output tokens. That is $0.58 of output and about $0.03 of
+  input, about $0.61. Rewrites asked for afterwards add 5 calls, about $0.50 more.
+- Realistic: about 15K output tokens per call. The 3 content votes cost about $0.023
+  of output and $0.003 of input (about 8.6K input tokens each). If the 3 slop calls ran
+  as long, a check would be about $0.05.
+- Harness dry run with no `--openai-max-tokens` flag (`--no-claude --openai-price
+  0.10,0.50 --openai-effort high --budget 5 --docs
+  01-lab-to-industry-agents,04-fullstack-senior-inconsistent`, 12 calls): worst case
+  $0.40. That is the 32000 default; at 16000 it would be about half.
