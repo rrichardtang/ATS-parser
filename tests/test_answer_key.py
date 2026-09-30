@@ -141,3 +141,9 @@ def test_a_keyed_place_is_still_voted_when_every_try_abstains_on_the_derived_ans
     assert "production-ownership/C4" not in {
         a.criterion_id for a in criterion_answers(voted.categories)}
     assert not voted.findings and not voted.unmet
+
+
+def test_the_owners_29_september_ruling_keys_16s_rebuilt_topic_layout_as_no():
+    [entry] = [e for e in ENTRIES if e["doc"] == "16-returning-data-engineer"
+               and e.get("locator") == "exp[0].bullet[2]"]
+    assert (entry["answer"], entry["date"]) == ("no", "2026-09-29")

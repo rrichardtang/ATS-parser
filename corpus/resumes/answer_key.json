@@ -153,9 +153,10 @@
       "category": "production-ownership",
       "criterion": "C4",
       "locator": "exp[0].bullet[2]",
-      "answer": "yes",
+      "answer": "no",
       "quote": "Our first topic layout was wrong and we rebuilt it.",
-      "date": "2026-09-28"
+      "date": "2026-09-29",
+      "note": "Changed from yes on 29 September (the owner): nothing in the line says the system was live, and it is a weak bullet the checker should flag. Effective from the next run; the 29 September run is not rescored."
     },
     {
       "doc": "28-forward-deployed-senior-thin",
