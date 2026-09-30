@@ -33,8 +33,8 @@ log = logging.getLogger("ats.passes")
 MAX_REWRITE_TARGETS = 6
 
 # Wall-clock seconds for the content pass. Its per-place reply, with Claude's thinking
-# on top, can run past `ensemble.gather`'s 180 s default while still streaming; a
-# stalled stream is caught sooner by `llm.CALL_TIMEOUT` between chunks.
+# on top, can run past `ensemble.gather`'s default (`llm.CALL_TIMEOUT`) while still
+# streaming; a stalled stream is caught sooner by `llm.CALL_TIMEOUT` between chunks.
 CONTENT_TIMEOUT = 600
 
 # Only the categories a judge is actually asked about. `Parseability`, `Structure` and

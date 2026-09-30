@@ -374,9 +374,10 @@ def main() -> None:
     parser.add_argument("--max-tokens", type=_positive, default=llm.ANTHROPIC_MAX_TOKENS,
                         help="Claude's output cap for this run, thinking included "
                              f"(default {llm.ANTHROPIC_MAX_TOKENS})")
-    parser.add_argument("--openai-max-tokens", type=_positive, default=llm.MAX_TOKENS,
+    parser.add_argument("--openai-max-tokens", type=_positive,
+                        default=int(config.ensemble_settings()["openai_max_tokens"]),
                         help="OpenAI's output cap for this run, reasoning included "
-                             f"(default {llm.MAX_TOKENS})")
+                             "(default: weights.toml's [ensemble] openai_max_tokens)")
     parser.add_argument("--openai-effort", choices=OPENAI_EFFORTS,
                         default=config.ensemble_settings()["openai_effort"],
                         help="OpenAI's reasoning effort (default: weights.toml's "

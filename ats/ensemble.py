@@ -27,6 +27,7 @@ import re
 from dataclasses import dataclass, field
 
 from . import rubric
+from .llm import CALL_TIMEOUT
 from .invariants import evaluate, has_metric, vacuous_number
 from .models import Category, JudgedCategory, Rewrite
 from .slop import PATTERNS, Scope, _is_protected
@@ -49,7 +50,7 @@ class PassResult:
     judged: dict = field(default_factory=dict)
 
 
-def gather(fns: list, timeout: int = 180) -> tuple[list, list[str]]:
+def gather(fns: list, timeout: float = CALL_TIMEOUT) -> tuple[list, list[str]]:
     """Run independent calls concurrently; collect results and failures separately."""
     results, errors = [], []
     if not fns:
@@ -82,8 +83,8 @@ def gather(fns: list, timeout: int = 180) -> tuple[list, list[str]]:
                 take(future)
             else:
                 late += 1
-        log.warning("%d ensemble call(s) still running after %ds; dropped", late, timeout)
-        errors.extend([f"timed out after {timeout}s"] * late)
+        log.warning("%d ensemble call(s) still running after %.0fs; dropped", late, timeout)
+        errors.extend([f"timed out after {timeout:.0f}s"] * late)
     finally:
         # Don't wait for a call that timed out; its thread finishes in the background.
         pool.shutdown(wait=False, cancel_futures=True)

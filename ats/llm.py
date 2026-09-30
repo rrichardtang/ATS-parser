@@ -20,7 +20,8 @@ OPENAI_MODEL = "gpt-6-luna"
 
 # Sized for a whole pass of findings/rewrites. Too small and the model is cut off
 # mid-object, which reads downstream as "unparseable JSON" -- a truncation bug
-# wearing a parse bug's clothes, so it must not be tuned down casually.
+# wearing a parse bug's clothes, so it must not be tuned down casually. A bare
+# Provider's OpenAI default only: the app sends weights.toml's `openai_max_tokens`.
 MAX_TOKENS = 16000
 
 # Claude's cap is separate and larger because claude-sonnet-5 runs adaptive thinking
@@ -42,11 +43,13 @@ OPENAI_EFFORT = "medium"
 
 # Seconds per attempt. For Claude, which streams, this is the read timeout between
 # chunks -- an inactivity bound, not a wall clock -- so a long healthy reply outlasts
-# it; OpenAI does not stream, so there it bounds the whole reply. The SDKs retry a
+# it; OpenAI does not stream, so there it bounds the whole reply. 300, not 180: at
+# "high" effort a 17K-token reply took up to ~2 minutes (ticket 15, 30 September), so
+# a reply running to the 32000-token cap needs ~4. The SDKs retry a
 # timeout (default max_retries=2) and `call()` may run a second `_dispatch` for JSON
 # repair, so a thread `ensemble.gather` has given up on can outlive this by several
 # attempts -- but it bounds what used to be the SDKs' default ten minutes per attempt.
-CALL_TIMEOUT = 180.0
+CALL_TIMEOUT = 300.0
 
 # Wall-clock seconds per streamed Claude attempt. Pings and deltas reset the read
 # timeout above, so without this a runaway reply keeps billing up to the token cap
@@ -148,8 +151,8 @@ def _truncated(label: str, reason: str | None, cap: int) -> None:
     if reason in ("max_tokens", "length"):
         raise LLMError(
             f"{label}: response hit the {cap}-token cap and was cut off "
-            "mid-JSON; raise the cap (ats.llm, or the harness's --max-tokens or "
-            "--openai-max-tokens) or narrow the prompt"
+            "mid-JSON; raise the cap (weights.toml's openai_max_tokens, ats.llm, or "
+            "the harness's --max-tokens or --openai-max-tokens) or narrow the prompt"
         )
 
 

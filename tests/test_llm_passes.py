@@ -12,7 +12,7 @@ from ats import config, llm, passes, prompts, rubric
 from ats.llm import Provider
 from ats.models import JUDGED_CATEGORIES, Category, Finding, Gate, Severity
 from ats.sections import Resume
-from ats.pipeline import RunInput, analyze
+from ats.pipeline import RunInput, analyze, app_providers
 
 # One judge's answers: a placed `no` (the resume says something and what it says is
 # the problem), an unplaced `no` (nothing to point at), and a `yes`.
@@ -147,19 +147,26 @@ def test_a_claude_key_never_calls_claude_in_the_app(monkeypatch, stubbed, fixtur
     assert report.run_meta["providers"] == [f"openai:{llm.OPENAI_MODEL}"]
 
 
-def test_the_app_sends_weights_openai_effort(monkeypatch, stubbed, fixtures):
-    efforts = set()
+def test_the_app_sends_weights_openai_effort_and_cap(monkeypatch, stubbed, fixtures):
+    sent = set()
 
     def dispatch(provider, system, user, temperature):
-        efforts.add(provider.openai_effort)
+        sent.add((provider.openai_effort, provider.openai_max_tokens))
         return _router(system)
 
     settings = config.ensemble_settings
-    monkeypatch.setattr(config, "ensemble_settings",
-                        lambda mode=None: {**settings(mode), "openai_effort": "high"})
+    monkeypatch.setattr(config, "ensemble_settings", lambda mode=None: {
+        **settings(mode), "openai_effort": "low", "openai_max_tokens": 12345})
     monkeypatch.setattr(llm, "_dispatch", dispatch)
     analyze(RunInput(pdf_path=str(fixtures["slop"])))
-    assert efforts == {"high"}
+    assert sent == {("low", 12345)}
+
+
+def test_weights_run_the_app_at_ticket_15s_passing_settings():
+    """Ticket 15 passed at "high"; a high-effort reply ran to 17K tokens, so 32000."""
+    [luna] = app_providers({"openai": "k"}, {}, config.ensemble_settings())
+    assert luna.openai_effort == "high"
+    assert luna.openai_max_tokens >= 32000
 
 
 def test_unquotable_llm_finding_is_dropped(monkeypatch, fixtures):

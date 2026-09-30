@@ -59,12 +59,13 @@ def deterministic(
 def app_providers(keys: dict[str, str], models: dict[str, str],
                   settings: dict) -> list[Provider]:
     """The providers a check runs on: Claude only when `[ensemble] use_claude` is on,
-    OpenAI at `[ensemble] openai_effort`.
+    OpenAI at `[ensemble] openai_effort` and `openai_max_tokens`.
 
     A key alone never turns Claude on. Every pass reads this one list, so the slop and
     rewrite passes cannot reach Claude by a route the content pass does not.
     """
-    return [replace(p, openai_effort=settings["openai_effort"])
+    return [replace(p, openai_effort=settings["openai_effort"],
+                    openai_max_tokens=int(settings["openai_max_tokens"]))
             for p in providers_from(keys, models)
             if p.name != "anthropic" or settings["use_claude"]]
 

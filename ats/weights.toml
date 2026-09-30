@@ -59,9 +59,13 @@ mode = "default"          # economy | default | thorough
 # this is true, and then every pass below runs on both providers.
 use_claude = false
 # OpenAI's reasoning effort (none, minimal, low, medium, high, xhigh, max). Reasoning
-# tokens count against its output cap (ats/llm.py MAX_TOKENS). Ticket 15 measured the
-# judge at "medium" and tries "high" next.
-openai_effort = "medium"
+# tokens count against its output cap below. Ticket 15's pre-registered test passed at
+# "high" on 30 September (35/36 and 32/36 against the answer key).
+openai_effort = "high"
+# OpenAI's max_completion_tokens, reasoning included. At "high" one content reply ran
+# 11-17K tokens, so ticket 15 set the floor at 32000; the agreement harness's
+# --openai-max-tokens defaults to this, so the test run and the app agree.
+openai_max_tokens = 32000
 # Tries per provider in the content pass, majority-voted per criterion into one answer
 # (ats/ensemble.py vote); the lower-band rule then applies across providers only.
 content_votes = 3
