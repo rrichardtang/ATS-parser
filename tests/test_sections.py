@@ -229,3 +229,21 @@ def test_a_mixed_heading_is_not_experience(heading, body):
     r = parse(f"Morgan Vale\n\n{heading}\n{body}\n")
     assert "experience" not in r.section_order
     assert r.roles == []
+
+
+def test_the_line_between_a_heading_and_its_first_bullet_is_the_role_subtitle():
+    resume = parse(
+        "EXPERIENCE\nAI Engineer, Northwind Data    Mar 2024 - Present\n"
+        "Ledger (Python 3.12, Postgres 16)\nInternal audit tool\n"
+        "• Built the eval harness for our RAG pipeline and wired it into\n"
+        "CI so every merge is scored.\n"
+        "Corvus Labs\nML Engineer    Jan 2022 - Jun 2023\n• Shipped the fraud service.\n"
+        "\nPROJECTS\nPond\nPond CLI (Go 1.22) live at pond.dev\n• A tiny job queue.\n")
+    assert [r.subtitle for r in resume.roles] == [
+        "Ledger (Python 3.12, Postgres 16) · Internal audit tool", "",
+        "Pond CLI (Go 1.22) live at pond.dev"]
+    assert [(r.title, r.company) for r in resume.roles[1:]] == [
+        ("ML Engineer", "Corvus Labs"), ("Pond", "")]
+    assert [text for _, text in resume.bullets] == [
+        "Built the eval harness for our RAG pipeline and wired it into "
+        "CI so every merge is scored.", "Shipped the fraud service.", "A tiny job queue."]

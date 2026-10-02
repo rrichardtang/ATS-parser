@@ -68,6 +68,7 @@ class Role:
     is_current: bool = False
     bullets: list[str] = field(default_factory=list)
     line_index: int = 0
+    subtitle: str = ""
 
     @property
     def months(self) -> int:
@@ -258,8 +259,9 @@ def _parse_roles(lines: list[str], projects: bool = False) -> list[Role]:
     """Roles and their bullets. PDF text keeps no indent, so a wrapped bullet's next line
     looks like any other line: after a bullet, a line opens a role only when it is
     heading-shaped, or -- under PROJECTS -- when a bullet follows it. A heading-shaped
-    line with a date range under it is the first half of that role's heading. Anything
-    else continues the bullet."""
+    line with a date range under it is the first half of that role's heading. A line
+    between a heading and its first bullet -- "Ledger (Python 3.12, Postgres)" -- is the
+    role's subtitle. Anything else continues the bullet."""
     roles: list[Role] = []
     pending = ""
     for index, line in enumerate(lines):
@@ -295,7 +297,7 @@ def _parse_roles(lines: list[str], projects: bool = False) -> list[Role]:
                 roles.append(Role(heading=stripped, title=title, company=company,
                                   line_index=index))
         elif not roles[-1].bullets:
-            continue
+            roles[-1].subtitle += (" · " if roles[-1].subtitle else "") + stripped
         elif _heading_shaped(stripped) or (projects and BULLET_RE.match(following)):
             title, company = _split_title_company(stripped)
             roles.append(Role(heading=stripped, title=title, company=company, line_index=index))

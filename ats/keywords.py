@@ -171,6 +171,7 @@ def _unsupported_skills(resume: Resume) -> list[Finding]:
         return []
     evidence_blob = " ".join(
         [b for _, b in resume.bullets]
+        + [r.subtitle for r in resume.roles]
         + resume.sections.get("projects", [])
         + [resume.summary]
     ).lower()
