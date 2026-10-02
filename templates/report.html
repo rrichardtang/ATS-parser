@@ -121,10 +121,11 @@
     {% if withheld_notice %}
     <div class="banner bad withheld" role="alert"><strong>Scored categories not judged.</strong> {{ withheld_notice }}</div>
     {% endif %}
-    {% if report.partial or report.notes %}
+    {% set other_notes = report.notes|reject("equalto", withheld_notice)|list %}
+    {% if report.partial or other_notes %}
     <div class="banner">
       {% if report.partial %}<strong>Partial run.</strong>{% endif %}
-      <ul>{% for n in report.notes if n != withheld_notice %}<li>{{ n }}</li>{% endfor %}</ul>
+      <ul>{% for n in other_notes %}<li>{{ n }}</li>{% endfor %}</ul>
     </div>
     {% endif %}
 

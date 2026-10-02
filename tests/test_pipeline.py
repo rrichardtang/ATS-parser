@@ -159,12 +159,23 @@ def test_unreadable_pdf_does_not_score_well(analyzed):
     assert any("nothing beyond the file itself" in n.lower() for n in report.notes)
 
 
-def test_a_withheld_report_leads_with_an_error_banner_naming_the_headings_found(analyzed):
+def _render_html(report):
     from app import templates
 
+    return templates.env.get_template("report.html").render(
+        report=report, token="t", parser=[], recruiter=[], manager=[], meta_json="{}",
+        error=None)
+
+
+def test_a_withheld_notice_alone_leaves_no_empty_notes_banner(analyzed):
     report = analyzed["hidden_text"]
-    html = templates.env.get_template("report.html").render(report=report, token="t", parser=[], recruiter=[],
-                                            manager=[], meta_json="{}", error=None)
+    alone = report.model_copy(update={"partial": False,
+                                      "notes": [report.run_meta["withheld_notice"]]})
+    assert '<div class="banner">' not in _render_html(alone)
+
+
+def test_a_withheld_report_leads_with_an_error_banner_naming_the_headings_found(analyzed):
+    html = _render_html(analyzed["hidden_text"])
     banner = html.split('<div class="banner bad withheld" role="alert">', 1)[1].split("</div>", 1)[0]
     assert "We couldn&#39;t find any jobs with bullet points" in banner
     assert "5 of the scored categories weren&#39;t judged" in banner
