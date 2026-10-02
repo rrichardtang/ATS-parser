@@ -9,7 +9,7 @@ quote that proves it, a fix, and exactly what it cost the score.
 ![A report: the score ledger on the left, the top five fixes on the right](docs/images/report.png)
 
 <sub>A sample report with no API key: deterministic checks only. Every row of the ledger on
-the left is a real movement of the score, and they sum to the total.</sub>
+the left is a real movement of the score, and they sum to the composite.</sub>
 
 **Contents:** [Quickstart](#quickstart) · [Why it exists](#why-it-exists) · [Engineering highlights](#engineering-highlights) · [How it works](#how-it-works) · [Evaluation](#evaluation) · [Models and cost](#models-and-cost) · [Project layout](#project-layout) · [Development](#development) · [Limitations](#limitations) · [Privacy](#privacy)
 
@@ -101,7 +101,7 @@ two samples differ by three, so voting is still noisy. The ruling examples in th
 were written from the keyed lines, so this measures instruction-following, not
 generalisation to unseen resumes. That check on unseen, real resumes is the next step.
 
-The harness also reports Krippendorff's alpha and how far each judge lands from itself on a
+The harness also reports Krippendorff's alpha and how far the voted judge lands from itself on a
 rerun, because two judges agreeing on the score nearly every resume gets is coincidence,
 not a rubric. `--dry-run` prints the call budget without spending it.
 
@@ -110,7 +110,7 @@ not a rubric. `--dry-run` prints the call budget without spending it.
 | Setting | Model | Typical cost per resume |
 |---|---|---|
 | Default | OpenAI `gpt-6-luna`, content judge voted 3 ways | about $0.03 for the content votes |
-| `use_claude = true` in `ats/weights.toml` | adds Claude `claude-sonnet-5` on every pass | about $0.11 more (measured 27 Sep) |
+| `use_claude = true` in `ats/weights.toml` | adds Claude `claude-sonnet-5` on every pass | about ten times the OpenAI judge's cost per call |
 | No key | deterministic checks only | free |
 
 A Claude key alone does not switch Claude on; the setting in `ats/weights.toml` does.
@@ -133,6 +133,7 @@ A Claude key alone does not switch Claude on; the setting in `ats/weights.toml` 
 ```bash
 .venv/bin/python -m pytest                              # 518 tests, no network
 .venv/bin/python tests/make_fixtures.py                 # regenerate fixture PDFs
+.venv/bin/python scripts/build_taxonomy.py              # regenerate ats/taxonomy.json from corpus/jds/
 .venv/bin/python scripts/hacking_sweep.py               # raising N must not degrade the audit
 .venv/bin/python scripts/agreement_harness.py --dry-run # judge agreement, call budget only
 ```

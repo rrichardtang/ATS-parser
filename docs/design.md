@@ -290,3 +290,14 @@ Krippendorff's alpha beside both — because two judges agreeing on the value ne
 every resume gets is a coincidence, not a rubric. It is the only thing here that
 spends API calls without producing a report, so it takes `--dry-run` and saves
 every run to `runs/` for replay.
+
+## Exports
+
+Markdown or PDF. The PDF is generated locally with ReportLab — no headless
+browser, no hosted service — so it contains only your report. No watermark, no
+branding, producer metadata blanked.
+
+## Fixtures
+
+Fixture PDFs are generated from `tests/make_fixtures.py` rather than checked in,
+so the inputs stay readable in review.
