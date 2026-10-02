@@ -6,14 +6,14 @@ deterministic half still produces a complete report, marked partial.
 from __future__ import annotations
 
 import concurrent.futures
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from . import config, human, keywords, passes, rules, slop
 from .extract import ExtractedDoc, ExtractionError, extract
 from .llm import Provider, providers_from
 from .models import JUDGED_CATEGORIES, Category, Finding, JudgedCategory, Report
-from .score import build
-from .sections import Resume, parse
+from .score import build, no_evidence_values
+from .sections import SECTION_SYNONYMS, Resume, parse
 
 __all__ = [
     "RunInput", "analyze", "generate_rewrites", "parse_resume", "resolve_target_title",
@@ -44,6 +44,20 @@ def parse_resume(pdf_path: str) -> Resume:
     return parse(doc.text)
 
 
+def _withheld_notice(resume: Resume) -> str:
+    """The run note the report shows as an error banner when `withholding_reason` holds."""
+    found = ", ".join(name.title() for name in resume.section_order) or "none"
+    headings = ", ".join(name.title() for name in SECTION_SYNONYMS["experience"])
+    return (
+        "We couldn't find any jobs with bullet points in this resume, so "
+        f"{len(JUDGED_CATEGORIES)} of the scored categories weren't judged and show as "
+        f"'no evidence' ({min(no_evidence_values().values()):.0f} of 100). "
+        f"Section headings found: {found}. "
+        f"Put your jobs under a heading such as {headings}, and start each bullet "
+        "with a standard symbol such as • or -."
+    )
+
+
 def deterministic(
     doc: ExtractedDoc, resume: Resume, jd_text: str, target_title: str
 ) -> list[Finding]:
@@ -54,6 +68,28 @@ def deterministic(
     findings += human.analyze(doc, resume)
     findings += keywords.analyze(resume, doc.text, jd_text)
     return findings
+
+
+def app_providers(keys: dict[str, str], models: dict[str, str],
+                  settings: dict) -> list[Provider]:
+    """The content pass's providers: Claude only when `[ensemble] use_claude` is on,
+    OpenAI at `[ensemble] openai_effort` and `openai_max_tokens`.
+
+    A key alone never turns Claude on. Every pass reads this one list, so the slop and
+    rewrite passes cannot reach Claude by a route the content pass does not.
+    """
+    return [replace(p, openai_effort=settings["openai_effort"],
+                    openai_max_tokens=int(settings["openai_max_tokens"]))
+            for p in providers_from(keys, models)
+            if p.name != "anthropic" or settings["use_claude"]]
+
+
+def non_content_providers(providers: list[Provider], settings: dict) -> list[Provider]:
+    """The same providers for the slop and rewrite passes, with OpenAI at
+    `[ensemble] openai_other_effort` and `openai_other_max_tokens`."""
+    return [replace(p, openai_effort=settings["openai_other_effort"],
+                    openai_max_tokens=int(settings["openai_other_max_tokens"]))
+            for p in providers]
 
 
 def resolve_target_title(explicit: str) -> str:
@@ -72,8 +108,9 @@ def analyze(run: RunInput) -> Report:
     target_title = resolve_target_title(run.target_title)
     findings = deterministic(doc, resume, run.jd_text, target_title)
 
-    providers = providers_from(run.keys, run.models)
     settings = config.ensemble_settings(run.ensemble_mode)
+    providers = app_providers(run.keys, run.models, settings)
+    others = non_content_providers(providers, settings)
     notes: list[str] = []
     meta: dict = {
         "mode": settings["mode"],
@@ -92,17 +129,14 @@ def analyze(run: RunInput) -> Report:
         {c: "withheld -- " + reason for c in JUDGED_CATEGORIES} if reason else {}
     )
     if reason:
-        notes.append(
-            "Judged categories withheld: " + reason + ". "
-            "An applicant tracking system that cannot read your jobs stores none, so "
-            "each of these categories is scored as if it found no evidence (10 of "
-            "100). Fix the layout and run this again."
-        )
+        meta["withheld_notice"] = _withheld_notice(resume)
+        notes.append(meta["withheld_notice"])
 
     if not providers or not doc.has_text_layer:
         if not providers:
             notes.append(
-                "No API key supplied. Deterministic checks only -- everything "
+                "No API key supplied for an enabled provider (OpenAI; Claude only "
+                "when weights.toml sets use_claude). Deterministic checks only -- everything "
                 "mechanically checkable is here; substance and slop judgement are not."
             )
         return build(findings, partial=True, notes=notes, run_meta=meta,
@@ -115,11 +149,11 @@ def analyze(run: RunInput) -> Report:
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         content_future = pool.submit(
             passes.content_pass, providers, resume, doc.text, run.jd_text,
-            findings, int(settings["content_samples"]), float(settings["temperature"]),
+            findings, int(settings["content_votes"]), float(settings["temperature"]),
             digest,
         )
         slop_future = pool.submit(
-            passes.slop_pass, providers, resume, caught,
+            passes.slop_pass, others, resume, caught,
             int(settings["slop_samples"]), int(settings["slop_vote_k"]),
             float(settings["temperature"]),
         )
@@ -141,7 +175,7 @@ def analyze(run: RunInput) -> Report:
         rewrite_result = _safe(
             None, "rewrite",
             fn=lambda: passes.rewrite_pass(
-                providers, resume, findings,
+                others, resume, findings,
                 int(settings["rewrite_objectives"]), int(settings["rewrite_samples"]),
                 bool(settings["rewrite_judge"]), float(settings["rewrite_margin"]),
                 float(settings["temperature"]), digest,
@@ -161,7 +195,7 @@ def analyze(run: RunInput) -> Report:
             "shows the lower of the two bands, and names the other one."
         )
 
-    partial = bool(content.errors or slop_result.errors) or len(providers) < 2
+    partial = bool(content.errors or slop_result.errors)
     if len(providers) == 1:
         notes.append(
             f"One provider ({providers[0].name}). Cross-provider ensembling is off, "
@@ -190,14 +224,15 @@ def generate_rewrites(
     rewrite generation too. Mutates and returns `report`; `resume` is whatever
     parse_resume() returned when the report was first built.
     """
-    providers = providers_from(keys, models)
+    settings = config.ensemble_settings(ensemble_mode)
+    providers = non_content_providers(app_providers(keys, models, settings), settings)
     if not providers:
         report.notes.append(
-            "No API key supplied -- nothing to generate rewrites with."
+            "No API key supplied for an enabled provider -- nothing to generate "
+            "rewrites with."
         )
         return report
 
-    settings = config.ensemble_settings(ensemble_mode)
     rewrite_result = _safe(
         None, "rewrite",
         fn=lambda: passes.rewrite_pass(

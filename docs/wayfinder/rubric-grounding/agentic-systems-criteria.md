@@ -29,12 +29,19 @@ step?**
 
 *Yes* needs the thing built named, and the fact that it acts rather than answers.
 Calling a model in a loop and doing something with the result counts; the word "agent"
-is not required.
+is not required. Built or shipped counts in any voice (ticket 15, 28 September):
+"Agentic systems were shipped with guardrails" and "Designed and implemented an
+LLM-powered claims workflow and the agentic steps in it, from concept through to
+production" are `yes`; voice is C5's concern.
 *No* looks like: a model that returns text and stops — a classifier, a summariser, a
 chatbot. **And using someone else's coding agent on your own work is
 `AI-assisted coding fluency`**, which is the conflation 02 warns about: three postings
 mean building agents, one means using them, and a rubric that scores "agentic
-experience" as one thing conflates shipping an agent with running Claude Code.
+experience" as one thing conflates shipping an agent with running Claude Code. Defining how an agent is evaluated ("What
+'good' looks like for an agent … was defined") is `no`, and so is designing agent
+behaviour without saying it was built ("Design and iterate on agent behaviours…", "I
+contributed the design for … the agent behind them"): design alone doesn't count, as in
+`resume-craft/C2`.
 
 ### C2 — Named system
 **Is the agentic system named specifically enough to ask about in an interview?**

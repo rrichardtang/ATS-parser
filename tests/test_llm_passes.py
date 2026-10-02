@@ -8,11 +8,11 @@ import re
 
 import pytest
 
-from ats import llm, passes, prompts, rubric
+from ats import config, llm, passes, prompts, rubric
 from ats.llm import Provider
 from ats.models import JUDGED_CATEGORIES, Category, Finding, Gate, Severity
 from ats.sections import Resume
-from ats.pipeline import RunInput, analyze
+from ats.pipeline import RunInput, analyze, app_providers, non_content_providers
 
 # One judge's answers: a placed `no` (the resume says something and what it says is
 # the problem), an unplaced `no` (nothing to point at), and a `yes`.
@@ -81,7 +81,15 @@ def test_all_three_passes_contribute(stubbed, fixtures):
     assert report.run_meta["providers"], "providers not recorded"
 
 
-def test_cross_provider_scores_are_averaged_and_banded(stubbed, fixtures):
+@pytest.fixture
+def claude_on(monkeypatch):
+    """The owner's opt-in: `[ensemble] use_claude = true`."""
+    settings = config.ensemble_settings
+    monkeypatch.setattr(config, "ensemble_settings",
+                        lambda mode=None: {**settings(mode), "use_claude": True})
+
+
+def test_cross_provider_scores_are_averaged_and_banded(stubbed, claude_on, fixtures):
     report = analyze(RunInput(pdf_path=str(fixtures["slop"]), ensemble_mode="economy"))
     assert report.run_meta["pass1"]["providers"] == ["anthropic", "openai"]
 
@@ -107,8 +115,8 @@ def test_a_failing_pass_does_not_lose_the_report(monkeypatch, fixtures):
         return _router(system)
 
     monkeypatch.setattr(llm, "_dispatch", _explode)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
     report = analyze(RunInput(pdf_path=str(fixtures["slop"]), ensemble_mode="economy"))
     assert report.composite > 0
@@ -118,10 +126,68 @@ def test_a_failing_pass_does_not_lose_the_report(monkeypatch, fixtures):
 
 def test_single_provider_is_flagged_in_the_notes(monkeypatch, fixtures):
     monkeypatch.setattr(llm, "_dispatch", _stub(_router))
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
-    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     report = analyze(RunInput(pdf_path=str(fixtures["slop"]), ensemble_mode="economy"))
     assert any("one provider" in n.lower() for n in report.notes)
+    assert not report.partial, "one provider is the app's design, not a degraded run"
+
+
+def test_a_claude_key_never_calls_claude_in_the_app(monkeypatch, stubbed, fixtures):
+    """27 September: the app judges with OpenAI; a key is not the opt-in."""
+    called = set()
+
+    def dispatch(provider, system, user, temperature):
+        called.add(provider.name)
+        return _router(system)
+
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    report = analyze(RunInput(pdf_path=str(fixtures["slop"])))
+    assert called == {"openai"}
+    assert report.run_meta["providers"] == [f"openai:{llm.OPENAI_MODEL}"]
+
+
+def _openai_settings_by_pass(monkeypatch, overrides=None):
+    """(pass, effort, cap) for every call a full check with rewrites makes."""
+    sent = set()
+
+    def dispatch(provider, system, user, temperature):
+        kind = "content" if system == prompts.content_system() else "other"
+        sent.add((kind, provider.openai_effort, provider.openai_max_tokens))
+        return _router(system)
+
+    settings = config.ensemble_settings
+    monkeypatch.setattr(config, "ensemble_settings",
+                        lambda mode=None: {**settings(mode), **(overrides or {})})
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    return sent
+
+
+def test_the_app_sends_each_pass_its_own_openai_effort_and_cap(monkeypatch, stubbed,
+                                                                fixtures):
+    sent = _openai_settings_by_pass(monkeypatch, {
+        "openai_effort": "low", "openai_max_tokens": 12345,
+        "openai_other_effort": "minimal", "openai_other_max_tokens": 6789})
+    analyze(RunInput(pdf_path=str(fixtures["slop"])))
+    assert sent == {("content", "low", 12345), ("other", "minimal", 6789)}
+
+
+def test_only_the_content_pass_runs_at_ticket_15s_passing_settings(monkeypatch, stubbed,
+                                                                   fixtures):
+    """Ticket 15 measured the content judge alone at high and 32000; slop and rewrites
+    (generate, judge, polish) stay at medium and 16000."""
+    sent = _openai_settings_by_pass(monkeypatch)
+    analyze(RunInput(pdf_path=str(fixtures["slop"])))
+    assert sent == {("content", "high", 32000), ("other", "medium", 16000)}
+
+
+@pytest.mark.parametrize("mode", ["economy", "default", "thorough"])
+def test_every_mode_keeps_both_openai_settings(mode):
+    settings = config.ensemble_settings(mode)
+    [content] = app_providers({"openai": "k"}, {}, settings)
+    [other] = non_content_providers([content], settings)
+    assert (content.openai_effort, content.openai_max_tokens) == ("high", 32000)
+    assert (other.openai_effort, other.openai_max_tokens) == ("medium", 16000)
 
 
 def test_unquotable_llm_finding_is_dropped(monkeypatch, fixtures):
@@ -284,7 +350,7 @@ def _answers(*items):
 def _one_content_pass(monkeypatch, reply, resume):
     monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: reply))
     return passes.content_pass(
-        [Provider("anthropic", "k", "m")], resume, "text", "", [], samples=1,
+        [Provider("anthropic", "k", "m")], resume, "text", "", [], votes=1,
         temperature=0.0,
     )
 
@@ -315,6 +381,16 @@ def test_content_findings_are_keyed_by_the_criterion_they_answer(monkeypatch):
     assert {f.rule_id for f in result.data} == {
         "production-ownership/C1", "production-ownership/C5",
     }
+
+
+def test_an_openai_style_locator_still_places_a_single_answer_finding(monkeypatch):
+    reply = _answers(
+        ("Production ownership", "C1", "no", "No destination named",
+         "Owned GLIDE-ME end to end", "exp[0].bullet[0]: Owned GLIDE-ME end to end"),
+    )
+    result = _one_content_pass(monkeypatch, reply, _resume())
+    [finding] = result.data
+    assert finding.locator == "exp[0].bullet[0]"
 
 
 def test_a_criterion_the_specs_do_not_have_is_dropped(monkeypatch):
@@ -404,7 +480,7 @@ def test_two_judges_reporting_one_defect_collide_on_kind_and_place(monkeypatch):
     monkeypatch.setattr(llm, "_dispatch", dispatch)
     result = passes.content_pass(
         [Provider("anthropic", "k", "m"), Provider("openai", "k", "m")],
-        _resume(), "text", "", [], samples=1, temperature=0.0,
+        _resume(), "text", "", [], votes=1, temperature=0.0,
     )
 
     assert len(result.data) == 1
@@ -433,7 +509,7 @@ def test_two_judges_splitting_on_a_criterion_produce_a_contested_category(monkey
     monkeypatch.setattr(llm, "_dispatch", dispatch)
     result = passes.content_pass(
         [Provider("anthropic", "k", "m"), Provider("openai", "k", "m")],
-        _resume(), "text", "", [], samples=1, temperature=0.0,
+        _resume(), "text", "", [], votes=1, temperature=0.0,
     )
 
     judged = result.judged[Category.PRODUCTION_OWNERSHIP]
@@ -471,7 +547,7 @@ def test_the_judged_value_reaches_the_report(monkeypatch, fixtures):
         ]}}})
 
     monkeypatch.setattr(llm, "_dispatch", dispatch)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
 
     report = analyze(RunInput(pdf_path=str(fixtures["strong"]),
                               ensemble_mode="economy", enable_rewrites=False))
@@ -511,14 +587,14 @@ def test_a_document_whose_roles_did_not_parse_is_withheld(monkeypatch, fixtures)
         return _router(system)
 
     monkeypatch.setattr(llm, "_dispatch", dispatch)
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-a")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-o")
 
     report = analyze(RunInput(pdf_path=str(fixtures["two_column"]),
                               ensemble_mode="economy", enable_rewrites=False))
 
     assert calls["content"] == 0, "a withheld document must not cost a call"
     assert report.run_meta["pass1"]["withheld"] == [c.value for c in JUDGED_CATEGORIES]
-    assert any("withheld" in note for note in report.notes)
+    assert report.run_meta["withheld_notice"] in report.notes
     assert not [f for f in report.findings if f.source.startswith("llm:")
                 and f.rule_id.startswith("production-ownership/")]
     # 06 and grounding 13: the composite is told, so the judged categories score as no
@@ -585,6 +661,36 @@ def test_a_missing_place_abstains_only_when_it_could_change_the_answer():
     open_role = _derive(Category.RESUME_CRAFT,
                         _per_place("C2", yes={"exp[0].bullet[0]"}, places=ALL_PLACES[:3]))
     assert open_role["answer"] is None and "exp[1].bullet[0]" in open_role["why"]
+
+
+def test_an_openai_style_locator_line_resolves_to_the_bare_locator():
+    """gpt-5.6-luna copies the whole `"<locator>: <text>"` prompt line into
+    `locator` instead of the bare locator Claude writes. Both must derive the
+    same answer."""
+    bare = _derive(Category.PRODUCTION_OWNERSHIP,
+                    _per_place("C3", yes={"exp[1].bullet[0]"}))
+    copied = _per_place("C3", yes={"exp[1].bullet[0]"})
+    copied["places"] = [
+        {**p, "locator": f"{p['locator']}: some bullet text"} for p in copied["places"]
+    ]
+    openai_style = _derive(Category.PRODUCTION_OWNERSHIP, copied)
+    assert (openai_style["answer"], openai_style["locator"]) == (
+        bare["answer"], bare["locator"])
+
+
+def test_summary_colon_form_resolves_to_summary():
+    copied = _per_place("C3", yes={"summary"})
+    copied["places"] = [
+        {**p, "locator": f"{p['locator']}: text"} for p in copied["places"]
+    ]
+    assert _derive(Category.RESUME_CRAFT, copied)["answer"] == "yes"
+
+
+def test_an_invented_locator_prefix_still_drops():
+    item = _per_place("C3", yes={"exp[1].bullet[0]"})
+    item["places"].append(
+        {"locator": "exp[9].bullet[9]: x", "answer": "yes", "evidence": "made up"})
+    assert _derive(Category.PRODUCTION_OWNERSHIP, item)["locator"] == "exp[1].bullet[0]"
 
 
 def test_every_role_needs_a_yes_in_each_role():
@@ -708,3 +814,77 @@ def test_every_scope_is_one_the_prompt_can_ask():
         for criterion in rubric.load_spec(slug)["criteria"]:
             if "scope" in criterion:
                 assert criterion["scope"] in prompts.PER_PLACE, f"{slug}/{criterion['id']}"
+
+
+def _try(sample, *answers):
+    """One provider's try at `Production ownership`, C1..C5 answered in order."""
+    items = [{"id": f"C{i}", "answer": a, "evidence": f"try {sample}",
+              "locator": "exp[0].bullet[0]", "why": f"try {sample} said {a}"}
+             for i, a in enumerate(answers, 1) if a is not None]
+    categories = {"Production ownership": {"criteria": items}}
+    return passes.ContentJudgment("openai", sample, categories, [], [])
+
+
+def _voted(*tries):
+    voted = passes.vote_samples(list(tries), _resume(), {"openai": 3})
+    assert len(voted) == 1
+    return {item["id"]: item for item in voted[0].categories["Production ownership"]["criteria"]}
+
+
+def test_a_voted_answer_carries_a_majority_try_s_evidence_and_every_vote():
+    items = _voted(_try(0, "no", "yes", "yes", None, "yes"),
+                   _try(1, "yes", "no", "yes", None, None),
+                   _try(2, "yes", "no", None, None, None))
+    assert items["C1"]["answer"] == "yes" and items["C1"]["evidence"] == "try 1"
+    assert items["C1"]["votes"] == ["no", "yes", "yes"]
+    assert items["C2"]["answer"] == "no" and items["C2"]["evidence"] == "try 1"
+    # 2 yes and 1 abstention is still a majority of the three tries.
+    assert items["C3"]["answer"] == "yes"
+    # Nobody answered C4: it stays unanswered rather than becoming a `no`.
+    assert "C4" not in items
+    # An abstention is not a `no`: the one try that answered C5 carries it.
+    assert items["C5"]["answer"] == "yes" and items["C5"]["evidence"] == "try 0"
+    assert items["C5"]["votes"] == ["yes", "abstain", "abstain"]
+
+
+def test_a_voted_answer_prefers_a_majority_try_with_a_quote_and_a_place():
+    unquoted, quoted, dissent = _try(0, "no"), _try(1, "no"), _try(2, "yes")
+    unquoted.categories["Production ownership"]["criteria"][0].update(
+        evidence="", locator="")
+    items = _voted(unquoted, quoted, dissent)
+    assert items["C1"]["answer"] == "no" and items["C1"]["evidence"] == "try 1"
+    assert items["C1"]["locator"] == "exp[0].bullet[0]"
+
+
+def test_a_try_that_failed_shrinks_its_own_vote_and_one_try_passes_through():
+    tries = [_try(0, "yes"), _try(1, "no"), _try(3, "no")]
+    voted = passes.vote_samples(tries, _resume(), {"openai": 3})
+    assert [j.sample for j in voted] == [0, 1]
+    assert voted[0].categories["Production ownership"]["criteria"][0]["answer"] == "no"
+    assert voted[1].categories == tries[2].categories
+
+
+def test_the_app_votes_each_provider_before_banding(monkeypatch):
+    """Three tries, two `yes` on C3: the voted band is C, not the worst try's D."""
+    replies = iter(["yes", "yes", "no"])
+
+    def dispatch(provider, system, user, temperature):
+        c3 = {"exp[0].bullet[0]"} if next(replies) == "yes" else set()
+        bullets = ["exp[0].bullet[0]", "exp[0].bullet[1]"]
+        owned = {"answer": "yes", "evidence": "Owned GLIDE-ME end to end",
+                 "locator": "exp[0].bullet[0]"}
+        return json.dumps({"categories": {"Production ownership": {"criteria": [
+            {"id": "C1", **owned},
+            _per_place("C2", yes={"exp[0].bullet[0]"}, places=bullets),
+            _per_place("C3", yes=c3, places=bullets),
+            _per_place("C4", places=bullets),
+            {"id": "C5", **owned},
+        ]}}})
+
+    monkeypatch.setattr(llm, "_dispatch", dispatch)
+    result = passes.content_pass(
+        [Provider("openai", "k", "m")], _resume(), "text", "", [], votes=3,
+        temperature=0.0,
+    )
+    judged = result.judged[Category.PRODUCTION_OWNERSHIP]
+    assert (judged.band, judged.judges, judged.contested) == ("C", 1, False)

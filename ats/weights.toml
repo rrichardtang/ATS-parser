@@ -54,7 +54,26 @@ fraud_cap = 40
 [ensemble]
 # Budget diversity before depth: the first unit of spend buys a second provider.
 mode = "default"          # economy | default | thorough
-content_samples = 1        # per provider
+# The app judges with OpenAI alone (27 September, ticket 15: Claude cost ~$0.11 a check
+# against ~$0.01). A Claude key, from the form or ANTHROPIC_API_KEY, is ignored unless
+# this is true, and then every pass below runs on both providers.
+use_claude = false
+# OpenAI's reasoning effort (none, minimal, low, medium, high, xhigh, max). Reasoning
+# tokens count against its output cap below. Ticket 15's pre-registered test passed at
+# "high" on 30 September (35/36 and 32/36 against the answer key).
+openai_effort = "high"
+# OpenAI's max_completion_tokens, reasoning included. At "high" one content reply ran
+# 11-17K tokens, so ticket 15 set the floor at 32000; the agreement harness's
+# --openai-max-tokens defaults to this, so the test run and the app agree.
+openai_max_tokens = 32000
+# The two settings above are the content pass's only: ticket 15 measured nothing else.
+# The slop and rewrite passes (generate, judge, polish) stay at medium and 16000 until
+# something measures them at high.
+openai_other_effort = "medium"
+openai_other_max_tokens = 16000
+# Tries per provider in the content pass, majority-voted per criterion into one answer
+# (ats/ensemble.py vote); the lower-band rule then applies across providers only.
+content_votes = 3
 slop_samples = 3           # per provider
 slop_vote_k = 2            # k-of-N within a provider
 # Only reaches models that still accept a sampling parameter (the gpt-4 era and
@@ -79,7 +98,7 @@ rewrite_judge = true
 rewrite_margin = 1.0
 
 [ensemble.thorough]
-content_samples = 1
+content_votes = 3
 slop_samples = 5
 slop_vote_k = 3
 rewrite_objectives = 3
@@ -87,7 +106,7 @@ rewrite_samples = 2
 rewrite_judge = true
 
 [ensemble.economy]
-content_samples = 1
+content_votes = 1
 slop_samples = 1
 slop_vote_k = 1
 rewrite_objectives = 1

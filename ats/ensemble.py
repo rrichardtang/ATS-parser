@@ -27,6 +27,7 @@ import re
 from dataclasses import dataclass, field
 
 from . import rubric
+from .llm import CALL_TIMEOUT
 from .invariants import evaluate, has_metric, vacuous_number
 from .models import Category, JudgedCategory, Rewrite
 from .slop import PATTERNS, Scope, _is_protected
@@ -49,7 +50,7 @@ class PassResult:
     judged: dict = field(default_factory=dict)
 
 
-def gather(fns: list, timeout: int = 180) -> tuple[list, list[str]]:
+def gather(fns: list, timeout: float = CALL_TIMEOUT) -> tuple[list, list[str]]:
     """Run independent calls concurrently; collect results and failures separately."""
     results, errors = [], []
     if not fns:
@@ -82,8 +83,8 @@ def gather(fns: list, timeout: int = 180) -> tuple[list, list[str]]:
                 take(future)
             else:
                 late += 1
-        log.warning("%d ensemble call(s) still running after %ds; dropped", late, timeout)
-        errors.extend([f"timed out after {timeout}s"] * late)
+        log.warning("%d ensemble call(s) still running after %.0fs; dropped", late, timeout)
+        errors.extend([f"timed out after {timeout:.0f}s"] * late)
     finally:
         # Don't wait for a call that timed out; its thread finishes in the background.
         pool.shutdown(wait=False, cancel_futures=True)
@@ -163,6 +164,21 @@ def filter_slop(items: list[dict], resume_text: str) -> list[dict]:
             continue
         kept.append(item)
     return kept
+
+
+def vote(answers: list[bool | None]) -> bool | None:
+    """One criterion's answer from one provider's tries: a majority vote (ticket 15).
+
+    `answers` holds one entry per try that returned a reply, None where that try gave no
+    readable answer. The majority is taken among the tries that answered, because an
+    abstention is not a `no` (`passes._met`). A tie is `no`: criteria are monotone, so a
+    `no` can only hold a band down, which is the lower-band rule's conservatism applied
+    within one provider. None only when no try answered.
+    """
+    answered = [answer for answer in answers if answer is not None]
+    if not answered:
+        return None
+    return answered.count(True) > len(answered) / 2
 
 
 def combine_bands(spec: dict, answer_sets: list[dict[str, bool]]) -> JudgedCategory | None:

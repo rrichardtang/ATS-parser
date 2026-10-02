@@ -22,6 +22,22 @@ five are the same proxy — a deterministic judge against one recorded model jud
 documents written to exercise the rubric. The real number is
 [rubric-migration 09](../rubric-migration/tickets/09-run-the-acceptance-test.md).
 
+**Status, 27 September: the finish line is set.** See ticket 15, "Decided, 27 September
+(the owner): the finish line" — a fixed acceptance bar for the 30-document run, in place
+of another wording round.
+
+**Status, 27 September: that run failed; the app judge is now OpenAI, voted 3 ways, with Claude as an audit judge.** See rubric-grounding 15, "cut the cost, vote the app judge".
+
+**Status, 28 September: the judge is now scored against the owner's answer key, not against Claude.** Luna and Claude each agreed with themselves and still disagreed, so the owner labelled the disagreements (`corpus/resumes/answer_key.json`). See rubric-grounding 15, "the answer key".
+
+**Status, 28 September: the finish line is set.** gpt-6-luna (medium effort, 3-try vote) must match the answer key on at least 32 of 36 entries, on each of its two voted samples, over the 24 keyed documents; a missing answer is a miss, and Claude is not part of the test. See rubric-grounding 15, "the answer key".
+
+**Status, 28 September: the medium run failed at 30/36 on both samples; one experiment at high effort is next.** The abstain gap is closed and the harness takes `--openai-effort` and `--openai-max-tokens`. If luna reaches 32/36 on both samples at `high`, the app's `openai_effort` becomes `high`. See rubric-grounding 15, "one experiment at high effort".
+
+**Status, 29 September: high effort failed at 31/32; one rerun is next, then the tuning stops.** The owner sorted the misses (two wordings, per-bullet context, a skipped project bullet, one key change to no) and they are built. One rerun at `high` with a 32000 cap and a $5 budget: a pass moves the app to `high` with a cap of at least 32000; a fail means Luna is accepted as it is. See rubric-grounding 15, "high effort failed at 31/32".
+
+**Status, 30 September: the rerun passed at 35/36 and 32/36; ticket 15 is closed.** The app's content judge now runs gpt-6-luna at `high` effort with a 32000-token OpenAI cap (`weights.toml` `openai_effort` and `openai_max_tokens`, which the harness also defaults to); the slop and rewrite passes stay at medium and 16000 until something measures them. Sample 1 sat exactly on the bar, 21 missed in both samples, and the rulings' examples come from the keyed lines, so this shows instruction-following, not generalisation; a check on unseen resumes is the natural next step. See rubric-grounding 15, "Passed, 30 September".
+
 ## Spec so far
 
 - [production-ownership-criteria.md](production-ownership-criteria.md) — the first

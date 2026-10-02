@@ -50,14 +50,30 @@ def _judged_line(report: AgreementReport) -> list[str]:
             "returned nothing for any resume"]
 
 
+def _sampling(meta: dict) -> str:
+    """Per provider since the app judge votes; a run recorded before that has one count."""
+    samples = meta.get("samples_per_provider", "?")
+    if not isinstance(samples, dict):
+        return f"{samples} samples per provider"
+    votes = meta.get("votes_per_sample") or {}
+    return ", ".join(f"{name} {count} sample(s) x {votes.get(name, 1)} voted tries"
+                     for name, count in samples.items())
+
+
+def _effort(meta: dict) -> str:
+    """Absent from a run recorded before 28 September."""
+    effort = meta.get("openai_effort")
+    return f", OpenAI effort {effort}" if effort else ""
+
+
 def render(report: AgreementReport) -> str:
     meta = report.meta
     out: list[str] = [
         "Inter-judge agreement",
         f"  providers   {', '.join(meta.get('providers') or ['none'])}",
         *_judged_line(report),
-        f"  sampling    {meta.get('samples_per_provider', '?')} samples per provider, "
-        f"temperature {meta.get('temperature', '?')}",
+        f"  sampling    {_sampling(meta)}, temperature {meta.get('temperature', '?')}"
+        f"{_effort(meta)}",
         f"  generated   {meta.get('generated', 'unknown')}",
         "",
     ]
@@ -118,8 +134,10 @@ def render(report: AgreementReport) -> str:
         )
         out += [
             "",
-            "  exact/adjacent/far  how far apart the two judges' bands were",
-            "  unstable            one provider named two bands for the same resume",
+            "  exact/adjacent/far  the worst gap between any sample of one judge and any of",
+            "                      the other's (each luna voted sample against Claude)",
+            "  unstable            one provider named two bands for the same resume; still",
+            "                      compared above, so a wobble never hides a far split",
             "",
         ]
 
@@ -140,13 +158,15 @@ def render(report: AgreementReport) -> str:
         )
         tally = defaultdict(int)
         for row in report.composites:
-            if row.comparable:
-                tally[verdict(row.spread_no_deduct)] += 1
+            tally[verdict(row.spread_no_deduct) if row.comparable else None] += 1
         out += [
             "",
+            "  spread     the worst gap between any sample of one judge and any of the other's:",
+            "             each luna voted sample against Claude, since the app reports one",
             "  as built   today's code: the model's number blended in AND its findings deducting",
             "  no deduct  ticket 03: model findings are evidence, not a deduction",
-            f"  no-deduct tally: {tally[PASS]} pass, {tally[LOOK]} look, {tally[FAIL]} FAIL",
+            f"  no-deduct tally: {tally[PASS]} pass, {tally[LOOK]} look, {tally[FAIL]} FAIL, "
+            f"{tally[None]} with one judge (see Notes)",
         ]
         if any(row.capped for row in report.composites):
             out.append(
@@ -155,7 +175,7 @@ def render(report: AgreementReport) -> str:
                 "spread is not evidence of agreement"
             )
         out.append("")
-        out += ["Composite by judge (as built)", ""]
+        out += ["Composite by judge (as built, mean of its samples)", ""]
         out += _table(
             ["resume", *report.providers],
             [

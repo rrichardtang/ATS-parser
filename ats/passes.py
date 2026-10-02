@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from . import ensemble, prompts, rubric
 from .llm import LLMError, Provider, call
@@ -31,6 +31,11 @@ from .sections import Resume
 log = logging.getLogger("ats.passes")
 
 MAX_REWRITE_TARGETS = 6
+
+# Wall-clock seconds for the content pass. Its per-place reply, with Claude's thinking
+# on top, can run past `ensemble.gather`'s default (`llm.CALL_TIMEOUT`) while still
+# streaming; a stalled stream is caught sooner by `llm.CALL_TIMEOUT` between chunks.
+CONTENT_TIMEOUT = 600
 
 # Only the categories a judge is actually asked about. `Parseability`, `Structure` and
 # `Title` are decided by rules alone, so a model naming one of them is answering a
@@ -180,14 +185,31 @@ def _derived(item, criteria: dict[str, dict], resume: Resume):
     return _any_place(item, answers, required)
 
 
+def _resolved_locator(locator: str, valid: set[str]) -> str:
+    """A model's locator, resolved against the resume's valid ones.
+
+    Anthropic writes the bare locator; some OpenAI models copy the whole
+    `"<locator>: <text>"` line the prompt showed them into it. Splitting on the
+    first ":" recovers the locator OpenAI meant without fuzzy-matching anything:
+    an invented prefix still fails to resolve and is dropped as before.
+    """
+    if locator in valid:
+        return locator
+    prefix, sep, rest = locator.partition(":")
+    prefix = prefix.strip()
+    return prefix if sep and rest and prefix in valid else locator
+
+
 def _place_answers(entries: list, valid: set[str]) -> dict[str, dict]:
     """Each resolvable place's readable answer. A place answered both yes and no is
     left out: which of the two to believe is not the code's call."""
     by_place: dict[str, list[dict]] = {}
     for entry in entries:
-        if (isinstance(entry, dict) and entry.get("locator") in valid
-                and _met(entry.get("answer")) is not None):
-            by_place.setdefault(entry["locator"], []).append(entry)
+        if not isinstance(entry, dict) or _met(entry.get("answer")) is None:
+            continue
+        locator = _resolved_locator(str(entry.get("locator") or ""), valid)
+        if locator in valid:
+            by_place.setdefault(locator, []).append(entry)
     return {loc: found[0] for loc, found in by_place.items()
             if len({_met(e["answer"]) for e in found}) == 1}
 
@@ -268,7 +290,8 @@ def place(
             continue
         _slug, criteria = index[answer.category]
         criterion = criteria[answer.criterion_id.split("/", 1)[1]]
-        if answer.evidence and answer.locator in places:
+        locator = _resolved_locator(answer.locator, places)
+        if answer.evidence and locator in places:
             findings.append(Finding(
                 rule_id=answer.criterion_id,
                 category=answer.category,
@@ -281,7 +304,7 @@ def place(
                 message=(answer.why or criterion["no_looks_like"])[:200],
                 fix=answer.fix,
                 evidence=answer.evidence,
-                locator=answer.locator,
+                locator=locator,
                 provenance=Provenance.HEURISTIC,
                 source=f"llm:{provider_name}",
             ))
@@ -351,44 +374,142 @@ def content_judgments(
     full_text: str,
     jd_text: str,
     deterministic: list[Finding],
-    samples: int,
+    tries: dict[str, int],
     temperature: float,
     digest: dict | None = None,
 ) -> tuple[list[ContentJudgment], list[str]]:
-    """Every (provider, sample) reply to the content prompt, parsed but not combined."""
-    summary = [f"{f.rule_id}: {f.message}" for f in deterministic]
-    user = prompts.content_user(resume, full_text, jd_text, summary, digest)
+    """Every (provider, try) reply to the content prompt, parsed but not combined.
+
+    `tries` is how many calls each provider name gets; a judgement's `sample` is its
+    try's index, which `vote_samples` groups by.
+    """
+    system, user = content_prompt(resume, full_text, jd_text, deterministic, digest)
 
     jobs = []
     for provider in providers:
-        for index in range(samples):
-            temp = 0.0 if samples == 1 else temperature
+        count = tries[provider.name]
+        temp = 0.0 if count == 1 else temperature
+        for index in range(count):
             jobs.append(
-                lambda p=provider, i=index, t=temp: (
-                    p.name, i, call(p, prompts.content_system(), user, t)
-                )
+                lambda p=provider, i=index, t=temp: (p.name, i, call(p, system, user, t))
             )
 
-    raw, errors = ensemble.gather(jobs)
-
-    judgments: list[ContentJudgment] = []
-    for provider_name, index, payload in raw:
-        categories: dict[str, dict] = {}
-        for name, entry in (payload.get("categories") or {}).items():
-            category = _category(name)
-            if category and isinstance(entry, dict):
-                categories[category.value] = derive_scoped(category, entry, resume)
-
-        # The model has no findings vocabulary of its own any more: a finding is the
-        # evidence for one criterion and its id is the criterion's, so both objects a
-        # reply produces come out of the answers rather than out of a `findings` array
-        # the model would have had to name the defects in.
-        findings, unmet = place(
-            criterion_answers(categories), resume, provider_name
-        )
-        judgments.append(ContentJudgment(provider_name, index, categories, findings, unmet))
-
+    raw, errors = ensemble.gather(jobs, timeout=CONTENT_TIMEOUT)
+    judgments = [
+        content_judgment(provider_name, index, payload, resume)
+        for provider_name, index, payload in raw
+    ]
     return judgments, errors
+
+
+def content_prompt(
+    resume: Resume, full_text: str, jd_text: str, deterministic: list[Finding],
+    digest: dict | None,
+) -> tuple[str, str]:
+    """The content pass's (system, user) prompt for one document."""
+    summary = [f"{f.rule_id}: {f.message}" for f in deterministic]
+    return prompts.content_system(), prompts.content_user(
+        resume, full_text, jd_text, summary, digest
+    )
+
+
+def content_judgment(
+    provider_name: str, index: int, payload: dict, resume: Resume,
+) -> ContentJudgment:
+    """One parsed content reply, as the judgement it stands for."""
+    categories: dict[str, dict] = {}
+    for name, entry in (payload.get("categories") or {}).items():
+        category = _category(name)
+        if category and isinstance(entry, dict):
+            categories[category.value] = derive_scoped(category, entry, resume)
+
+    # The model has no findings vocabulary of its own any more: a finding is the
+    # evidence for one criterion and its id is the criterion's, so both objects a
+    # reply produces come out of the answers rather than out of a `findings` array
+    # the model would have had to name the defects in.
+    findings, unmet = place(criterion_answers(categories), resume, provider_name)
+    return ContentJudgment(provider_name, index, categories, findings, unmet)
+
+
+def vote_samples(
+    judgments: list[ContentJudgment], resume: Resume, votes: dict[str, int],
+) -> list[ContentJudgment]:
+    """Each provider's tries, `votes[provider]` at a time, as one voted judgement each.
+
+    Try `i` belongs to sample `i // votes`, fixed when the calls were made, so a try
+    that failed shrinks its own vote instead of shifting every later one.
+    """
+    groups: dict[tuple[str, int], list[ContentJudgment]] = {}
+    for judgment in sorted(judgments, key=lambda j: (j.provider, j.sample)):
+        key = (judgment.provider, judgment.sample // votes[judgment.provider])
+        groups.setdefault(key, []).append(judgment)
+    return [voted_judgment(tries, resume, sample)
+            for (_provider, sample), tries in sorted(groups.items())]
+
+
+def voted_judgment(
+    tries: list[ContentJudgment], resume: Resume, sample: int,
+) -> ContentJudgment:
+    """One provider's tries, voted criterion by criterion (`ensemble.vote`).
+
+    Scoped criteria vote on the answers `derive_scoped` already made. A voted item is
+    copied from a try that voted with the majority -- the first one with a quote and a
+    place, else the first -- so its evidence, locator and why are ones a judge gave, and
+    it carries every try's answer under "votes".
+    """
+    if len(tries) == 1:
+        return replace(tries[0], sample=sample)
+    provider = tries[0].provider
+    categories: dict[str, dict] = {}
+    for name in dict.fromkeys(name for t in tries for name in t.categories):
+        _slug, criteria = criteria_index()[Category(name)]
+        voted = (_voted_item(cid, [_answered_item(t.categories.get(name), cid)
+                                     for t in tries], _try_places(tries, name, cid))
+                 for cid in criteria)
+        categories[name] = {"criteria": [item for item in voted if item]}
+    findings, unmet = place(criterion_answers(categories), resume, provider)
+    return ContentJudgment(provider, sample, categories, findings, unmet)
+
+
+def criterion_items(entry, cid: str) -> list[dict]:
+    """Every item a category entry holds for criterion `cid`, readable or not."""
+    items = entry.get("criteria") if isinstance(entry, dict) else None
+    return [item for item in items or [] if isinstance(item, dict)
+            and str(item.get("id") or "").strip().upper() == cid]
+
+
+def _answered_item(entry, cid: str) -> dict | None:
+    """The item `criterion_answers` would read for `cid`: the first readable one."""
+    return next((item for item in criterion_items(entry, cid)
+                 if _met(item.get("answer")) is not None), None)
+
+
+def _try_places(tries: list[ContentJudgment], name: str, cid: str) -> list[list] | None:
+    """Every try's per-place answers for a scoped criterion, so a place can be voted on
+    as well as the derived answer. None for a criterion no try answered place by place."""
+    firsts = (next(iter(criterion_items(t.categories.get(name), cid)), {}) for t in tries)
+    lists = [i.get("places") if isinstance(i.get("places"), list) else [] for i in firsts]
+    return lists if any(lists) else None
+
+
+def _voted_item(
+    cid: str, items: list[dict | None], try_places: list[list] | None,
+) -> dict | None:
+    answers = [None if item is None else _met(item["answer"]) for item in items]
+    met = ensemble.vote(answers)
+    if met is None:
+        # No answer, so `criterion_answers` skips it; kept only so the answer key can
+        # still vote a keyed place across the tries.
+        return {"id": cid, "try_places": try_places} if try_places else None
+    # `vote` only returns an answer some try gave, so the majority is never empty. A
+    # quoted, placed try is preferred: it is what lets a `no` file as a placed finding.
+    majority = [item for item, answer in zip(items, answers) if answer is met]
+    item = next((i for i in majority if i.get("evidence") and i.get("locator")),
+                majority[0])
+    votes = ["abstain" if answer is None else "yes" if answer else "no"
+             for answer in answers]
+    voted = {**item, "answer": "yes" if met else "no", "votes": votes}
+    return {**voted, "try_places": try_places} if try_places else voted
 
 
 def content_pass(
@@ -397,21 +518,22 @@ def content_pass(
     full_text: str,
     jd_text: str,
     deterministic: list[Finding],
-    samples: int,
+    votes: int,
     temperature: float,
     digest: dict | None = None,
 ) -> ensemble.PassResult:
     """The criterion answers behind every judged category, and what they place.
 
-    Two channels come out of here and they fold differently:
+    Each provider is tried `votes` times and its tries are voted into one judgement
+    (`vote_samples`) before anything below sees them. Two channels come out of the voted
+    judgements and they fold differently:
 
     * the **report** channel -- placed findings and unmet criteria -- is unioned
       across judgements here, keyed on `(rule_id, locator)` and on the criterion id
       respectively, exactly as findings were unioned before 05.
     * the **scoring** channel -- the answers themselves -- folds through the band
-      lookup instead, in `judge_categories`: each judge is banded from its own answers
-      and the lower band wins (06). The unfolded answers stay on each `ContentJudgment`
-      regardless, because `ats/agreement.py` measures the split the fold resolves.
+      lookup instead, in `judge_categories`: each provider is banded from its voted
+      answers and the lower band wins across providers (06).
     """
     withheld = withholding_reason(resume)
     if withheld:
@@ -419,14 +541,15 @@ def content_pass(
             meta={
                 "withheld": [c.value for c in JUDGED_CATEGORIES],
                 "withheld_reason": withheld,
-                "samples_per_provider": samples,
+                "votes_per_provider": votes,
             },
         )
 
-    judgments, errors = content_judgments(
-        providers, resume, full_text, jd_text, deterministic, samples,
-        temperature, digest,
+    tries = {p.name: votes for p in providers}
+    raw, errors = content_judgments(
+        providers, resume, full_text, jd_text, deterministic, tries, temperature, digest,
     )
+    judgments = vote_samples(raw, resume, tries)
 
     findings: list[Finding] = []
     seen: set[tuple[str, str]] = set()
@@ -467,7 +590,7 @@ def content_pass(
             "unmet": [c.model_dump(mode="json") for c in unmet],
             "criteria_answered": len(answered),
             "criteria_asked": sum(len(c) for _slug, c in criteria_index().values()),
-            "samples_per_provider": samples,
+            "votes_per_provider": votes,
         },
     )
 
@@ -476,10 +599,9 @@ def judge_categories(judgments: list[ContentJudgment]) -> dict[Category, JudgedC
     """What every judge's criterion answers make each category worth (06).
 
     The scoring channel 05 deliberately left unfolded, folded at last. One judge is one
-    `(provider, sample)` reply, not one provider: sampling noise and genuine provider
-    disagreement are the same shape from here, and `weights.toml` ships one sample per
-    provider, so collapsing samples first would only hide the noise the agreement
-    harness exists to measure.
+    judgement as handed over; `content_pass` hands over one voted judgement per
+    provider (`vote_samples`), so the lower band here is chosen across providers, never
+    across one provider's tries.
 
     A category no judge answered completely is absent from the result rather than
     present at a guess, which is what lets `score.build` tell "nobody could answer this"

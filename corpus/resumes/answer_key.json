@@ -1,0 +1,305 @@
+{
+  "note": "The owner's answers, 28 September (ticket 15). Scoped criteria are keyed per place by locator; the rest per document. Locators and quotes come from ats.sections.parse on corpus/resumes/synthetic/.",
+  "entries": [
+    {
+      "doc": "12-returning-rag",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "What \"good\" looks like for an agent completing a task end to end was defined with the policy team, in 7 written criteria.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "23-returning-genai-product",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Defined what \"good\" means for our quest-generation agent, 5 written criteria.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "29-returning-agentic-corporate",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "I defined what \"good\" looks like for an agent completing a fraud review end to end, in 9 criteria we still use.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "01-lab-to-industry-agents",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Design and iterate on agent behaviours for long-horizon coding tasks.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "13-eval-quality-promoted",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "I contributed the design for our LLM-powered claims features and the agent behind them.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "25-staff-forward-deployed",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Agent behaviours were designed and iterated on for real coding tasks in the internal developer tooling.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "16-returning-data-engineer",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "yes",
+      "quote": "Designed and implemented an LLM-powered claims workflow and the agentic steps in it, from concept through to production.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "17-staff-applied-ml-narrative",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "yes",
+      "quote": "Agentic systems were shipped with guardrails, authorisation and an audit trail, so the agents act on our own systems rather than only advising.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "18-terse-data-senior",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "yes",
+      "quote": "Agentic systems were shipped with guardrails, authorisation and audit.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "30-junior-genai-product",
+      "category": "agentic-systems",
+      "criterion": "C1",
+      "answer": "yes",
+      "quote": "Agentic features were built for the knowledge base, using our own page service, so agents can edit and retire the fraud playbooks on their own.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "04-fullstack-senior-inconsistent",
+      "category": "evaluation-rigour",
+      "criterion": "C4",
+      "answer": "yes",
+      "quote": "Improved a summarisation feature through prompt changes, tool-use strategy and context construction; 22% fewer escalations over the following two months.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "17-staff-applied-ml-narrative",
+      "category": "evaluation-rigour",
+      "criterion": "C4",
+      "answer": "yes",
+      "quote": "A prompt change was shipped that quietly halved recall on one document type; it was found six weeks later in an A/B readout.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "27-staff-eval-quality",
+      "category": "evaluation-rigour",
+      "criterion": "C4",
+      "answer": "yes",
+      "quote": "We fine-tuned a classifier with LoRA for the first triage step, 4 points of F1.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "29-returning-agentic-corporate",
+      "category": "evaluation-rigour",
+      "criterion": "C4",
+      "answer": "yes",
+      "quote": "I improved performance through prompting, tool-use strategy and context construction, 19% fewer failed reviews.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "22-career-changer-ml-infra",
+      "category": "evaluation-rigour",
+      "criterion": "C4",
+      "answer": "no",
+      "quote": "We designed the evaluation harness for our generative screening feature: a golden set, written rubrics, and an LLM judge calibrated against 500 human labels.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "08-junior-mixed-quality",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[0].bullet[3]",
+      "answer": "yes",
+      "quote": "I got the consumer group configuration wrong and we replayed three days of events.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "15-backend-junior-no-ai",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[0].bullet[3]",
+      "answer": "yes",
+      "quote": "A migration was run badly and the lab's booking service was down for a morning.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "15-backend-junior-no-ai",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[0].bullet[4]",
+      "answer": "yes",
+      "quote": "It was kept running afterwards and the runbook came out of that.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "16-returning-data-engineer",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[0].bullet[2]",
+      "answer": "no",
+      "quote": "Our first topic layout was wrong and we rebuilt it.",
+      "date": "2026-09-29",
+      "note": "Changed from yes on 29 September (the owner): nothing in the line says the system was live, and it is a weak bullet the checker should flag. Effective from the next run; the 29 September run is not rescored."
+    },
+    {
+      "doc": "28-forward-deployed-senior-thin",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[2].bullet[0]",
+      "answer": "yes",
+      "quote": "Drift, hallucination rate, cost per request and token usage were monitored in Grafana, 14 dashboards.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "21-returning-fullstack",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[0].bullet[3]",
+      "answer": "yes",
+      "quote": "We rewrote the caching layer twice in the process.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "23-returning-genai-product",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[0].bullet[4]",
+      "answer": "yes",
+      "quote": "Cut generation cost 40% by caching lore chunks.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "09-llm-platform-career-change",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[3].bullet[0]",
+      "answer": "no",
+      "quote": "A small serving benchmark I run each release, published as a repo.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "10-new-grad-agentic",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[0].bullet[4]",
+      "answer": "no",
+      "quote": "An embedding version mismatch made results incoherent for a week before it was caught.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "19-academic-terse-mid",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[1].bullet[2]",
+      "answer": "no",
+      "quote": "We kept the loops running after the grant ended.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "24-forward-deployed-senior",
+      "category": "production-ownership",
+      "criterion": "C4",
+      "locator": "exp[0].bullet[2]",
+      "answer": "no",
+      "quote": "The eval suite has been run on every release since, 40 releases.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "04-fullstack-senior-inconsistent",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Seeking a senior full-stack role with room to work closer to the model layer.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "07-junior-data-engineer-bank",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Data engineer, analytics platform.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "08-junior-mixed-quality",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Engineer. Data platforms, some product work.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "10-new-grad-agentic",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "New graduate, agentic systems.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "11-promoted-junior-agentic",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Agentic AI engineer.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "12-returning-rag",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "RAG and retrieval systems. Two years out of the industry for family reasons; back since early 2025 and current on where the tooling has gone.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "17-staff-applied-ml-narrative",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Fourteen years, most recently on agent behaviour and the systems around it. I like the part of the job where you find out the thing you shipped is wrong.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "23-returning-genai-product",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "GenAI product engineer.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "26-returning-llm-platform",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "Back after two years out. LLM platform and serving work, ideally somewhere the serving path is the product rather than an afterthought.",
+      "date": "2026-09-28"
+    },
+    {
+      "doc": "30-junior-genai-product",
+      "category": "resume-craft",
+      "criterion": "C1",
+      "answer": "no",
+      "quote": "GenAI product engineer, two years.",
+      "date": "2026-09-28"
+    }
+  ]
+}

@@ -33,8 +33,13 @@ pipeline", "Explored transformer architectures".
 interview?**
 
 *Yes* needs a named service, product, model, or pipeline in the same bullet as the
-destination.
-*No* looks like: "Shipped AI-powered solutions", "delivered scalable systems" —
+destination — or a word for what it is FOR, with no proper name: "Built forecasting for
+build timelines" is yes, and so is plain "built forecasting". A generic stage or kind
+word — ingestion, processing, ETL, pipeline, service — needs one more detail that picks
+it out: purpose, users, data, or stack. "Built ingestion on Airflow and Postgres" is
+yes.
+*No* looks like: a bare category noun with no picking-out detail — "the pipeline", "the
+ingestion service" — or "Shipped AI-powered solutions", "delivered scalable systems" —
 portable to any candidate.
 
 ### C3 — Operational fact
@@ -49,8 +54,20 @@ size.
 **Does any bullet describe work done to a system that was already live?**
 
 *Yes* needs operating, monitoring, debugging, tuning, migrating, porting, replacing,
-profiling or iterating on something already running.
-*No* looks like: every bullet ends at the launch.
+profiling or iterating on something already running. From ticket 15, 28 September:
+fixing a live system ("I got the consumer group configuration wrong and we replayed
+three days of events"), monitoring ("Drift, hallucination rate … were monitored in
+Grafana"), and rework the neighbouring bullets place after launch ("We rewrote the
+caching layer twice in the process" after "We stayed on all three afterwards"; "Cut
+generation cost 40% by caching lore chunks" after "Shipped 3 client titles with it"),
+and operating it when that produced a named artefact ("It was kept running afterwards
+and the runbook came out of that").
+*No* looks like: every bullet ends at the launch. Also "The eval suite has been run on
+every release since, 40 releases" -- it says the suite is still used, not what the
+candidate did to it. An incident that was merely caught ("An embedding version mismatch
+made results incoherent for a week before it was caught") is C3's operational fact, not
+work; "A small serving benchmark I run each release" is `no` too, and so is "We kept
+the loops running after the grant ended": staying, with no work named.
 
 ### C5 — First-person ownership
 **Is the shipped work attributed to this candidate rather than to a team, and without

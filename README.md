@@ -51,18 +51,18 @@ passes 1 and 2 only judge, so there's nothing there for a model to game.
 
 ```mermaid
 flowchart TD
-    IN["PDF resume + optional JD<br/>+ Anthropic and/or OpenAI key"] --> EX["extract.py<br/>text, layout, hidden text, columns"]
+    IN["PDF resume + optional JD<br/>+ OpenAI key (Claude opt-in)"] --> EX["extract.py<br/>text, layout, hidden text, columns"]
     EX --> SEC["sections.py<br/>contact, roles, bullets, dates"]
     SEC --> DET["Deterministic checks<br/>parseability, structure, slop patterns,<br/>recruiter scan, keyword coverage"]
 
-    DET --> P1["Pass 1 — content judge<br/>both providers, banded per judge"]
+    DET --> P1["Pass 1 — content judge<br/>3 tries voted per provider, banded"]
     DET --> P2["Pass 2 — slop judge<br/>k-of-N per provider, union across"]
 
     P1 --> GEN
     P2 --> GEN
 
     subgraph P3["Pass 3 — rewrite the worst bullets (only on request)"]
-        GEN["Generate<br/>3 objectives × 2 providers"] --> CLEAN["Fact-check filter<br/>drop invented figures, dropped claims,<br/>vacuous numbers, proper-noun padding"]
+        GEN["Generate<br/>3 objectives × each provider"] --> CLEAN["Fact-check filter<br/>drop invented figures, dropped claims,<br/>vacuous numbers, proper-noun padding"]
         CLEAN --> JUDGE["Quality judge<br/>ranks fact-checked candidates only —<br/>impact, clarity, credibility, ..."]
         JUDGE --> POLISH["Polish the #1 candidate<br/>#2 kept as reference only"]
         POLISH --> GATE["Final gate<br/>beat original by margin,<br/>no audit regression"]
@@ -111,12 +111,17 @@ and 2). A "Generate rewrite suggestions" button appears once the score is in —
 generation is a second, explicit request, so you always know when the extra calls
 are being spent and never pay for rewrites you didn't ask to see.
 
-## Two API keys
+## API keys
 
-Supply both an Anthropic and an OpenAI key and the tool ensembles across them.
-This is worth more than sampling one model repeatedly, because **a model is
-weakest at flagging its own idiom** — if your resume was drafted with one, the
-other is the informative detector.
+The app judges with OpenAI (`gpt-6-luna`) alone. Its content judgement is a
+majority vote of three tries per criterion. Claude costs about ten times as much
+per check, so it is off unless `weights.toml` sets `[ensemble] use_claude = true`;
+a Claude key on its own does not turn it on.
+
+With Claude switched on, the tool ensembles across both providers. That is worth
+more than sampling one model repeatedly, because **a model is weakest at flagging
+its own idiom** — if your resume was drafted with one, the other is the
+informative detector.
 
 That inverts the combination rule, which is the subtle part:
 
@@ -128,7 +133,7 @@ That inverts the combination rule, which is the subtle part:
 Getting that backwards would either flood you with false positives or discard
 exactly the catches that make two keys worth having.
 
-Either key alone works. Neither still runs every deterministic check.
+No key still runs every deterministic check.
 
 ## Rewrites invent nothing
 
@@ -145,7 +150,7 @@ generate diverse options, throw out anything that fails the fact-check, then jud
 quality only among what's left.
 
 1. **Generate** under three objectives — mechanism-led, outcome-led, ownership-led
-   (the same invariants scoring already checks) — from both providers, so
+   (the same invariants scoring already checks) — from every enabled provider, so
    candidates differ in framing, not just in luck from resampling one prompt.
 2. **Fact-check filter.** Every candidate runs through the audit set (below) before
    anything judges its quality. A candidate that invents a figure or drops a claim
@@ -306,9 +311,10 @@ so the inputs stay readable in review.
 
 ### Do two judges agree?
 
-`scripts/agreement_harness.py` runs every fixture past both providers twice and
+`scripts/agreement_harness.py` runs every fixture past the app's judge (OpenAI, two
+answers, each voted from three tries) and Claude as an audit judge (one answer), and
 prints what a rubric change has to be judged on: how far apart the two providers
-land per category, how far apart one provider lands from *itself* on a rerun, and
+land per category, how far apart the voted judge lands from *itself* on a rerun, and
 Krippendorff's alpha beside both — because two judges agreeing on the value nearly
 every resume gets is a coincidence, not a rubric. It is the only thing here that
 spends API calls without producing a report, so it takes `--dry-run` and saves

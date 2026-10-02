@@ -45,8 +45,8 @@
       "id": "C4",
       "name": "compared to something",
       "question": "Is the number compared with something -- a baseline, a prior model, a before and after, a target?",
-      "yes_requires": "The other end of the comparison, named: the model or method that was beaten, the previous value, the bar that had to be cleared.",
-      "no_looks_like": "A single standalone number. '0.87 F1' is unreadable without knowing what 0.87 replaced or beat.",
+      "yes_requires": "A relative change on ANY metric states its own baseline, 'before', and is yes -- business outcomes such as escalations or reviews count as much as model-quality metrics: '22% fewer escalations', 'halved recall', '4 points of F1', '19% fewer failed reviews' -- yes. It needs no baseline named beside it. Also yes: the other end of the comparison, named -- the model or method that was beaten, the previous value, the bar that had to be cleared.",
+      "no_looks_like": "A single standalone number. '0.87 F1' is unreadable without knowing what 0.87 replaced or beat. A method rather than a result is no too: 'an LLM judge calibrated against 500 human labels'.",
       "aliases": ["baseline", "baselines", "prior", "previous", "incumbent", "compared", "comparison", "versus", "vs", "vs.", "against", "outperformed", "beat", "improved from", "up from", "down from", "rose from", "fell from", "target", "sla", "threshold", "state of the art", "sota", "human baseline", "holdback", "relative to", "ablation"],
       "deterministic": {
         "kind": "alias",

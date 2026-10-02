@@ -64,6 +64,11 @@ def _judges(monkeypatch, table):
     return [Provider("anthropic", "k", "claude-x"), Provider("openai", "k", "gpt-x")]
 
 
+def _each(samples):
+    """Every provider `samples` single tries, as the harness ran before votes."""
+    return {"anthropic": (samples, 1), "openai": (samples, 1)}
+
+
 AGREEING = _reply(dict.fromkeys(CATEGORIES, 60))
 DISAGREEING = _reply(dict.fromkeys(CATEGORIES, 82))
 
@@ -80,7 +85,7 @@ def test_between_and_within_spread_are_reported_separately(monkeypatch, fixtures
         "openai": [_reply(dict.fromkeys(CATEGORIES, 84)),
                    _reply(dict.fromkeys(CATEGORIES, 84))],
     })
-    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 2, 0.7)
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], _each(2), 0.7)
     report = agreement.analyse(run)
 
     assert report.numeric, "no category was measured"
@@ -92,7 +97,7 @@ def test_between_and_within_spread_are_reported_separately(monkeypatch, fixtures
 
 def test_a_resume_with_no_text_layer_is_skipped_not_crashed(monkeypatch, fixtures):
     providers = _judges(monkeypatch, {"anthropic": [AGREEING], "openai": [AGREEING]})
-    run = agreement.collect(providers, [("scanned", str(fixtures["scanned"]))], 2, 0.7)
+    run = agreement.collect(providers, [("scanned", str(fixtures["scanned"]))], _each(2), 0.7)
     assert run.resumes[0].skipped
     assert not run.resumes[0].judgments
     report = agreement.analyse(run)
@@ -101,7 +106,7 @@ def test_a_resume_with_no_text_layer_is_skipped_not_crashed(monkeypatch, fixture
 
 def test_one_provider_says_so_rather_than_reporting_agreement(monkeypatch, fixtures):
     providers = [_judges(monkeypatch, {"anthropic": [AGREEING]})[0]]
-    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 2, 0.7)
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], _each(2), 0.7)
     report = agreement.analyse(run)
     assert any("cannot be measured with one judge" in n for n in report.notes)
 
@@ -132,7 +137,7 @@ def test_model_findings_deduct_today_and_not_under_ticket_03(monkeypatch, fixtur
         for i in range(4)
     ])
     providers = _judges(monkeypatch, {"anthropic": [wordy], "openai": [AGREEING]})
-    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 1, 0.0)
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], _each(1), 0.0)
     report = agreement.analyse(run)
 
     row = report.composites[0]
@@ -148,7 +153,7 @@ def test_findings_agreement_keys_on_defect_kind_and_place_not_wording(monkeypatc
     b = _reply(dict.fromkeys(CATEGORIES, 60),
                [("C1", "this bullet never says how big", "Cut p99 inference latency", same_defect)])
     providers = _judges(monkeypatch, {"anthropic": [a], "openai": [b]})
-    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 1, 0.0)
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], _each(1), 0.0)
     report = agreement.analyse(run)
     keyed = {row.key: row for row in report.findings if row.resume == "strong"}
     assert keyed["kind+locator"].between == 1.0
@@ -172,7 +177,7 @@ def test_findings_agreement_reports_a_chance_line_under_every_key(monkeypatch, f
         "anthropic": [_reply(dict.fromkeys(CATEGORIES, 60), places)],
         "openai": [_reply(dict.fromkeys(CATEGORIES, 60), places)],
     })
-    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 1, 0.0)
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], _each(1), 0.0)
     report = agreement.analyse(run)
     row = next(r for r in report.findings if r.key == "locator")
     assert row.between == 1.0
@@ -215,7 +220,7 @@ def test_a_judge_that_names_two_bands_for_one_resume_is_unstable_not_averaged():
 
 def test_a_saved_run_round_trips_so_a_rerender_needs_no_calls(monkeypatch, fixtures):
     providers = _judges(monkeypatch, {"anthropic": [AGREEING], "openai": [DISAGREEING]})
-    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 2, 0.7)
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], _each(2), 0.7)
     restored = agreement.HarnessRun.from_dict(json.loads(json.dumps(run.to_dict())))
     assert render(agreement.analyse(restored)) == render(
         agreement.analyse(run)
@@ -227,7 +232,7 @@ def test_the_table_renders_every_section(monkeypatch, fixtures):
     run = agreement.collect(
         providers,
         [("strong", str(fixtures["strong"])), ("scanned", str(fixtures["scanned"]))],
-        2, 0.7, notes=["a note"],
+        _each(2), 0.7, notes=["a note"],
     )
     text = render(agreement.analyse(run))
     for expected in ("Per-category agreement", "Composite spread between judges",
@@ -275,7 +280,7 @@ def test_a_document_whose_roles_did_not_parse_is_withheld_not_judged(monkeypatch
     one kind of document the pipeline refuses to judge.
     """
     providers = _judges(monkeypatch, {"anthropic": [AGREEING], "openai": [AGREEING]})
-    run = agreement.collect(providers, [("two_column", str(fixtures["two_column"]))], 2, 0.7)
+    run = agreement.collect(providers, [("two_column", str(fixtures["two_column"]))], _each(2), 0.7)
 
     assert "withheld" in run.resumes[0].skipped
     assert not run.resumes[0].judgments
@@ -292,8 +297,9 @@ def test_a_lone_judge_never_counts_as_band_agreement():
     assert report.bands[0].exact == 0
 
 
-def test_an_unstable_judge_costs_the_category_its_verdict():
-    """A rubric no judge can apply twice running has not passed anything."""
+def test_an_unstable_judge_cannot_hide_a_far_split():
+    """The app reports one of a judge's samples, so a wobble is still compared: here
+    one anthropic sample is two bands from openai, and that is a far split."""
     wobbly = [
         passes.ContentJudgment("anthropic", 0, {Category.PRODUCTION_OWNERSHIP.value: {"band": "thin"}}, []),
         passes.ContentJudgment("anthropic", 1, {Category.PRODUCTION_OWNERSHIP.value: {"band": "strong"}}, []),
@@ -302,8 +308,36 @@ def test_an_unstable_judge_costs_the_category_its_verdict():
     ]
     run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], wobbly)])
     row = agreement.analyse(run, band_order=["absent", "thin", "solid", "strong"]).bands[0]
-    assert (row.unstable, row.exact) == (1, 0)
+    assert (row.unstable, row.exact, row.far) == (1, 0, 1)
+    assert row.verdict == agreement.FAIL
+
+
+def _band(provider, sample, band):
+    return passes.ContentJudgment(
+        provider, sample, {Category.PRODUCTION_OWNERSHIP.value: {"band": band}}, [])
+
+
+def test_a_wobble_one_band_from_the_other_judge_is_adjacent_and_unstable():
+    judgments = [_band("openai", 0, "thin"), _band("openai", 1, "solid"),
+                 _band("anthropic", 0, "thin")]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    row = agreement.analyse(run, band_order=["absent", "thin", "solid", "strong"]).bands[0]
+    assert (row.resumes, row.unstable, row.adjacent, row.far) == (1, 1, 1, 0)
     assert row.verdict == agreement.LOOK
+
+
+def test_the_composite_spread_is_each_voted_sample_against_the_other_judge():
+    """luna's two voted samples differ and Claude matches the lower one. Their mean is
+    half the gap from Claude, but the app could report the higher, so the resume's
+    spread is the whole gap."""
+    judgments = [_numeric("openai", 0, dict.fromkeys(CATEGORIES, 60)),
+                 _numeric("openai", 1, dict.fromkeys(CATEGORIES, 80)),
+                 _numeric("anthropic", 0, dict.fromkeys(CATEGORIES, 60))]
+    run = agreement.HarnessRun(resumes=[agreement.ResumeRun("strong", "x", [], judgments)])
+    [row] = agreement.analyse(run).composites
+    luna, claude = row.no_deduct["openai"], row.no_deduct["anthropic"]
+    assert row.spread_no_deduct > abs(luna - claude) + 0.5
+    assert row.spread_no_deduct == pytest.approx(2 * abs(luna - claude), abs=0.2)
 
 
 def _numeric(provider, sample, scores):
@@ -354,7 +388,7 @@ def test_a_resume_only_one_judge_scored_gets_no_composite_verdict(monkeypatch, f
 
     monkeypatch.setattr(llm, "_dispatch", half_dead)
     providers = [Provider("anthropic", "k", "claude-x"), Provider("openai", "k", "gpt-x")]
-    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], 2, 0.7)
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], _each(2), 0.7)
     report = agreement.analyse(run)
 
     assert not report.composites[0].comparable
@@ -364,6 +398,7 @@ def test_a_resume_only_one_judge_scored_gets_no_composite_verdict(monkeypatch, f
     row = next(l for l in section.splitlines() if l.startswith("strong"))
     assert row.split()[1:] == ["-", "-", "-", "-"], f"verdict printed on one judge: {row!r}"
     assert "1 pass" not in section and "1 look" not in section and "1 FAIL" not in section
+    assert "strong: call failed: openai:gpt-x: 429 rate limited" in report.notes
     assert any("429 rate limited" in note for note in report.notes), \
         "a sweep that lost calls must say so beside its numbers"
     assert "judged by   anthropic" in text
@@ -472,6 +507,31 @@ def test_collect_reports_after_every_resume(monkeypatch, fixtures):
     agreement.collect(
         providers,
         [("strong", str(fixtures["strong"])), ("no_phone", str(fixtures["no_phone"]))],
-        1, 0.7, after_each=lambda run: seen.append([r.name for r in run.resumes]),
+        _each(1), 0.7, after_each=lambda run: seen.append([r.name for r in run.resumes]),
     )
     assert seen == [["strong"], ["strong", "no_phone"]]
+
+
+def test_a_judge_that_replied_but_scored_nothing_is_named_per_resume(monkeypatch, fixtures):
+    """The 27 September run lost two Claude composites with nothing in the report
+    saying so; a reply that bands no category must be named against its resume."""
+    providers = _judges(monkeypatch, {"anthropic": [json.dumps({"categories": {}})],
+                                      "openai": [AGREEING]})
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], _each(1), 0.0)
+    report = agreement.analyse(run)
+
+    assert ("strong: no composite from anthropic: its reply answered no category "
+            "completely") in report.notes
+    assert "1 with one judge" in render(report)
+
+
+def test_openai_samples_are_voted_and_claude_answers_once(monkeypatch, fixtures):
+    """The harness's default plan: luna 2 samples x 3 tries, Claude 1 x 1."""
+    providers = _judges(monkeypatch, {"anthropic": [AGREEING], "openai": [DISAGREEING]})
+    plan = {"anthropic": (1, 1), "openai": (2, 3)}
+    run = agreement.collect(providers, [("strong", str(fixtures["strong"]))], plan, 0.7)
+
+    samples = sorted((j.provider, j.sample) for j in run.resumes[0].judgments)
+    assert samples == [("anthropic", 0), ("openai", 0), ("openai", 1)]
+    assert run.meta["votes_per_sample"] == {"anthropic": 1, "openai": 3}
+    assert "openai 2 sample(s) x 3 voted tries" in render(agreement.analyse(run))

@@ -39,12 +39,14 @@ it is something the candidate has to defend in an interview.
 # code (`passes.derive_scoped`) counts, because "does any bullet..." asked in one go
 # was answered `no` without every bullet being read.
 PER_PLACE = {
-    "any_bullet": "Answer it for EVERY role bullet in PLACES (not the summary). Whether "
-                  "any bullet qualifies is counted from your answers, not by you.",
+    "any_bullet": "Answer it for EVERY bullet in PLACES, project bullets included (not the "
+                  "summary). Whether any bullet qualifies is counted from your answers, not "
+                  "by you.",
     "any_place": "Answer it for EVERY place in PLACES, the summary included. Whether any "
                  "place qualifies is counted from your answers, not by you.",
-    "every_role": "Answer it for EVERY role bullet in PLACES (not the summary). Whether "
-                  "every role has one is counted from your answers, not by you.",
+    "every_role": "Answer it for EVERY bullet in PLACES, project bullets included (not the "
+                  "summary). Whether every role has one is counted from your answers, not "
+                  "by you.",
 }
 
 
@@ -97,10 +99,13 @@ Rules for answering, none of them optional:
 - Do not name a band. Do not give a category a score. Neither is yours to choose:
   both are computed from these answers.
 - A criterion marked ANSWER PER PLACE gets no single answer, no "why" and no "fix".
-  Its "yes requires" describes what ONE qualifying place looks like: judge each
-  place alone against it. Return "places" with one entry for every place it names.
-  A "yes" quotes that place exactly in "evidence"; a "no" leaves "evidence" empty.
-  Skipping a place can leave the whole criterion unanswered.
+  Its "yes requires" describes what ONE qualifying place looks like. Read each
+  place in the context of the other bullets in the same role or project: a
+  neighbouring bullet can settle what this one describes. The answer still belongs
+  to that place. Return "places" with one entry for EVERY place the criterion
+  covers -- PLACES says how many there are, and bullets under a Projects heading are
+  places too. A "yes" quotes that place exactly in "evidence"; a "no" leaves
+  "evidence" empty. One place left unanswered leaves the whole criterion unanswered.
 - Every other criterion gets one answer. Its "yes" requires an EXACT QUOTE from the
   resume in "evidence", and the "locator" of the place it came from, copied
   verbatim from the PLACES list you are given.
@@ -307,6 +312,7 @@ def content_user(
     resume: Resume, full_text: str, jd_text: str, findings_summary: list[str],
     digest: dict | None = None,
 ) -> str:
+    listed = places(resume)
     parts = [
         "RESUME:",
         full_text[:12000],
@@ -314,8 +320,8 @@ def content_user(
         f"PARSED: {resume.years_experience} years across {len(resume.roles)} roles; "
         f"sections: {', '.join(resume.section_order) or 'none detected'}.",
         "",
-        "PLACES (the only locators you may use):",
-        "\n".join(places(resume)) or "(none)",
+        f"PLACES ({len(listed)}; the only locators you may use):",
+        "\n".join(listed) or "(none)",
         "",
         "ALREADY FOUND BY STATIC RULES (do not repeat these):",
         "\n".join(f"- {f}" for f in findings_summary[:40]) or "- none",

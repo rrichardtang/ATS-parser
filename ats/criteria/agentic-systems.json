@@ -10,8 +10,8 @@
       "id": "C1",
       "name": "a system that acts",
       "question": "Does any bullet say the candidate built a system that takes actions on its own -- an agent, an agentic workflow, a tool-calling loop, a pipeline that decides its own next step?",
-      "yes_requires": "A quote naming the thing built and the fact that it acts rather than answers. Calling a model in a loop and doing something with the result counts; the word 'agent' is not required.",
-      "no_looks_like": "A model that only returns text -- a classifier, a summariser, a chatbot that answers and stops. Also using someone else's coding agent on your own work: that is AI-assisted coding fluency, and 02 warns this is the conflation to avoid.",
+      "yes_requires": "A quote naming the thing built and the fact that it acts rather than answers. Calling a model in a loop and doing something with the result counts; the word 'agent' is not required. Built or shipped counts in any voice: 'Agentic systems were shipped with guardrails', 'Designed and implemented an LLM-powered claims workflow and the agentic steps in it, from concept through to production' -- yes. Voice is C5's concern.",
+      "no_looks_like": "A model that only returns text -- a classifier, a summariser, a chatbot that answers and stops. Also using someone else's coding agent on your own work: that is AI-assisted coding fluency, and 02 warns this is the conflation to avoid. Defining how an agent is evaluated ('What \"good\" looks like for an agent ... was defined') is no. So is designing agent behaviour without saying it was built ('Design and iterate on agent behaviours', 'I contributed the design for ... the agent behind them'): design alone doesn't count.",
       "aliases": ["agent", "agents", "agentic", "tool-calling", "tool calling", "tool use", "function calling", "multi-agent", "orchestrator", "orchestration", "autonomous", "workflow engine", "planner", "planning loop", "react loop", "mcp", "model context protocol", "langgraph", "langchain", "autogen", "crewai", "temporal", "state machine", "takes actions", "acts on"],
       "deterministic": {
         "kind": "alias"

@@ -34,9 +34,9 @@
     <fieldset>
       <legend>Model access</legend>
       <p class="hint" style="margin:0 0 .5rem">
-        Both keys enables cross-provider checking: a model is weakest at spotting its
-        own phrasing, so two providers catch what one misses. Either alone works.
-        Neither still runs every deterministic check.
+        The OpenAI key runs the model checks; each judgement is a majority vote of
+        three tries. The Anthropic key is used only when <code>weights.toml</code>
+        sets <code>use_claude = true</code>. No key still runs every deterministic check.
       </p>
       <label for="anthropic_key">Anthropic API key</label>
       <input id="anthropic_key" type="password" name="anthropic_key" placeholder="sk-ant-…" autocomplete="off">
@@ -49,9 +49,9 @@
       <legend>Depth</legend>
       <label for="mode">Ensemble</label>
       <select id="mode" name="mode">
-        <option value="economy">Economy — 4 calls to score</option>
-        <option value="default" selected>Default — 8 calls to score</option>
-        <option value="thorough">Thorough — 12 calls to score</option>
+        <option value="economy">Economy — 2 calls to score</option>
+        <option value="default" selected>Default — 6 calls to score</option>
+        <option value="thorough">Thorough — 8 calls to score</option>
       </select>
       <p class="hint">This analyzes and scores the resume only. Rewrite suggestions
         are a separate step &mdash; a button appears at the bottom of the report,
