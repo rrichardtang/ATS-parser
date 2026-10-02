@@ -218,3 +218,14 @@ def test_combined_heading_and_round_bullets():
     assert r.roles[1].start is None
     assert [len(role.bullets) for role in r.roles] == [2, 2]
     assert r.roles[0].bullets[0].endswith("across seasonal peaks")
+
+
+@pytest.mark.parametrize("heading,body", [
+    ("SKILLS & EXPERIENCE", "Python, SQL, Airflow"),
+    ("EDUCATION / EXPERIENCE", "BSc Physics, Lakeview University  Sep 2010 - Jun 2014"),
+])
+def test_a_mixed_heading_is_not_experience(heading, body):
+    """Only experience and projects combine; a skills or degree line must not become a role."""
+    r = parse(f"Morgan Vale\n\n{heading}\n{body}\n")
+    assert "experience" not in r.section_order
+    assert r.roles == []

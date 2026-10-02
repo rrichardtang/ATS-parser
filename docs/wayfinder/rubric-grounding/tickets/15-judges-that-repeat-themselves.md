@@ -596,10 +596,12 @@ owner's resume every judged category was withheld ("no roles survived extraction
 causes in `ats/sections.py`, both fixed:
 
 - A combined heading, "EXPERIENCE & PROJECTS", matched no synonym. `_canonical_section`
-  now splits a heading on `&`, `/` and "and". When every part names a section and one of
-  them is experience, it is experience. Otherwise it is the section all the parts name
-  ("Skills & Tools" is skills). One unknown part rejects the line, so "and experience"
-  or "Python & Experience" is not a heading.
+  now splits a heading on `&`, `/` and "and". Experience combined with projects is
+  experience, and a heading whose parts all name one section is that section ("Skills &
+  Tools" is skills). Any other mix, or any unknown part, is not a heading. A first cut
+  mapped every mix containing experience to experience: review found that "Skills &
+  Experience" turned a skills line into a role, and "Education / Experience" counted a
+  degree as years of work.
 - Bullets used "●", which `BULLET_RE` did not cover. It now also takes ○ ◦ ▪ ▫ ■ □ ◆ ◇ ♦
   ❖ ➢ ➤ ➔ ► ▸ ✓ ✔ ✦ and the Word symbol-font bullets U+F0A7 and U+F0B7.
 

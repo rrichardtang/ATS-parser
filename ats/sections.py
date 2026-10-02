@@ -136,9 +136,9 @@ def _canonical_section(line: str) -> str | None:
     parts = {_lookup(part) for part in re.split(r"&|/|\band\b", stripped.lower())}
     if None in parts:
         return None
-    if "experience" in parts:
-        return "experience"
-    return parts.pop() if len(parts) == 1 else None
+    if len(parts) == 1:
+        return parts.pop()
+    return "experience" if parts == {"experience", "projects"} else None
 
 
 def _lookup(name: str) -> str | None:
