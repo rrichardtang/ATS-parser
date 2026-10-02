@@ -587,3 +587,44 @@ already reads the cap each `Provider` sends. At $0.10/$0.50 per million tokens:
   0.10,0.50 --openai-effort high --budget 5 --docs
   01-lab-to-industry-agents,04-fullstack-senior-inconsistent`, 12 calls): worst case
   $0.40. That is the 32000 default; at 16000 it would be about half.
+
+## Post-close note: found on the owner's first real resume, 2 October
+
+Not a judge-consistency finding, but it stopped the judges running at all, and the
+parser had only ever seen the synthetic corpus, which comes from one template. On the
+owner's resume every judged category was withheld ("no roles survived extraction"). Two
+causes in `ats/sections.py`, both fixed:
+
+- A combined heading, "EXPERIENCE & PROJECTS", matched no synonym. `_canonical_section`
+  now splits a heading on `&`, `/` and "and". When every part names a section and one of
+  them is experience, it is experience. Otherwise it is the section all the parts name
+  ("Skills & Tools" is skills). One unknown part rejects the line, so "and experience"
+  or "Python & Experience" is not a heading.
+- Bullets used "●", which `BULLET_RE` did not cover. It now also takes ○ ◦ ▪ ▫ ■ □ ◆ ◇ ♦
+  ❖ ➢ ➤ ➔ ► ▸ ✓ ✔ ✦ and the Word symbol-font bullets U+F0A7 and U+F0B7.
+
+After the fix that resume parses as 2 roles and 10 bullets, with 7 and 3 bullets per role. `resume.bullets`, roles and
+section order for all 30 `corpus/resumes/rendered/*.pdf` are unchanged.
+`tests/test_sections.py::test_combined_heading_and_round_bullets` covers the shape.
+
+Known gaps in that layout, not fixed:
+
+- **Project subtitle dropped.** A line between a role's heading and its first bullet,
+  such as "Some Agent (Python, RAG)", is skipped by `_parse_roles`, so no judge sees the
+  project name or its stack. Keeping it needs a decision: a new `Role` field, folding it
+  into `title`, or giving it a locator a judge can cite.
+- **Dateless project entry.** A company or product line with no dates, followed by a
+  "… live at <domain>" subtitle, becomes a role whose title is the product line and
+  whose company is empty. `struct/missing-dates` (MAJOR) fires on it, as it already
+  does for any dateless entry under PROJECTS.
+- **Roles under ACTIVITIES.** "Activities" maps to `interests`, so a dated role there,
+  such as a part-time job, is not parsed as a role.
+- **`parse/exotic-bullets` still fires on ●.** `extract.STANDARD_BULLETS` was left
+  alone, so the resume still gets that MINOR parseability finding. The bullets now parse
+  correctly, so whether ● should still count as exotic is open.
+- **The UI signal is easy to miss.** The report page shows the reason in the notes
+  banner at the top of the stream ("Judged categories withheld: …"). Each withheld
+  category shows a "no evidence" chip scoring 10, with the reason only in a hover
+  tooltip. The banner uses the same amber style as every other note, and nothing names
+  the headings that were found. The owner saw a result with no judging and did not
+  notice why.

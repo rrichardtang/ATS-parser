@@ -186,3 +186,35 @@ def test_a_wrapped_line_of_product_names_continues_an_unfinished_bullet(wrapped,
 def test_contact_lines_do_not_count_against_the_header_length(header):
     assert parse(header + "\n\nEXPERIENCE\nAI Engineer, Northwind Data    Mar 2024 - Present\n"
                           "• Shipped it.\n").summary == "Senior AI Engineer, 5 years, LLM serving"
+
+
+COMBINED = """Morgan Vale
+morgan.vale@example.com | (206) 555-0199 | Portland, OR
+
+EXPERIENCE & PROJECTS
+Harbor Freight Analytics
+Senior Analyst (Forecasting) June 2021 - Present
+Tidewater Demand Model (XGBoost, Python 3, S3)
+● Rebuilt the weekly demand forecast for 40 depots, cutting error from 18% to 11%
+across seasonal peaks
+● Moved feature generation into a nightly job that finishes in 12 minutes
+LanternPost.app
+Recipe Planner (Flask, Postgres, GPT-4) live at lanternpost.app
+● Built a pantry-aware planner that suggests meals from what is already in stock
+▪ Added a caching layer that halved the median response time
+
+SKILLS & TOOLS
+Python, SQL, Airflow
+"""
+
+
+def test_combined_heading_and_round_bullets():
+    """Found on the owner's first real resume: a combined heading and ● bullets left no roles."""
+    r = parse(COMBINED)
+    assert r.section_order == ["experience", "skills"]
+    assert [(role.title, role.company) for role in r.roles] == [
+        ("Senior Analyst (Forecasting)", "Harbor Freight Analytics"), ("LanternPost.app", "")]
+    assert (r.roles[0].start, r.roles[0].is_current) == (date(2021, 6, 1), True)
+    assert r.roles[1].start is None
+    assert [len(role.bullets) for role in r.roles] == [2, 2]
+    assert r.roles[0].bullets[0].endswith("across seasonal peaks")

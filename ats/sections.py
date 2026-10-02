@@ -45,7 +45,7 @@ GITHUB_RE = re.compile(r"github\.(?:com|io)/[\w/-]+", re.IGNORECASE)
 URL_RE = re.compile(r"(?:https?://|www\.)[\w./-]+", re.IGNORECASE)
 LOCATION_RE = re.compile(r"\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*),\s*([A-Z]{2})\b")
 
-BULLET_RE = re.compile(r"^\s*(?:[•\-–*‣·o]|\d+[.)])\s+")
+BULLET_RE = re.compile(r"^\s*(?:[•\-–*‣·o●○◦▪▫■□◆◇♦❖➢➤➔►▸✓✔✦\uf0a7\uf0b7]|\d+[.)])\s+")
 
 
 @dataclass
@@ -132,11 +132,19 @@ def _canonical_section(line: str) -> str | None:
     stripped = line.strip().strip(":").strip()
     if not stripped or len(stripped) > 40 or BULLET_RE.match(line):
         return None
-    lowered = re.sub(r"[^a-z& ]", "", stripped.lower()).strip()
-    for canonical, names in SECTION_SYNONYMS.items():
-        if lowered in names:
-            return canonical
-    return None
+    # "Experience & Projects", "Honors and Awards": every part names a section.
+    parts = {_lookup(part) for part in re.split(r"&|/|\band\b", stripped.lower())}
+    if None in parts:
+        return None
+    if "experience" in parts:
+        return "experience"
+    return parts.pop() if len(parts) == 1 else None
+
+
+def _lookup(name: str) -> str | None:
+    lowered = re.sub(r"[^a-z ]", "", name.lower()).strip()
+    return next((canonical for canonical, names in SECTION_SYNONYMS.items()
+                 if lowered in names), None)
 
 
 def _parse_token(token: str) -> date | None:
