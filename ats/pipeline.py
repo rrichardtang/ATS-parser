@@ -12,7 +12,7 @@ from . import config, human, keywords, passes, rules, slop
 from .extract import ExtractedDoc, ExtractionError, extract
 from .llm import Provider, providers_from
 from .models import JUDGED_CATEGORIES, Category, Finding, JudgedCategory, Report
-from .score import build
+from .score import build, no_evidence_values
 from .sections import SECTION_SYNONYMS, Resume, parse
 
 __all__ = [
@@ -51,7 +51,8 @@ def _withheld_notice(resume: Resume) -> str:
     return (
         "We couldn't find any jobs with bullet points in this resume, so "
         f"{len(JUDGED_CATEGORIES)} of the scored categories weren't judged and show as "
-        f"'no evidence' (10 of 100). Section headings found: {found}. "
+        f"'no evidence' ({min(no_evidence_values().values()):.0f} of 100). "
+        f"Section headings found: {found}. "
         f"Put your jobs under a heading such as {headings}, and start each bullet "
         "with a standard symbol such as • or -."
     )
