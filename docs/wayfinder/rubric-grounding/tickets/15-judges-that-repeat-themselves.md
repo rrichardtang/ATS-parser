@@ -611,10 +611,8 @@ section order for all 30 `corpus/resumes/rendered/*.pdf` are unchanged.
 
 Known gaps in that layout, not fixed:
 
-- **Project subtitle dropped.** A line between a role's heading and its first bullet,
-  such as "Some Agent (Python, RAG)", is skipped by `_parse_roles`, so no judge sees the
-  project name or its stack. Keeping it needs a decision: a new `Role` field, folding it
-  into `title`, or giving it a locator a judge can cite.
+- **Project subtitle dropped. Fixed, see below.** A line between a role's heading and
+  its first bullet, such as "Some Agent (Python, RAG)", was skipped by `_parse_roles`.
 - **Dateless project entry.** A company or product line with no dates, followed by a
   "… live at <domain>" subtitle, becomes a role whose title is the product line and
   whose company is empty. `struct/missing-dates` (MAJOR) fires on it, as it already
@@ -624,9 +622,29 @@ Known gaps in that layout, not fixed:
 - **`parse/exotic-bullets` still fires on ●.** `extract.STANDARD_BULLETS` was left
   alone, so the resume still gets that MINOR parseability finding. The bullets now parse
   correctly, so whether ● should still count as exotic is open.
-- **The UI signal is easy to miss.** The report page shows the reason in the notes
-  banner at the top of the stream ("Judged categories withheld: …"). Each withheld
-  category shows a "no evidence" chip scoring 10, with the reason only in a hover
-  tooltip. The banner uses the same amber style as every other note, and nothing names
-  the headings that were found. The owner saw a result with no judging and did not
-  notice why.
+- **The UI signal is easy to miss. Fixed, see below.** The withheld reason sat in the
+  amber notes banner like every other note, with the detail only in a hover tooltip on
+  the "no evidence" chips, and nothing named the headings that were found.
+
+Fixed afterwards, same day:
+
+- **Project subtitle.** `Role.subtitle` (default "") holds the lines between a role's
+  heading and its first bullet, joined with " · ". It is not a bullet and has no
+  locator, so `resume.bullets`, PLACES and `exp[i].bullet[j]` are unchanged. A wrapped
+  bullet's continuation and a two-line heading are matched before it, as before. Reading
+  it: `keywords._unsupported_skills` counts it as evidence behind a Skills entry, since a
+  stack line is where those skills are shown. The content prompt is unchanged: it already
+  carries the extracted text whole under RESUME, subtitle line included next to its
+  heading, so the content judge always saw it. Only the parsed structure dropped it. The
+  slop and rewrite prompts carry bullets only, by design, and the UI renders no roles.
+  None of the 30 corpus documents or the `tests/fixtures` PDFs has such a line: bullets,
+  roles, sections and the content prompt are identical to `dffacd2` for all of them, so
+  the passing run above is unaffected. On the owner's resume both entries now carry one.
+- **Withheld banner.** `pipeline._withheld_notice` writes a plain-words note: no jobs
+  with bullet points were found, so N of the scored categories show as "no evidence";
+  the section headings that were found; and the experience headings the parser knows,
+  with a reminder to start bullets with a standard symbol. It is still a run note, so the
+  Markdown and PDF exports carry it. It is also in `run_meta["withheld_notice"]`, which
+  `report.html` shows as a red error banner (`role="alert"`) above the other notes.
+  `tests/test_pipeline.py` renders it for `hidden_text`. The page also declares an empty
+  favicon now, so the browser stops requesting `/favicon.ico`.
