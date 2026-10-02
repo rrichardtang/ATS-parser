@@ -12,7 +12,7 @@ quote that proves it, a fix, and exactly what it cost the score.
 <sub>A sample report with no API key: deterministic checks only. Every row of the ledger on
 the left is a real movement of the score, and they sum to the composite.</sub>
 
-**Contents:** [Quickstart](#quickstart) · [Why it exists](#why-it-exists) · [Engineering highlights](#engineering-highlights) · [How it works](#how-it-works) · [Evaluation](#evaluation) · [Models and cost](#models-and-cost) · [Project layout](#project-layout) · [Development](#development) · [Limitations](#limitations) · [Privacy](#privacy) · [License](#license)
+**Contents:** [Quickstart](#quickstart) · [Why it exists](#why-it-exists) · [How it works](#how-it-works) · [Evaluation](#evaluation) · [Models and cost](#models-and-cost) · [Project layout](#project-layout) · [Development](#development) · [Limitations](#limitations) · [Privacy](#privacy) · [License](#license)
 
 ## Quickstart
 
@@ -35,20 +35,6 @@ rubric and scales it to 0 to 100. This project does not pretend otherwise. Its s
 **diagnostic index over named defects**, never a prediction. If you ignored the number and
 read only the findings, the tool would still work.
 
-## Engineering highlights
-
-What the project demonstrates, in the order a reviewer would want to check it:
-
-| | |
-|---|---|
-| **LLM evaluation against a labelled answer key** | The content judge is accepted only if it matches a hand-labelled answer key on at least 32 of 36 entries, on each of two independent voted samples. The current configuration passed at **35/36 and 32/36**. ([results](#evaluation)) |
-| **Rubric built for reproducibility** | Judges answer binary evidence questions, each with the quote that settles it. Scores are computed from those answers by a lookup, never chosen by the model, so two judges can be compared question by question. |
-| **Reward-hacking defence for generation** | Rewrites are best-of-N with a **split verifier**: one signal set ranks candidates, a separate audit set (invented figures, vacuous numbers, padding) is never optimised against and only detects gaming. A rising rank score with a falling audit score is logged and asserted in tests. |
-| **No fabrication by construction** | Every rewrite candidate is fact-checked before any judge sees it. A missing metric becomes `[add: eval metric]`, never a plausible number. |
-| **Deterministic first, LLM only where rules can't reach** | PDF geometry checks (hidden text, columns, tables, header bands), structure and slop patterns all run in plain Python, free and reproducible. Two of three LLM passes only judge. |
-| **Cost-aware ensembling** | One model is voted three ways; a second provider is switched on deliberately, and the combination rule flips with it (k-of-N for samples of one model, union for two providers, since a model is weakest at spotting its own idiom). The three content votes cost about **$0.03** per resume. |
-| **Weights grounded in data** | Behaviour categories are weighted by how many target job postings state that behaviour, so adding a posting moves the weights with nobody editing a number. |
-
 ## How it works
 
 ```mermaid
@@ -67,8 +53,15 @@ flowchart LR
     P3 -.-> REP
 ```
 
-A resume has to clear two gates that fail for unrelated reasons, and findings are labelled
-by which one they belong to:
+### Rules first, models second
+
+Anything a rule can check runs in plain Python, free and reproducible: hidden text, columns,
+tables and header-band content read from the PDF's geometry, plus dates, section order and
+known slop patterns. The models only judge what rules can't reach, and two of the three
+passes only judge; they never write.
+
+Findings are labelled by the gate they belong to, because a resume can pass one and fail
+the other for unrelated reasons:
 
 - **Parser gate.** Can an applicant tracking system extract your fields? Fails on two
   columns, tables, hidden text, content in the header band.
@@ -76,10 +69,37 @@ by which one they belong to:
   believe the work happened? Fails on buried evidence, no eval method, no scale, no named
   model.
 
+### Judges answer questions, not scores
+
+The content judge never picks a number. For each category it answers a handful of yes/no
+evidence questions, each with the quote that settles it, and the score is looked up from
+those answers. That makes two judges comparable question by question, and it is what the
+[evaluation](#evaluation) below measures.
+
+By default one OpenAI model answers three times and the majority wins. Claude can be added
+as a second provider, and the rule for combining findings flips when it is: across samples
+of one model, a finding seen once is probably noise, so it needs k of N; across two
+providers, a finding only one of them saw is plausibly the other's blind spot, so the union
+is kept. A model is weakest at spotting its own idiom.
+
+### Rewrites can't invent anything
+
 Pass 3 never runs on upload. It is a separate button, so you always know when extra calls
-are being spent. It generates candidates under three framings, drops any that fail the
-fact-check, ranks the survivors, lightly polishes the winner, and ships it only if it beats
-your original bullet by a margin. Otherwise your bullet stands.
+are being spent. It generates candidates under three framings, drops any that fail a
+fact-check before anything judges their quality, ranks the survivors, lightly polishes the
+winner, and ships it only if it beats your original bullet by a margin. Where a bullet
+needs a number you never gave, you get `[add: eval metric]`, not a plausible figure.
+
+Picking the best of N candidates invites gaming whatever picks them, so the checks are
+split. One set ranks candidates; a separate audit set (invented figures, vacuous numbers,
+padding) is never ranked on and only watches for gaming. A ranking score that rises while
+the audit score falls is logged, and a test asserts it is caught.
+
+### Weights come from job postings
+
+The four behaviour categories are weighted by how many of your target postings ask for that
+behaviour, so adding a posting moves the weights without anyone editing a number. The rest
+are authored in `ats/weights.toml`, and the report shows what each one cost.
 
 The full reasoning for every stage is in [docs/design.md](docs/design.md).
 
@@ -91,7 +111,7 @@ answer key (`corpus/resumes/answer_key.json`).
 
 | Run (30 Sep 2026) | Bar | Sample 0 | Sample 1 | Result |
 |---|---|---|---|---|
-| gpt-6-luna, high effort, 3-try vote | ≥ 32/36 on each sample | **35/36** | **32/36** | Pass |
+| gpt-6-luna, high effort, 3-try vote | ≥ 32/36 on each sample | 35/36 | 32/36 | Pass |
 
 How the bar was reached, including the runs that failed (30/36 on both samples at medium
 effort, then 31 and 32 at high), is recorded in
