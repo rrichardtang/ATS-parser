@@ -5,13 +5,14 @@ Upload a PDF and get a list of named defects. Each one comes with the line it is
 quote that proves it, a fix, and exactly what it cost the score.
 
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ![A report: the score ledger on the left, the top five fixes on the right](docs/images/report.png)
 
 <sub>A sample report with no API key: deterministic checks only. Every row of the ledger on
 the left is a real movement of the score, and they sum to the composite.</sub>
 
-**Contents:** [Quickstart](#quickstart) · [Why it exists](#why-it-exists) · [Engineering highlights](#engineering-highlights) · [How it works](#how-it-works) · [Evaluation](#evaluation) · [Models and cost](#models-and-cost) · [Project layout](#project-layout) · [Development](#development) · [Limitations](#limitations) · [Privacy](#privacy)
+**Contents:** [Quickstart](#quickstart) · [Why it exists](#why-it-exists) · [Engineering highlights](#engineering-highlights) · [How it works](#how-it-works) · [Evaluation](#evaluation) · [Models and cost](#models-and-cost) · [Project layout](#project-layout) · [Development](#development) · [Limitations](#limitations) · [Privacy](#privacy) · [License](#license)
 
 ## Quickstart
 
@@ -168,3 +169,7 @@ Slop patterns adapted from [`no-ai-slop`](https://github.com/petergyang/no-ai-sl
 Peter Yang (MIT), see `vendor/no-ai-slop/`. UI built following Anthropic's
 [`frontend-design`](https://github.com/anthropics/skills/tree/main/skills/frontend-design)
 skill.
+
+## License
+
+[MIT](LICENSE). The vendored `no-ai-slop` patterns keep their own MIT license in `vendor/no-ai-slop/`.
