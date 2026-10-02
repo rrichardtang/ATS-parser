@@ -13,7 +13,7 @@ from .extract import ExtractedDoc, ExtractionError, extract
 from .llm import Provider, providers_from
 from .models import JUDGED_CATEGORIES, Category, Finding, JudgedCategory, Report
 from .score import build
-from .sections import Resume, parse
+from .sections import SECTION_SYNONYMS, Resume, parse
 
 __all__ = [
     "RunInput", "analyze", "generate_rewrites", "parse_resume", "resolve_target_title",
@@ -42,6 +42,19 @@ def parse_resume(pdf_path: str) -> Resume:
     re-run analyze() or keep the PDF around."""
     doc = extract(pdf_path)
     return parse(doc.text)
+
+
+def _withheld_notice(resume: Resume) -> str:
+    """The run note the report shows as an error banner when `withholding_reason` holds."""
+    found = ", ".join(name.title() for name in resume.section_order) or "none"
+    headings = ", ".join(name.title() for name in SECTION_SYNONYMS["experience"])
+    return (
+        "We couldn't find any jobs with bullet points in this resume, so "
+        f"{len(JUDGED_CATEGORIES)} of the scored categories weren't judged and show as "
+        f"'no evidence' (10 of 100). Section headings found: {found}. "
+        f"Put your jobs under a heading such as {headings}, and start each bullet "
+        "with a standard symbol such as • or -."
+    )
 
 
 def deterministic(
@@ -115,12 +128,8 @@ def analyze(run: RunInput) -> Report:
         {c: "withheld -- " + reason for c in JUDGED_CATEGORIES} if reason else {}
     )
     if reason:
-        notes.append(
-            "Judged categories withheld: " + reason + ". "
-            "An applicant tracking system that cannot read your jobs stores none, so "
-            "each of these categories is scored as if it found no evidence (10 of "
-            "100). Fix the layout and run this again."
-        )
+        meta["withheld_notice"] = _withheld_notice(resume)
+        notes.append(meta["withheld_notice"])
 
     if not providers or not doc.has_text_layer:
         if not providers:

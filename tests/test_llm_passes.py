@@ -594,7 +594,7 @@ def test_a_document_whose_roles_did_not_parse_is_withheld(monkeypatch, fixtures)
 
     assert calls["content"] == 0, "a withheld document must not cost a call"
     assert report.run_meta["pass1"]["withheld"] == [c.value for c in JUDGED_CATEGORIES]
-    assert any("withheld" in note for note in report.notes)
+    assert report.run_meta["withheld_notice"] in report.notes
     assert not [f for f in report.findings if f.source.startswith("llm:")
                 and f.rule_id.startswith("production-ownership/")]
     # 06 and grounding 13: the composite is told, so the judged categories score as no

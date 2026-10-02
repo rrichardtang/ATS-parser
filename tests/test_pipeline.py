@@ -157,3 +157,17 @@ def test_unreadable_pdf_does_not_score_well(analyzed):
     assert report.parser_subscore == 0.0
     assert report.human_subscore == 0.0
     assert any("nothing beyond the file itself" in n.lower() for n in report.notes)
+
+
+def test_a_withheld_report_leads_with_an_error_banner_naming_the_headings_found(analyzed):
+    from app import templates
+
+    report = analyzed["hidden_text"]
+    html = templates.env.get_template("report.html").render(report=report, token="t", parser=[], recruiter=[],
+                                            manager=[], meta_json="{}", error=None)
+    banner = html.split('<div class="banner bad withheld" role="alert">', 1)[1].split("</div>", 1)[0]
+    assert "We couldn&#39;t find any jobs with bullet points" in banner
+    assert "5 of the scored categories weren&#39;t judged" in banner
+    assert "Section headings found: Experience." in banner
+    assert "such as Experience, Work Experience, Professional Experience" in banner
+    assert html.count("We couldn&#39;t find") == 1
