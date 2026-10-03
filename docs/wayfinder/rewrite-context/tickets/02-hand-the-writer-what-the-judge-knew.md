@@ -1,5 +1,5 @@
 type: task (AFK)
-status: closed
+status: open
 claimed: claude
 blocked-by: —
 
@@ -41,8 +41,10 @@ Built 3 October. Offline tests only; no key here, so no live call has read the n
   deterministic and slop findings keep the `"<message> -> <fix>"` string. The criterion's
   `name`, `question`, `yes_requires` and `no_looks_like` go once into a CRITERIA section
   (`passes.referenced_criteria`), keyed by id, rendered by `prompts.rewrite_user`.
-- **Not uncut.** The judge's `why` reaches the writer as `Finding.message`, already cut to
-  200 characters by `place`. The Finding model is not widened; `fix` was never cut.
+- **Not uncut.** The ticket asked for the judge's `why` and `fix` uncut; this falls short.
+  `why`, `fix` and `evidence` are each capped at 200 characters when the content reply is
+  parsed (`passes.py`, the `CriterionAnswer` build), before `place` runs. The Finding model
+  is not widened.
 - **Role.** Each target carries `role` (title, or heading, plus company) and
   `other_bullets_in_role_context_only`. The system prompt says to rewrite only `bullet`.
   It does not tell the writer it may borrow figures from the other bullets; the fact-check
@@ -60,3 +62,7 @@ Built 3 October. Offline tests only; no key here, so no live call has read the n
   7079 chars before (1367 + 5712), 17122 after (1834 + 15288), about 4300 tokens.
   Most of the growth is the other bullets repeated per target and the posting digest;
   CRITERIA is one copy of each of 3 criteria. Input only, far inside the reply caps.
+- **Round 2.** The writer is told to take no fact or figure from the other bullets
+  (the fact-check reads the bullet alone); ticket 03 lifts that.
+- **Deferred.** Group bullets by role so the context is not repeated per target, once 06
+  measures what the repetition costs.

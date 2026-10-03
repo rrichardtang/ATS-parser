@@ -203,7 +203,9 @@ Method:
   Where yes_requires needs a fact the bullet lacks, use a placeholder. The "evidence"
   is the quote the judge found wanting.
 - "other_bullets_in_role_context_only" and the postings are there so you understand the
-  work and its vocabulary. Rewrite only "bullet"; never return the other bullets.
+  work and its vocabulary. Rewrite only "bullet"; never return the other bullets. Take no fact or
+  figure from them into the bullet: the fact-check reads the bullet alone, so use a
+  placeholder instead.
 - Preserve the candidate's meaning and voice. Do not smooth everything into the
   same polished register.
 - Keep every claim the original made. Do not drop content to make it shorter.

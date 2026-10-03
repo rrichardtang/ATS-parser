@@ -55,6 +55,11 @@ def test_the_writer_prompt_carries_the_digest_when_given_and_not_otherwise():
     assert "Postings" not in prompts.rewrite_user(targets, {}, None)
 
 
+def test_the_writer_is_told_to_take_no_fact_from_the_other_bullets():
+    system = " ".join(prompts.rewrite_system("lens", "instruction").split())
+    assert "Take no fact or figure from them into the bullet" in system
+
+
 def test_the_judge_is_told_each_bullets_defects():
     user = prompts.judge_user([{"locator": LOC, "original": "o", "defects": ["Named system: Is it named?"],
                                 "candidates": []}])
