@@ -32,3 +32,38 @@ here and in the map. Recording them needs `OPENAI_API_KEY`. A session without it
 the script, says so, and leaves the baseline for one that has it.
 
 ## Found
+
+**Built, 3 October. Baseline not recorded yet:** the session that built it had no
+`OPENAI_API_KEY`, so no number exists. A session with the key runs the command below and
+records the printed table here and in the map.
+
+- `scripts/rewrite_harness.py` drives `ats/rewrite_eval.py` (pure logic, tested without a
+  network in `tests/test_rewrite_harness.py`). Targets are picked as the agreement harness
+  picks them; OpenAI only, built with `pipeline.app_providers` and the "default" mode.
+- Per document: before (deterministic rules, `content_pass`, `slop_pass`, `rewrite_pass`
+  with the app's arguments), a control (`content_pass` again on the unchanged resume), and
+  after (every shipped rewrite swapped into the parsed bullets and the full text, then the
+  rules and `content_pass` again).
+- Each (locator, rule_id) that pass 3 handed a writer is `fixed`, `not_fixed`,
+  `not_shipped` (reason bucket: `no candidates`, `no margin`, `audit rejected`),
+  `not_swapped` (original not found in the full text) or `unmeasured` (an LLM slop finding,
+  which is not re-run, or a content finding when the judge failed after the swap).
+  Deterministic and content-judge findings are counted apart; the control vanish rate
+  prints beside the content fix rate.
+- `passes.rewrite_targets` was factored out of `rewrite_pass` so the harness reads the
+  same target selection. App behaviour is unchanged.
+- `--summary PATH` writes counts, rule ids and locators only. The raw run goes to
+  `runs/rewrite-eval-<UTC stamp>.json`. `--from RUN.json` re-renders without calls.
+- Not swapped into: `resume.sections` and `resume.lines`, which the rules read for the
+  projects section and the unlinked-projects check.
+
+Dry run for the acceptance set (the 30 drawn documents plus the 7 fixtures, as
+`--acceptance-set` does in the agreement harness):
+
+    .venv/bin/python scripts/rewrite_harness.py --acceptance-set --dry-run --openai-price 0.10,0.50
+
+    37 resume(s) x (9 content + 3 slop + 3 rewrite + 2 judge and polish) = up to 629 calls
+    Worst case $14.80 against a $3.00 budget: over.
+
+At that price a $3 budget covers about 7 documents (`--docs`), or raise `--budget`. The
+live command is the same line without `--dry-run`.
