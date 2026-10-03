@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import re
 from dataclasses import dataclass, field, replace
 
 from . import ensemble, prompts, rubric
@@ -74,6 +75,13 @@ def criteria_index() -> dict[Category, tuple[str, dict[str, dict]]]:
         )
         for spec in rubric.load_specs()
     }
+
+
+@functools.lru_cache(maxsize=1)
+def criteria_by_rule_id() -> dict[str, dict]:
+    """`<slug>/<criterion id>` -> criterion, the keys a placed finding's `rule_id` carries."""
+    return {f"{slug}/{cid}": c for slug, criteria in criteria_index().values()
+            for cid, c in criteria.items()}
 
 
 YES = {"yes", "true", "y", "met"}
@@ -711,6 +719,48 @@ def rewrite_targets(resume: Resume, findings: list[Finding]) -> list[tuple[str, 
     return [(locator, items[:5]) for locator, items in ranked]
 
 
+ROLE_OF = re.compile(r"exp\[(\d+)\]\.bullet\[(\d+)\]")
+CRITERION_FIELDS = ("name", "question", "yes_requires", "no_looks_like")
+
+
+def _defect(finding: Finding) -> str | dict:
+    """A placed finding names its criterion and keeps the quote and the judge's words;
+    anything else keeps the `message -> fix` line. The message is what `place` kept of
+    the judge's `why` (200 characters), the one shortening left."""
+    if finding.rule_id in criteria_by_rule_id():
+        return {"criterion": finding.rule_id, "evidence": finding.evidence,
+                "why": finding.message, "fix": finding.fix}
+    return f"{finding.message} -> {finding.fix}"
+
+
+def target_payload(resume: Resume, locator: str, items: list[Finding]) -> dict:
+    """One bullet for the writer: the text, its defects, and its role as context only."""
+    role_index, bullet_index = map(int, ROLE_OF.fullmatch(locator).groups())
+    role = resume.roles[role_index]
+    others = [b for i, b in enumerate(role.bullets) if i != bullet_index]
+    return {
+        "locator": locator,
+        "bullet": role.bullets[bullet_index],
+        "defects": [_defect(f) for f in items],
+        "role": ", ".join(filter(None, [role.title or role.heading, role.company])),
+        "other_bullets_in_role_context_only": others,
+    }
+
+
+def referenced_criteria(targets: list[dict]) -> dict[str, dict]:
+    """Each criterion's text once, for every criterion a target's defects point at."""
+    ids = {d["criterion"] for t in targets for d in t["defects"] if isinstance(d, dict)}
+    return {cid: {k: criteria_by_rule_id()[cid][k] for k in CRITERION_FIELDS}
+            for cid in sorted(ids)}
+
+
+def defect_brief(defect: str | dict, criteria: dict[str, dict]) -> str:
+    if isinstance(defect, str):
+        return defect
+    criterion = criteria[defect["criterion"]]
+    return f"{criterion['name']}: {criterion['question']}"
+
+
 def rewrite_pass(
     providers: list[Provider],
     resume: Resume,
@@ -733,19 +783,13 @@ def rewrite_pass(
     that plain best-of-N uses, so polishing can only win by actually being better.
     """
     bullet_text = {loc: text for loc, text in resume.bullets if text}
-    targets = [
-        {
-            "locator": locator,
-            "bullet": bullet_text[locator],
-            "defects": [f"{f.message} -> {f.fix}" for f in items],
-        }
-        for locator, items in rewrite_targets(resume, findings)
-    ]
+    targets = [target_payload(resume, locator, items) for locator, items in rewrite_targets(resume, findings)]
     if not targets:
         return ensemble.PassResult(meta={"reason": "no bullets needed rewriting"})
 
     # -- 3a. Generate: diverse objectives x providers, batched across bullets --
-    user = prompts.rewrite_user(targets)
+    criteria = referenced_criteria(targets)
+    user = prompts.rewrite_user(targets, criteria, digest)
     active_objectives = prompts.OBJECTIVES[: max(1, objectives)]
     jobs = []
     for label, instruction in active_objectives:
@@ -779,6 +823,7 @@ def rewrite_pass(
         for target in targets
     }
     judged_locators = [loc for loc, clean in clean_by_target.items() if clean]
+    defects = {t["locator"]: t["defects"] for t in targets}
 
     judge_errors: list[str] = []
     polish_errors: list[str] = []
@@ -791,6 +836,7 @@ def rewrite_pass(
             {
                 "locator": loc,
                 "original": bullet_text.get(loc, ""),
+                "defects": [defect_brief(d, criteria) for d in defects[loc]],
                 "candidates": [
                     {"candidate_id": f"c{i}", "text": c["text"]}
                     for i, c in enumerate(clean_by_target[loc])

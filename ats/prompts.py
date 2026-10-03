@@ -198,6 +198,12 @@ Still fix every named defect; the lens changes emphasis, not which defects get f
 
 Method:
 - Make the MINIMUM effective edit. Fix the named defects; leave the rest alone.
+- A defect with a "criterion" id is fixed when the answer to that criterion's question
+  (see CRITERIA) turns to yes under its yes_requires, using the bullet's own facts.
+  Where yes_requires needs a fact the bullet lacks, use a placeholder. The "evidence"
+  is the quote the judge found wanting.
+- "other_bullets_in_role_context_only" and the postings are there so you understand the
+  work and its vocabulary. Rewrite only "bullet"; never return the other bullets.
 - Preserve the candidate's meaning and voice. Do not smooth everything into the
   same polished register.
 - Keep every claim the original made. Do not drop content to make it shorter.
@@ -214,13 +220,16 @@ Return JSON only:
 
 
 JUDGE_SYSTEM = """
-You rank candidate rewrites of resume bullets by writing quality.
+You rank candidate rewrites of resume bullets, first by whether the bullet's named
+defects are fixed, then by writing quality.
 
 Every candidate you see has already passed a fact-check against its original
 bullet -- your job is judging quality, not truthfulness. Do not second-guess
 whether a claim is true; assume it is and judge only how well it's written.
 
-Rank on: impact (does it state why the work mattered), specificity (concrete
+Each bullet lists its defects. A candidate that fixes more of them ranks above one that
+fixes fewer, however well the other reads. Among candidates equal on that, rank on:
+impact (does it state why the work mattered), specificity (concrete
 technical detail), technical depth (real engineering complexity, not jargon),
 clarity (a recruiter understands it in one read), credibility (sounds believable,
 not inflated), ATS relevance (natural technical terminology, not stuffed).
@@ -350,15 +359,20 @@ def slop_user(resume: Resume, caught: list[str]) -> str:
     ])
 
 
-def rewrite_user(targets: list[dict]) -> str:
-    return (
-        "Rewrite each bullet below. Fix every defect listed with it.\n\n"
-        + json.dumps(targets, indent=2)
-    )
+def rewrite_user(targets: list[dict], criteria: dict[str, dict], digest: dict | None = None) -> str:
+    """criteria: each criterion a defect points at, keyed by id and stated once."""
+    parts = ["Rewrite each bullet below. Fix every defect listed with it.\n"]
+    digest_summary = digest_text(digest or {})
+    if digest_summary:
+        parts += ["Postings the candidate is targeting:", digest_summary, ""]
+    if criteria:
+        parts += ["CRITERIA (referenced by id from the defects):", json.dumps(criteria, indent=2), ""]
+    parts += ["BULLETS:", json.dumps(targets, indent=2)]
+    return "\n".join(parts)
 
 
 def judge_user(targets: list[dict], digest: dict | None = None) -> str:
-    """targets: [{"locator", "original", "candidates": [{"candidate_id", "text"}]}].
+    """targets: [{"locator", "original", "defects", "candidates": [{"candidate_id", "text"}]}].
 
     Provider and objective are deliberately withheld -- a judge that knew which
     model or lens produced a candidate could favor it on that basis rather than

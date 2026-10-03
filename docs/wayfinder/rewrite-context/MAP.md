@@ -14,7 +14,7 @@ Done when a rewrite's prompt carries the criterion, its quote, the target postin
 the rest of the role, unmet criteria come back as drafts in the report, and 06 has
 measured the fix rate before and after on the acceptance set.
 
-**Status, 3 October: opened.** Nothing is built. 01, 02, 03 and 04 are the frontier.
+**Status, 3 October: opened.** 02 is built (awaiting review). 01, 03 and 04 are the frontier.
 
 ## Why this map exists
 

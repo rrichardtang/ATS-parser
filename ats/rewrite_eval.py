@@ -19,6 +19,7 @@ drives it.
 from __future__ import annotations
 
 import copy
+import json
 import re
 from collections import Counter
 from dataclasses import replace
@@ -249,12 +250,28 @@ def call_counts(settings: dict) -> dict[str, int]:
             "rewrite": generate, "judge and polish": 2 * bool(settings["rewrite_judge"])}
 
 
+def writer_prompt(resume: Resume, digest: dict) -> tuple[str, str]:
+    """The largest pass-3 writer prompt this resume can produce: the six bullets whose
+    payloads are largest, each with five defects at 260 characters a field, and the six
+    largest criteria the rubric holds, one section entry apiece."""
+    placed = {"criterion": max(passes.criteria_by_rule_id(), key=len),
+              "evidence": "x" * 260, "why": "x" * 260, "fix": "x" * 260}
+    payloads = sorted((passes.target_payload(resume, loc, []) | {"defects": [placed] * 5}
+                       for loc, _ in resume.bullets), key=lambda t: -len(json.dumps(t)))
+    biggest = sorted(passes.criteria_by_rule_id().items(),
+                     key=lambda kv: -len(json.dumps(kv[1])))[:passes.MAX_REWRITE_TARGETS * 5]
+    criteria = {cid: {k: c[k] for k in passes.CRITERION_FIELDS} for cid, c in biggest}
+    label, instruction = prompts.OBJECTIVES[0]
+    return (prompts.rewrite_system(label, instruction),
+            prompts.rewrite_user(payloads[:passes.MAX_REWRITE_TARGETS], criteria, digest))
+
+
 def worst_case(providers, others, settings: dict, documents: list[tuple[Resume, str, list[Finding]]],
                price) -> float:
     """Dollars for these documents together, every reply at its cap and every call repaired (ats/budget.py).
 
-    Pass 3's prompts are estimated from the longest the writer is sent: the six longest
-    bullets with five 260-character defects each; the judge and polish calls also carry every candidate.
+    Pass 3's prompts are estimated from the largest the writer is sent (`writer_prompt`);
+    the judge and polish calls also carry every candidate.
     """
     counts = call_counts(settings)
     digest = config.jd_digest()
@@ -262,13 +279,7 @@ def worst_case(providers, others, settings: dict, documents: list[tuple[Resume, 
                for r, text, dets in documents]
     slop = [budget.input_tokens(prompts.SLOP_SYSTEM, prompts.slop_user(r, []))
             for r, _, _ in documents]
-    label, instruction = prompts.OBJECTIVES[0]
-    writer = [budget.input_tokens(
-        prompts.rewrite_system(label, instruction),
-        prompts.rewrite_user([{"locator": loc, "bullet": text, "defects": ["x" * 260] * 5}
-                              for loc, text in sorted(r.bullets, key=lambda b: -len(b[1]))
-                              [:passes.MAX_REWRITE_TARGETS]]))
-        for r, _, _ in documents]
+    writer = [budget.input_tokens(*writer_prompt(r, digest)) for r, _, _ in documents]
     candidates = 1 + int(settings["rewrite_objectives"]) * int(settings["rewrite_samples"])
     phases = [(providers, content, counts["content"]), (others, slop, counts["slop"]),
               (others, writer, counts["rewrite"]),
