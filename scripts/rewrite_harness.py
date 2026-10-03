@@ -7,20 +7,25 @@ every shipped rewrite in and reruns the deterministic rules and the content judg
 finding pass 3 handed a writer is counted fixed, not fixed, not shipped (and why) or not
 swapped, deterministic and content-judge findings apart. See ats/rewrite_eval.py.
 
-    .venv/bin/python scripts/rewrite_harness.py --acceptance-set --dry-run
+    .venv/bin/python scripts/rewrite_harness.py --acceptance-set --no-fixtures --dry-run
     .venv/bin/python scripts/rewrite_harness.py --acceptance-set --openai-price 0.10,0.50
     .venv/bin/python scripts/rewrite_harness.py --docs strong,thin --openai-price 0.10,0.50
     .venv/bin/python scripts/rewrite_harness.py --resume ~/resume.pdf --openai-price 0.10,0.50
     .venv/bin/python scripts/rewrite_harness.py --from runs/rewrite-eval-....json --summary s.json
 
 Targets are picked as the agreement harness picks them. OpenAI only, built as the app
-builds it (weights.toml's "default" mode); the key comes from OPENAI_API_KEY. Nothing is
-sent until the run's worst case fits `--budget`, $3 by default, and a live run needs
-`--openai-price IN,OUT`. `--dry-run` prints the same check without a key.
+builds it (weights.toml's "default" mode); the key comes from OPENAI_API_KEY. `--budget`
+(default $3) caps real spend: each reply's token usage is read as it arrives (a JSON
+repair included, cached input priced as input) and the run stops before any document
+whose own worst case would take spend past it, saving what it has. It refuses to start if
+one document's worst case alone is over. A live run needs `--openai-price IN,OUT`.
+`--dry-run` prints each document's worst case and the total, without a key.
+`--acceptance-set --no-fixtures` runs the 30 drawn documents only.
 
-The run is saved whole to `runs/rewrite-eval-<UTC stamp>.json` after every document. It
-holds quoted resume text, so `runs/` is gitignored; the printed table quotes nothing.
-`--summary PATH` writes counts only (rule ids and locators, no text), safe to commit.
+The run is saved whole to `runs/rewrite-eval-<UTC stamp>.json` after every document, with each
+document's real spend. It holds quoted resume text, so `runs/` is gitignored; the printed
+table quotes nothing. `--summary PATH` writes counts, real spend and the skipped count
+(rule ids and locators, no text), safe to commit.
 `--from RUN.json` re-renders a saved run without calls.
 """
 from __future__ import annotations
@@ -35,11 +40,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from ats import budget, config, passes, pipeline, rewrite_eval  # noqa: E402
+from ats import budget, config, llm, passes, pipeline, rewrite_eval  # noqa: E402
 from ats.extract import extract  # noqa: E402
 from ats.sections import parse  # noqa: E402
 from scripts.agreement_harness import (  # noqa: E402
-    _positive, _price, _shown, _stamped, _write, select_targets,
+    _positive, _price, acceptance_targets, fixture_targets, _shown, _stamped, _write, select_targets,
 )
 
 
@@ -53,15 +58,15 @@ def providers_for(settings: dict, key: str):
     return content, pipeline.non_content_providers(content, settings)
 
 
-def prepared(targets) -> list:
-    """(resume, text, deterministic findings) of each document the content judge reads."""
-    out = []
-    for _, path in targets:
+def prepared(targets) -> dict:
+    """name -> (resume, text, deterministic findings) of each document the content judge reads."""
+    out = {}
+    for name, path in targets:
         doc = extract(path)
         resume = parse(doc.text)
         if doc.has_text_layer and not passes.withholding_reason(resume):
-            out.append((resume, doc.text, pipeline.deterministic(
-                doc, resume, "", pipeline.resolve_target_title(""))))
+            out[name] = (resume, doc.text, pipeline.deterministic(
+                doc, resume, "", pipeline.resolve_target_title("")))
     return out
 
 
@@ -81,14 +86,17 @@ def main() -> None:
                              "and the --resume stem; replaces --only and --acceptance-set")
     parser.add_argument("--acceptance-set", action="store_true",
                         help="also run 08's 30 drawn documents (corpus/resumes/)")
+    parser.add_argument("--no-fixtures", action="store_true",
+                        help="with --acceptance-set, run only the 30 drawn documents")
     parser.add_argument("--out", help="where to save the run (default runs/rewrite-eval-*.json)")
     parser.add_argument("--summary", metavar="PATH", help="write a counts-only JSON here")
     parser.add_argument("--from", dest="replay", help="re-render a saved run; no calls")
     parser.add_argument("--dry-run", action="store_true",
                         help="print the calls and worst-case cost, then stop")
     parser.add_argument("--budget", type=float, default=3.0,
-                        help="refuse, before sending anything, a run whose worst case "
-                             "costs more dollars than this (default 3.0)")
+                        help="spend at most this many dollars: stop before the document "
+                             "whose worst case would take real spend past it, and refuse "
+                             "to start if one document's worst case alone does (default 3.0)")
     parser.add_argument("--openai-price", type=_price, metavar="IN,OUT",
                         help="OpenAI's $ per million input and output tokens; needed to "
                              "budget the run (gpt-6-luna: 0.10,0.50)")
@@ -104,7 +112,12 @@ def main() -> None:
     key = os.environ.get("OPENAI_API_KEY", "").strip()
     if not key and not args.dry_run:
         raise SystemExit("no API key found; set OPENAI_API_KEY (this harness is OpenAI only)")
+    if args.no_fixtures and not args.acceptance_set:
+        parser.error("--no-fixtures needs --acceptance-set")
     targets, _ = select_targets(args)
+    if args.no_fixtures:
+        fixtures = {name for name, _ in fixture_targets([])}
+        targets = [t for t in targets if t[0] not in fixtures]
     # The file stem can be a name, and the summary is committed.
     stem = Path(args.resume).expanduser().stem if args.resume else None
     targets = [("resume" if name == stem else name, path) for name, path in targets]
@@ -118,25 +131,41 @@ def main() -> None:
         print(f"  {name:<18} {path}")
 
     try:
-        cost = rewrite_eval.worst_case(providers, others, settings, prepared(targets),
-                                       args.openai_price)
+        worst = {name: rewrite_eval.worst_case(providers, others, settings, [doc],
+                                               args.openai_price)
+                 for name, doc in prepared(targets).items()}
     except budget.PriceUnknown as exc:
         raise SystemExit(str(exc))
-    fits = cost <= args.budget
-    print(f"Worst case ${cost:.2f} against a ${args.budget:.2f} budget: "
-          f"{'fits' if fits else 'over'}.")
+    for name, cost in worst.items():
+        print(f"  {name:<18} worst case ${cost:.2f}")
+    print(f"Worst case ${sum(worst.values()):.2f} in all. Real spend is measured per reply "
+          f"and the run stops before any document that could take it past the "
+          f"${args.budget:.2f} budget.")
     if args.dry_run:
         return
-    if not fits:
-        raise SystemExit("over budget; nothing was sent")
+    if (dearest := max(worst.values(), default=0)) > args.budget:
+        raise SystemExit(f"one document's worst case, ${dearest:.2f}, is over the "
+                         f"${args.budget:.2f} budget; nothing was sent")
 
     out = Path(args.out) if args.out else _stamped("rewrite-eval")
-    run = {"settings": settings, "documents": []}
+    run = {"settings": settings, "documents": [], "skipped_for_budget": []}
+    spent = 0.0
     for name, path in targets:
-        run["documents"].append(rewrite_eval.evaluate(name, path, providers, others, settings))
+        if spent + worst.get(name, 0) > args.budget:
+            run["skipped_for_budget"] = [n for n, _ in targets[len(run["documents"]):]]
+            break
+        llm.take_usage()
+        document = rewrite_eval.evaluate(name, path, providers, others, settings)
+        document["spend"] = rewrite_eval.spend_of(llm.take_usage(), args.openai_price)
+        spent += document["spend"]["dollars"]
+        run["documents"].append(document)
         _write(out, run)
         print(f"  [{len(run['documents'])}/{len(targets)}] {name}", flush=True)
+    _write(out, run)
     print("\n" + rewrite_eval.render(run))
+    if run["skipped_for_budget"]:
+        print(f"Stopped for budget: {len(run['skipped_for_budget'])} document(s) skipped; "
+              f"real spend so far ${spent:.2f} of ${args.budget:.2f}.")
     print(f"Raw run saved to {_shown(out)}")
     if args.summary:
         save_summary(run, args.summary)

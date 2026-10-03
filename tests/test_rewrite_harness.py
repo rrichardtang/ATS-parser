@@ -155,7 +155,7 @@ def test_a_dry_run_prints_calls_and_cost_without_a_key(monkeypatch, capsys):
     harness.main()
     out = capsys.readouterr().out
     assert "1 resume(s) x (9 content + 3 slop + 3 rewrite + 2 judge and polish) = up to 17" in out
-    assert "Worst case $" in out and "budget" in out
+    assert "Worst case $" in out and "stops before any document" in out
 
 
 def test_a_live_run_without_the_key_exits_naming_it(monkeypatch):
@@ -165,12 +165,12 @@ def test_a_live_run_without_the_key_exits_naming_it(monkeypatch):
         harness.main()
 
 
-def test_over_budget_sends_nothing(monkeypatch):
+def test_a_document_whose_worst_case_is_over_budget_sends_nothing(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "k")
     monkeypatch.setattr(rewrite_eval, "evaluate", lambda *a: pytest.fail("sent"))
     monkeypatch.setattr("sys.argv", ["h", "--docs", "strong", "--budget", "0.001",
                                      "--openai-price", "0.10,0.50"])
-    with pytest.raises(SystemExit, match="over budget"):
+    with pytest.raises(SystemExit, match="over the"):
         harness.main()
 
 
@@ -244,3 +244,67 @@ def test_a_resume_is_summarised_under_a_fixed_label_not_its_file_stem(monkeypatc
                                      "--openai-price", "0.10,0.50"])
     harness.main()
     assert seen == ["resume"]
+
+
+def test_usage_accumulator_sums_concurrent_records():
+    from concurrent.futures import ThreadPoolExecutor
+    from types import SimpleNamespace as NS
+
+    from ats import llm
+
+    llm.take_usage()
+    usage = NS(prompt_tokens=10, completion_tokens=3, prompt_tokens_details=NS(cached_tokens=4),
+               completion_tokens_details=NS(reasoning_tokens=0))
+    with ThreadPoolExecutor(8) as pool:
+        list(pool.map(lambda _: llm._log_openai_usage(Provider("openai", "m", "k"), usage, "stop"),
+                      range(400)))
+    assert llm.take_usage() == (4000, 1600, 1200)
+    assert llm.take_usage() == (0, 0, 0)
+
+
+def _stub_run(monkeypatch, tmp_path, *args, tokens=(1_000_000, 0, 0)):
+    """Run main() live with evaluate stubbed to record `tokens` per document."""
+    from ats import llm
+
+    seen = []
+
+    def evaluate(name, *a):
+        seen.append(name)
+        llm._usage[:] = tokens
+        return {"name": name, "targets": []}
+
+    monkeypatch.setenv("OPENAI_API_KEY", "k")
+    monkeypatch.setattr(rewrite_eval, "evaluate", evaluate)
+    monkeypatch.setattr("sys.argv", ["h", "--out", str(tmp_path / "run.json"),
+                                     "--openai-price", "1,1", *args])
+    harness.main()
+    return seen, json.loads((tmp_path / "run.json").read_text())
+
+
+def test_the_guard_stops_before_a_document_that_could_pass_the_budget(monkeypatch, tmp_path,
+                                                                     capsys):
+    monkeypatch.setattr(rewrite_eval, "worst_case", lambda *a: 1.5)
+    seen, run = _stub_run(monkeypatch, tmp_path, "--docs", "strong,slop,two_column", "--budget", "2.0")
+    assert seen == ["strong"]
+    assert run["skipped_for_budget"] == ["slop", "two_column"]
+    assert run["documents"][0]["spend"]["dollars"] == 1.0
+    out = capsys.readouterr().out
+    assert "2 document(s) skipped" in out and "real spend so far $1.00" in out
+    assert "Real spend: 1000000 input" in out
+
+
+def test_real_spend_is_in_the_raw_run_and_the_summary(monkeypatch, tmp_path):
+    monkeypatch.setattr(rewrite_eval, "worst_case", lambda *a: 0.1)
+    _, run = _stub_run(monkeypatch, tmp_path, "--docs", "strong", "--budget", "5",
+                       tokens=(2000, 500, 100))
+    assert run["documents"][0]["spend"] == {"input": 2000, "cached": 500, "output": 100,
+                                            "dollars": 0.0021}
+    assert rewrite_eval.summary(run)["spend"]["output"] == 100
+
+
+def test_no_fixtures_selects_exactly_the_drawn_documents(monkeypatch, tmp_path):
+    monkeypatch.setattr(rewrite_eval, "worst_case", lambda *a: 0.0)
+    seen, _ = _stub_run(monkeypatch, tmp_path, "--acceptance-set", "--no-fixtures",
+                        "--budget", "5", tokens=(0, 0, 0))
+    drawn = {name for name, _ in harness.acceptance_targets()}
+    assert len(seen) == 30 and set(seen) == drawn

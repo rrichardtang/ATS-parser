@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import re
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -200,10 +201,26 @@ def anthropic_text(provider: Provider, message) -> str:
     )
 
 
+_usage_lock = threading.Lock()
+_usage = [0, 0, 0]
+
+
+def take_usage() -> tuple[int, int, int]:
+    """OpenAI (input, cached input, output) tokens recorded since the last call, then
+    reset. The rewrite harness reads real spend with it; the app never does."""
+    with _usage_lock:
+        taken = tuple(_usage)
+        _usage[:] = [0, 0, 0]
+    return taken
+
+
 def _log_openai_usage(provider: Provider, usage, finish_reason: str | None) -> None:
     if usage is None:
         return
     cached = getattr(usage.prompt_tokens_details, "cached_tokens", None) or 0
+    with _usage_lock:
+        for i, n in enumerate((usage.prompt_tokens, cached, usage.completion_tokens)):
+            _usage[i] += n
     reasoning = getattr(usage.completion_tokens_details, "reasoning_tokens", None) or 0
     log.info("%s used %s input (%s cached) and %s output tokens (%s reasoning) "
              "(finish_reason=%s)", provider.label, usage.prompt_tokens, cached,

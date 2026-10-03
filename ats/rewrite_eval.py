@@ -156,6 +156,18 @@ def evaluate(name: str, path: str, providers, others, settings: dict) -> dict:
     }
 
 
+def spend_of(usage: tuple[int, int, int], price: tuple[float, float]) -> dict:
+    """Tokens and dollars of one `llm.take_usage()`; cached input is priced as input."""
+    tokens, cached, output = usage
+    return {"input": tokens, "cached": cached, "output": output,
+            "dollars": (tokens * price[0] + output * price[1]) / 1e6}
+
+
+def total_spend(documents: list[dict]) -> dict:
+    keys = ("input", "cached", "output", "dollars")
+    return {k: sum(d.get("spend", {}).get(k, 0) for d in documents) for k in keys}
+
+
 def tally(documents: list[dict]) -> dict:
     """Counts only: outcomes by kind, not-shipped reasons, and the control."""
     outcomes = {kind: Counter() for kind in KINDS}
@@ -176,6 +188,8 @@ def summary(run: dict) -> dict:
     documents = run["documents"]
     return {
         "total": tally(documents),
+        "spend": total_spend(documents),
+        "skipped_for_budget": len(run.get("skipped_for_budget", [])),
         "documents": {
             d["name"]: {"skipped": d["skipped"]} if "skipped" in d else {
                 **tally([d]),
@@ -216,6 +230,9 @@ def render(run: dict) -> str:
                  f"({fix_rate(total['outcomes']['content'])}).",
              "Not shipped, by reason: " + (", ".join(
                  f"{r} {n}" for r, n in total["not_shipped_reasons"].items()) or "none")]
+    spend = total_spend(documents)
+    rows.append(f"Real spend: {spend['input']} input ({spend['cached']} cached) + "
+                f"{spend['output']} output tokens = ${spend['dollars']:.2f}")
     return "\n".join(rows + [f"Skipped: {s}" for s in skipped])
 
 
@@ -229,7 +246,7 @@ def call_counts(settings: dict) -> dict[str, int]:
 
 def worst_case(providers, others, settings: dict, documents: list[tuple[Resume, str, list[Finding]]],
                price) -> float:
-    """Dollars, every reply at its cap and every call repaired (ats/budget.py).
+    """Dollars for these documents together, every reply at its cap and every call repaired (ats/budget.py).
 
     Pass 3's prompts are estimated from the longest the writer is sent: the six longest
     bullets with five 260-character defects each; the judge and polish calls also carry every candidate.

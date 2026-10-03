@@ -57,13 +57,18 @@ records the printed table here and in the map.
 - Not swapped into: `resume.sections` and `resume.lines`, which the rules read for the
   projects section and the unlinked-projects check.
 
-Dry run for the acceptance set (the 30 drawn documents plus the 7 fixtures, as
-`--acceptance-set` does in the agreement harness):
+`--budget` caps real spend. Each OpenAI reply's token usage (a JSON repair included; cached
+input priced as input) is accumulated in `ats/llm.py` and read per document, and the run stops
+before any document whose own worst case would take real spend past the budget, saving the
+partial run and printing the documents skipped. A single document's worst case over the
+budget refuses the run. Worst case per document is about $0.44; real cost is expected near $3.
 
-    .venv/bin/python scripts/rewrite_harness.py --acceptance-set --dry-run --openai-price 0.10,0.50
+The baseline command (the 30 drawn documents, without the 7 fixtures):
 
-    37 resume(s) x (9 content + 3 slop + 3 rewrite + 2 judge and polish) = up to 629 calls
-    Worst case $14.80 against a $3.00 budget: over.
+    .venv/bin/python scripts/rewrite_harness.py --acceptance-set --no-fixtures --openai-price 0.10,0.50 --budget 4
 
-At that price a $3 budget covers about 7 documents (`--docs`), or raise `--budget`. The
-live command is the same line without `--dry-run`.
+Its dry run (`--dry-run` added), with the document and per-document lines elided:
+
+    30 resume(s) x (9 content + 3 slop + 3 rewrite + 2 judge and polish) = up to 510 calls
+    ...
+    Worst case $13.21 in all. Real spend is measured per reply and the run stops before any document that could take it past the $4.00 budget.
