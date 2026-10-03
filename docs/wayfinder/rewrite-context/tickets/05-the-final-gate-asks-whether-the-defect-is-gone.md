@@ -1,5 +1,5 @@
 type: task (AFK)
-status: open
+status: closed
 claimed: claude
 blocked-by: 01, 02
 

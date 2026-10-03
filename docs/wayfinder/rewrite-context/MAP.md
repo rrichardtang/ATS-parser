@@ -25,6 +25,14 @@ takes about 2.5 minutes a resume in the app; across the whole run, 69% of output
 are reasoning. See 01's Found. The
 baseline on `14c6a89` is still not run.
 
+**Status, 3 October: 05 is closed; the margin rule is gone.** A rewrite now ships when it
+passes the fact-check, adds no bullet-level rule at its bullet, and, where rules fired,
+stops at least one; among passers the ranking judge's order decides, or without the
+judge, most defects fixed. No model re-check of
+criteria for now (1 of 9 fixed, same as control, and the owner rejects added latency);
+06 revisits it. Next: rerun the five-document command to see what ships now. 03 and 04
+are the frontier.
+
 ## Why this map exists
 
 `rubric-migration` moved scoring onto criteria and left one question unanswered in its

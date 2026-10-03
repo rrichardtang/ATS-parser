@@ -24,9 +24,12 @@ answer step.
    bullet: the criterion text, the role it most plausibly belongs to, that role's
    bullets as context, and the posting digest. The writer returns a new bullet built
    from placeholders plus any fact already in that role (03's rule).
-3. **Gate them differently.** There is no original to beat, so `select_rewrite`'s margin
-   does not apply. The fact-check still does: every figure and specific must come from
-   the role or sit inside `[add: …]`.
+3. **Gate them differently.** Since 05, `ensemble.select_rewrite` compares a candidate with
+   the original bullet: no new bullet-level rule, and a fixed one where rules fired. A
+   draft has no original, so neither comparison applies, and `select_rewrite` reads the
+   original from `resume.bullets` by locator, which a draft does not have. Drafts need
+   their own gate. The fact-check still applies: every figure and specific must come from
+   the role or sit inside `[add: …]`, and the draft should trip no bullet-level rule.
 4. **Show them.** Decide where a draft sits in the report (see the map's *Not yet
    specified*) and render it in the HTML, Markdown and PDF reports.
 
