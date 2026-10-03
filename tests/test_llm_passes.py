@@ -104,7 +104,7 @@ def test_invented_metric_from_the_model_is_rejected(stubbed, fixtures):
     for rewrite in report.rewrites:
         assert "62%" not in rewrite.rewritten
     selections = report.run_meta.get("pass3", {}).get("selections", [])
-    assert any(s.get("rejected_for_audit") for s in selections)
+    assert any(s["rejections"].get("audit rejected") for s in selections)
 
 
 def test_a_failing_pass_does_not_lose_the_report(monkeypatch, fixtures):
@@ -333,7 +333,7 @@ def test_unrewritable_locators_do_not_consume_the_target_budget(monkeypatch):
     monkeypatch.setattr(llm, "_dispatch", _stub(lambda system: REWRITE_REPLY))
     result = passes.rewrite_pass(
         [Provider("anthropic", "k", "m")], resume, junk + [real],
-        objectives=1, samples=1, use_judge=False, margin=1.0, temperature=0.0,
+        objectives=1, samples=1, use_judge=False, temperature=0.0,
     )
 
     assert result.meta.get("reason") != "no bullets needed rewriting"

@@ -16,8 +16,9 @@ where output is generated to win a selection. It runs generate -> audit-filter -
 judge-rank -> polish-the-winner -> final gate: candidates are never picked for
 truthfulness (audit_clean() enforces that before any opinion is formed), only for
 quality once truthfulness is no longer in question. select_rewrite() is the final
-gate -- rank vs. original by a margin, no audit regression, no audit problems -- and
-it is what catches a hacking attempt that made it past everything upstream.
+gate -- no audit problems or regression, no new deterministic defect at the bullet,
+and at least one of its deterministic defects gone -- and it is what catches a
+hacking attempt that made it past everything upstream.
 """
 from __future__ import annotations
 
@@ -25,12 +26,14 @@ import concurrent.futures
 import contextvars
 import logging
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 
-from . import rubric
+from . import rubric, rules, slop
 from .llm import CALL_TIMEOUT
 from .invariants import evaluate, has_metric, vacuous_number
 from .models import Category, JudgedCategory, Rewrite
+from .sections import Resume
 from .slop import PATTERNS, Scope, _is_protected
 
 log = logging.getLogger("ats.ensemble")
@@ -271,7 +274,7 @@ def _specifics(text: str) -> set[str]:
 
 
 def rank_score(text: str) -> float:
-    """The RANKING set. Candidates are selected against these signals.
+    """The tie-break between gate-passing candidates when no judge ordered them.
 
     Kept deliberately small and mechanical. Everything the optimiser can see, it
     can eventually game -- which is why the audit signals below are held out.
@@ -296,7 +299,7 @@ def audit_score(original: str, candidate: str) -> tuple[float, list[str]]:
     """The AUDIT set. Never used for ranking -- only to detect gaming.
 
     A candidate cannot be optimised against signals it is not selected on, so a
-    rising rank_score paired with a falling audit_score is the hacking signature.
+    defect fixed alongside a falling audit_score is the hacking signature.
     """
     problems: list[str] = []
     score = 100.0
@@ -391,76 +394,68 @@ def audit_clean(
     return clean
 
 
+GATE_REJECTIONS = ("audit rejected", "new defect", "fixed nothing")
+
+
+def bullet_defects(resume: Resume, locator: str) -> set[str]:
+    """The deterministic rule ids firing at one bullet: content mechanics and the
+    bullet-scope slop checks. Pure and offline, so the gate can run it per candidate."""
+    findings = rules.content_mechanics(resume) + slop.analyze(resume, "")
+    return {f.rule_id for f in findings if f.locator == locator}
+
+
 def select_rewrite(
-    original: str,
+    resume: Resume,
     locator: str,
     candidates: list[tuple[str, str, str]],
-    margin: float,
+    judged: bool = False,
 ) -> tuple[Rewrite | None, dict]:
-    """The final gate: rank, then audit, then require a real improvement.
+    """The final gate: does the candidate fix the bullet without breaking anything?
 
-    Three checks, and a candidate must pass all of them:
-      1. beat the ORIGINAL by `margin` on the ranking set (not merely beat siblings)
-      2. not regress on the audit set
-      3. be clean of audit problems
+    A candidate ships only if it
+      1. is clean of audit problems and does not regress on the audit set,
+      2. brings no deterministic rule into firing at this bullet that did not before,
+      3. stops at least one of them firing, when any fired on the original.
 
-    If nothing clears all three, the original is kept. Failing to improve is an
-    acceptable outcome; shipping a hacked rewrite is not.
-
-    Doubles as the fallback path: `rewrite_pass` normally narrows candidates to a
-    judge-ranked winner (+ its polished form) before calling this, but if the judge
-    or polish call fails it can be called with the full audit-clean candidate pool
-    and behaves exactly as a plain best-of-N selector.
+    Content-only and slop-pass targets have no cheap check, so 1 and 2 suffice and the
+    judge's order decides. `judged` means `candidates` is already in the judge's order;
+    otherwise the passing candidate that fixes most defects wins, rank_score breaking
+    ties. If nothing passes, the original is kept.
     """
-    baseline_rank = rank_score(original)
+    original = dict(resume.bullets)[locator]
+    before = bullet_defects(resume, locator)
     baseline_audit, _ = audit_score(original, original)
-
-    scored = []
+    passing, rejections, hack = [], [], False
     for text, what_changed, provider in candidates:
         if not text or _norm(text) == _norm(original):
             continue
-        rank = rank_score(text)
         audit, problems = audit_score(original, text)
-        scored.append({
-            "text": text, "what_changed": what_changed, "provider": provider,
-            "rank": rank, "audit": audit, "problems": problems,
-        })
+        after = bullet_defects(resume.with_bullet(locator, text), locator)
+        fixed = before - after
+        if problems or audit < baseline_audit:
+            rejections.append("audit rejected")
+            # The hacking signature: winning on what the gate selects for (a defect
+            # gone) while losing on the fact-check it never trades against.
+            hack |= bool(fixed)
+        elif after - before:
+            rejections.append("new defect")
+        elif before and not fixed:
+            rejections.append("fixed nothing")
+        else:
+            passing.append({"text": text, "what_changed": what_changed, "provider": provider,
+                            "audit": audit, "fixed": len(fixed), "rank": rank_score(text)})
 
-    if not scored:
-        return None, {"locator": locator, "reason": "no candidates"}
-
-    scored.sort(key=lambda c: -c["rank"])
-    best_rank = scored[0]
-
-    eligible = [
-        c for c in scored
-        if c["rank"] >= baseline_rank + margin
-        and c["audit"] >= baseline_audit
-        and not c["problems"]
-    ]
-
-    meta = {
-        "locator": locator,
-        "baseline_rank": baseline_rank,
-        "best_rank": best_rank["rank"],
-        "best_audit": best_rank["audit"],
-        "candidates": len(scored),
-        "rejected_for_audit": [
-            {"rank": c["rank"], "audit": c["audit"], "problems": c["problems"]}
-            for c in scored if c["problems"]
-        ],
-    }
-
-    # The hacking signature: the top-ranked candidate wins on the signals it was
-    # selected against while losing on the ones it never saw.
-    if best_rank["rank"] > baseline_rank and best_rank["audit"] < baseline_audit:
+    meta = {"locator": locator, "candidates": len(rejections) + len(passing),
+            "defects": sorted(before), "rejections": dict(Counter(rejections))}
+    if hack:
         meta["hack_detected"] = True
-
-    if not eligible:
-        meta["reason"] = "no candidate beat the original without regressing"
+    if not passing:
+        meta["reason"] = max(rejections, key=GATE_REJECTIONS.index, default="no candidates")
         return None, meta
 
-    winner = eligible[0]
+    if not judged:
+        passing.sort(key=lambda c: (-c["fixed"], -c["rank"]))
+    winner = passing[0]
     return Rewrite(
         locator=locator,
         original=original,

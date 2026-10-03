@@ -5,6 +5,7 @@ intervals so years-of-experience and gaps are computed, not guessed.
 """
 from __future__ import annotations
 
+import copy
 import re
 from dataclasses import dataclass, field
 from datetime import date
@@ -96,6 +97,13 @@ class Resume:
             for b_index, bullet in enumerate(role.bullets):
                 out.append((f"exp[{r_index}].bullet[{b_index}]", bullet))
         return out
+
+    def with_bullet(self, locator: str, text: str) -> Resume:
+        """A copy with the bullet at `locator` replaced by `text`."""
+        resume = copy.deepcopy(self)
+        role, bullet = map(int, re.findall(r"\d+", locator))
+        resume.roles[role].bullets[bullet] = text
+        return resume
 
     @property
     def total_months(self) -> int:

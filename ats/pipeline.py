@@ -177,7 +177,7 @@ def analyze(run: RunInput) -> Report:
             fn=lambda: passes.rewrite_pass(
                 others, resume, findings,
                 int(settings["rewrite_objectives"]), int(settings["rewrite_samples"]),
-                bool(settings["rewrite_judge"]), float(settings["rewrite_margin"]),
+                bool(settings["rewrite_judge"]),
                 float(settings["temperature"]), digest,
             ),
         )
@@ -238,7 +238,7 @@ def generate_rewrites(
         fn=lambda: passes.rewrite_pass(
             providers, resume, report.findings,
             int(settings["rewrite_objectives"]), int(settings["rewrite_samples"]),
-            bool(settings["rewrite_judge"]), float(settings["rewrite_margin"]),
+            bool(settings["rewrite_judge"]),
             float(settings["temperature"]), config.jd_digest(),
         ),
     )

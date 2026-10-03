@@ -93,9 +93,6 @@ rewrite_samples = 1
 # winner step on top of that (+2 calls); off, a bullet's fact-checked candidates go
 # straight to the final gate as plain best-of-N.
 rewrite_judge = true
-# A rewrite must beat the original by this margin on the ranking set, and must not
-# regress on the audit set. Failing to improve is fine; shipping a hacked rewrite is not.
-rewrite_margin = 1.0
 
 [ensemble.thorough]
 content_votes = 3

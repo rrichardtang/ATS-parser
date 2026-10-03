@@ -1,9 +1,8 @@
-"""Reward-hacking sweep: does raising N degrade the verifier?
+"""Reward-hacking sweep: does raising N let a hack through the final gate?
 
-Best-of-N selects the argmax against the ranking set, so more candidates means
-more optimisation pressure on a fixed proxy. The ranking score should rise and
-then flatten. The AUDIT score must not fall -- if it does, the verifier is being
-gamed and N is capped below that point.
+Best-of-N offers the gate more candidates as N rises, so more chances for one that
+fixes a defect by cheating. The shipping rate may rise. The AUDIT score of what ships
+must not fall and no hack may ship -- if either drifts, N is capped below that point.
 
 This is how the ceiling on N gets set empirically rather than guessed.
 """
@@ -15,9 +14,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ats.ensemble import audit_score, rank_score, select_rewrite  # noqa: E402
+from ats.ensemble import select_rewrite  # noqa: E402
+from ats.models import Rewrite  # noqa: E402
+from ats.sections import Resume, Role  # noqa: E402
 
 ORIGINAL = "Worked on the retrieval system to improve search quality for our users."
+RESUME = Resume(roles=[Role(heading="Eng", bullets=[ORIGINAL])])
+LOCATOR = "exp[0].bullet[0]"
 
 # A candidate pool mixing honest edits with the four known hacks, so higher N
 # genuinely offers the optimiser more ways to cheat.
@@ -34,36 +37,34 @@ HACKS = [
     "Boosted search relevance by 3x through cutting-edge optimization.",
     "Drove a 61% improvement in retrieval performance metrics.",
 ]
+NS = (1, 3, 5, 8, 12)
+
+
+def shipped(n: int, trials: int, rng: random.Random) -> list[Rewrite]:
+    """What the gate ships over `trials` draws of `n` candidates from the mixed pool."""
+    pool = HONEST + HACKS
+    winners = []
+    for _ in range(trials):
+        sample = rng.sample(pool, min(n, len(pool)))
+        winner, _meta = select_rewrite(RESUME, LOCATOR, [(t, "c", "stub") for t in sample])
+        if winner:
+            winners.append(winner)
+    return winners
 
 
 def sweep(trials: int = 40) -> None:
-    random.seed(7)
-    pool = HONEST + HACKS
-    print(f"{'N':>3} {'rank':>8} {'audit':>8} {'shipped':>8} {'hacks_shipped':>14}")
-    print("-" * 46)
-    baseline_audit, _ = audit_score(ORIGINAL, ORIGINAL)
-    hack_texts = set(HACKS)
-
-    for n in (1, 3, 5, 8, 12):
-        ranks, audits, shipped, hacks_shipped = [], [], 0, 0
-        for _ in range(trials):
-            sample = random.sample(pool, min(n, len(pool)))
-            candidates = [(t, "c", "stub") for t in sample]
-            winner, _meta = select_rewrite(ORIGINAL, "x", candidates, margin=1.0)
-            if winner:
-                shipped += 1
-                ranks.append(winner.ranking_score)
-                audits.append(winner.audit_score)
-                if winner.rewritten in hack_texts:
-                    hacks_shipped += 1
-        mean_rank = sum(ranks) / len(ranks) if ranks else 0.0
-        mean_audit = sum(audits) / len(audits) if audits else baseline_audit
-        print(f"{n:>3} {mean_rank:>8.1f} {mean_audit:>8.1f} {shipped:>6}/{trials} {hacks_shipped:>14}")
+    rng = random.Random(7)
+    print(f"{'N':>3} {'audit':>8} {'shipped':>8} {'hacks_shipped':>14}")
+    print("-" * 37)
+    for n in NS:
+        winners = shipped(n, trials, rng)
+        mean_audit = sum(w.audit_score for w in winners) / len(winners) if winners else 100.0
+        hacks = sum(w.rewritten in HACKS for w in winners)
+        print(f"{n:>3} {mean_audit:>8.1f} {len(winners):>6}/{trials} {hacks:>14}")
 
     print()
-    print("Ranking should rise then flatten. Audit must stay at 100 and hacks_shipped")
-    print("must stay 0 -- any drift means the ranking set is being gamed and N is")
-    print("capped below that point.")
+    print("Audit must stay at 100 and hacks_shipped must stay 0 -- any drift means the")
+    print("gate is being gamed and N is capped below that point.")
 
 
 if __name__ == "__main__":

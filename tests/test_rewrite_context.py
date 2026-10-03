@@ -73,7 +73,7 @@ def test_the_rewrite_pass_gives_the_judge_the_criterion_name_and_question(monkey
                         '{"rewrites": [{"locator": "%s", "rewritten": "Owned GLIDE-ME, end to end, for the team", '
                         '"what_changed": "x"}]}' % LOC)
     passes.rewrite_pass([Provider("openai", "k", "m")], Resume(roles=[ROLE]), [_finding(CRITERION)],
-                        1, 1, True, 1.0, 0.0, DIGEST)
+                        1, 1, True, 0.0, DIGEST)
 
     criterion = passes.criteria_by_rule_id()[CRITERION]
     judge_user = next(user for system, user in seen if system == prompts.JUDGE_SYSTEM)
@@ -100,7 +100,7 @@ def test_the_dry_run_estimate_is_at_least_the_largest_real_writer_prompt(fixture
                 for rid in list(passes.criteria_by_rule_id())[:5]]
     seen = []
     monkeypatch.setattr(llm, "_dispatch", lambda p, system, user, t: seen.append(system + user) or "{}")
-    passes.rewrite_pass([Provider("openai", "k", "m")], resume, findings, 1, 1, False, 1.0, 0.0,
+    passes.rewrite_pass([Provider("openai", "k", "m")], resume, findings, 1, 1, False, 0.0,
                         config.jd_digest())
 
     assert budget.input_tokens(*rewrite_eval.writer_prompt(resume, config.jd_digest())) >= \

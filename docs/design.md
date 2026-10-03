@@ -55,7 +55,7 @@ flowchart TD
         GEN["Generate<br/>3 objectives × each provider"] --> CLEAN["Fact-check filter<br/>drop invented figures, dropped claims,<br/>vacuous numbers, proper-noun padding"]
         CLEAN --> JUDGE["Quality judge<br/>ranks fact-checked candidates only —<br/>impact, clarity, credibility, ..."]
         JUDGE --> POLISH["Polish the #1 candidate<br/>#2 kept as reference only"]
-        POLISH --> GATE["Final gate<br/>beat original by margin,<br/>no audit regression"]
+        POLISH --> GATE["Final gate<br/>no new defect, one fixed,<br/>no audit regression"]
     end
 
     GATE -- "ships, or original stands" --> SCORE
@@ -157,22 +157,25 @@ quality only among what's left.
    "strengths" is exactly how phrases like "cutting-edge ecosystem" get
    manufactured, and manufacturing slop is what the rest of this project exists to
    catch.
-5. **Final gate.** The polished bullet (and, as a fallback, the unpolished winner)
-   both go through the same verifier as plain best-of-N — see below. Polishing can
-   only win by clearing it; if it doesn't, the unpolished winner ships instead.
+5. **Final gate.** The polished bullet, then the judge's order, go through the same
+   verifier as plain best-of-N — see below. Polishing can only win by clearing it;
+   if it doesn't, the judge's best candidate that does ships instead.
 
 The final gate is a textbook Goodhart setup — selecting against a proxy invites
 gaming it — so the verifier is **split**:
 
-- **Ranking set** — the invariants, slop patterns, and length used above.
-- **Audit set** — never used for ranking, only to detect gaming: invented
+- **Defect set** — the bullet-level deterministic rules (content mechanics and
+  bullet-scope slop), rerun with the candidate in place of the bullet. A candidate
+  that brings a new rule into firing there is blocked; when any fired on the
+  original, at least one must stop. Without the judge, the candidate fixing most
+  of them wins, with the invariants/slop/length rank score as the tie-break.
+- **Audit set** — never selected on, only to detect gaming: invented
   figures, vacuous numbers (`collaborated with 3 engineers`), truncation, and
   proper-noun padding.
 
-A candidate cannot optimise against signals it is not selected on, so a rising
-ranking score with a falling audit score is the hacking signature — logged per run
-and asserted in tests. The winning bullet must also beat the **original** by a
-margin, not merely beat its siblings; if nothing does, you keep your bullet.
+A candidate cannot optimise against signals it is not selected on, so a defect
+fixed alongside a falling audit score is the hacking signature — logged per run
+and asserted in tests. If nothing clears the gate, you keep your bullet.
 
 Run `python scripts/hacking_sweep.py` to see the ceiling check: raising N must not
 degrade the audit. The quality judge and polish step cost two extra calls total per

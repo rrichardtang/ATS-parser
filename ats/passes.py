@@ -788,7 +788,6 @@ def rewrite_pass(
     objectives: int,
     samples: int,
     use_judge: bool,
-    margin: float,
     temperature: float,
     digest: dict | None = None,
 ) -> ensemble.PassResult:
@@ -798,9 +797,9 @@ def rewrite_pass(
     both providers, not resampling one prompt. Every candidate is fact-checked
     (ensemble.audit_clean) before an LLM forms any opinion of its quality -- the
     quality judge never adjudicates truthfulness, only which fact-checked candidate
-    reads best. The judge's #1 pick is lightly polished, and both the polished and
-    unpolished forms are handed to the same final gate (ensemble.select_rewrite)
-    that plain best-of-N uses, so polishing can only win by actually being better.
+    reads best. The judge's #1 pick is lightly polished, and the polished form then
+    the judge's order are handed to the same final gate (ensemble.select_rewrite)
+    that plain best-of-N uses, so polishing can only win by clearing it.
     """
     bullet_text = {loc: text for loc, text in resume.bullets if text}
     targets = [target_payload(resume, locator, items) for locator, items in rewrite_targets(resume, findings)]
@@ -850,7 +849,7 @@ def rewrite_pass(
     judge_errors: list[str] = []
     polish_errors: list[str] = []
     polished: dict[str, str] = {}
-    winners: dict[str, dict] = {}
+    ranked: dict[str, list[dict]] = {}
 
     if use_judge and judged_locators:
         # -- 3c. One batched call ranks every bullet's clean candidates ------
@@ -896,9 +895,9 @@ def rewrite_pass(
             ]
             if not ranked_clean:
                 # Judge failed, skipped this bullet, or hallucinated bad ids --
-                # fall back to the deterministic ranking signal.
-                ranked_clean = sorted(clean, key=lambda c: -c["rank"])
-            winners[loc] = ranked_clean[0]
+                # the gate's own ordering decides instead.
+                continue
+            ranked[loc] = ranked_clean
             entry = {"locator": loc, "original": bullet_text.get(loc, ""),
                       "winner": ranked_clean[0]["text"]}
             if len(ranked_clean) > 1:
@@ -907,7 +906,7 @@ def rewrite_pass(
 
         if polish_payload:
             polish_provider = ensemble.adjudicator_provider(
-                providers, [w["provider"] for w in winners.values()]
+                providers, [r[0]["provider"] for r in ranked.values()]
             )
             started = time.monotonic()
             polish_raw, polish_errors = ensemble.gather([
@@ -924,22 +923,19 @@ def rewrite_pass(
                         polished[loc] = text
 
     # -- 3e. Final gate: the same check for every bullet, judged or not ------
-    # A judged bullet offers {polished, unpolished winner} -- both already
-    # fact-checked, so this call mainly re-verifies polish didn't regress. An
+    # A judged bullet offers the polished form, then the judge's order. An
     # unjudged bullet (Economy mode, or the judge skipped/failed it) offers the
     # full raw candidate pool, so this call does the fact-check itself and
-    # behaves as plain best-of-N -- the graceful degradation path.
+    # orders by defects fixed -- the graceful degradation path.
     rewrites: list[Rewrite] = []
     selection_meta = []
     for target in targets:
         locator = target["locator"]
-        winner = winners.get(locator)
-        if winner:
-            gate_candidates = [(winner["text"], winner["what_changed"], winner["provider"])]
+        order = ranked.get(locator)
+        if order:
+            gate_candidates = [(c["text"], c["what_changed"], c["provider"]) for c in order]
             if locator in polished:
-                gate_candidates.insert(
-                    0, (polished[locator], "polished", winner["provider"])
-                )
+                gate_candidates.insert(0, (polished[locator], "polished", order[0]["provider"]))
         else:
             gate_candidates = [
                 (text, what_changed, provider_name)
@@ -948,7 +944,7 @@ def rewrite_pass(
             ]
 
         chosen, meta = ensemble.select_rewrite(
-            target["bullet"], locator, gate_candidates, margin
+            resume, locator, gate_candidates, judged=bool(order)
         )
         selection_meta.append(meta)
         if chosen:

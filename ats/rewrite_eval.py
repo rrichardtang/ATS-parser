@@ -18,7 +18,6 @@ drives it.
 """
 from __future__ import annotations
 
-import copy
 import json
 import re
 import statistics
@@ -52,7 +51,6 @@ def swap_text(text: str, original: str, rewritten: str) -> str | None:
 def swap(text: str, resume: Resume, rewrites: list[Rewrite]) -> tuple[str, Resume, set[str]]:
     """The text and a copy of the resume with each rewrite in place of its bullet, and
     the locators whose original could not be found in the text (left unswapped)."""
-    resume = copy.deepcopy(resume)
     missed: set[str] = set()
     for rewrite in rewrites:
         swapped = swap_text(text, rewrite.original, rewrite.rewritten)
@@ -60,18 +58,13 @@ def swap(text: str, resume: Resume, rewrites: list[Rewrite]) -> tuple[str, Resum
             missed.add(rewrite.locator)
             continue
         text = swapped
-        role, bullet = map(int, re.findall(r"\d+", rewrite.locator))
-        resume.roles[role].bullets[bullet] = rewrite.rewritten
+        resume = resume.with_bullet(rewrite.locator, rewrite.rewritten)
     return text, resume, missed
 
 
 def not_shipped_reason(selection: dict | None) -> str:
     """Why `select_rewrite` kept the original, as a bucket that quotes nothing."""
-    if selection is None:
-        return "no selection"
-    if selection.get("reason") == "no candidates":
-        return "no candidates"
-    return "audit rejected" if selection.get("rejected_for_audit") else "no margin"
+    return (selection or {}).get("reason", "no selection")
 
 
 def classify(
@@ -135,7 +128,7 @@ def evaluate(name: str, path: str, providers, others, settings: dict) -> dict:
     rewrite = passes.rewrite_pass(
         others, resume, findings, int(settings["rewrite_objectives"]),
         int(settings["rewrite_samples"]), bool(settings["rewrite_judge"]),
-        float(settings["rewrite_margin"]), float(settings["temperature"]), digest)
+        float(settings["temperature"]), digest)
 
     control = content(resume, doc.text, deterministic)
     text, swapped, missed = swap(doc.text, resume, rewrite.data)

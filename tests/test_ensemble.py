@@ -8,8 +8,9 @@ import concurrent.futures
 
 import pytest
 
-from ats import ensemble
+from ats import config, ensemble
 from ats.rubric import load_spec
+from ats.sections import Resume, Role
 from ats.ensemble import (
     audit_clean,
     audit_score,
@@ -55,40 +56,83 @@ def test_identifier_digits_are_not_invented_figures():
     assert problems == []
 
 
+LOC = "exp[0].bullet[0]"
+
+
+def _resume(bullet=ORIGINAL):
+    return Resume(roles=[Role(heading="Eng", bullets=[bullet])])
+
+
+def _select(candidates, bullet=ORIGINAL, judged=False):
+    return select_rewrite(_resume(bullet), LOC, [(t, "c", "openai") for t in candidates], judged)
+
+
+# ORIGINAL fires content/no-outcome, content/weak-opener and slop/portable.
+KEEPS_EVERY_DEFECT = "Worked on the retrieval system to improve search quality for all our users."
+FIXES_ONE = "Rebuilt the retrieval system to improve search quality for our users."
+FIXES_TWO = "Rebuilt the retrieval system and improved search quality for our users."
+FIXES_ONE_ADDS_ONE = "Rebuilt the retrieval system and I improved search quality for our users."
+
+
 def test_best_of_n_picks_the_honest_candidate():
-    candidates = [(HONEST, "named the mechanism", "anthropic")] + [
-        (text, "changed", "openai") for text in HACKS.values()
-    ]
-    winner, meta = select_rewrite(ORIGINAL, "exp[0].bullet[0]", candidates, margin=1.0)
-    assert winner is not None
+    winner, meta = _select([HONEST, *HACKS.values()])
     assert winner.rewritten == HONEST
-    assert len(meta["rejected_for_audit"]) >= 3
+    assert meta["rejections"] == {"audit rejected": len(HACKS)}
 
 
 def test_hacked_candidates_alone_produce_no_rewrite():
-    """If nothing beats the original honestly, the original is kept.
-
-    Failing to improve is acceptable. Shipping a hacked rewrite is not.
-    """
-    candidates = [(t, "c", "openai") for t in HACKS.values()]
-    winner, meta = select_rewrite(ORIGINAL, "exp[0].bullet[0]", candidates, margin=1.0)
+    """Failing to improve is acceptable. Shipping a hacked rewrite is not."""
+    winner, meta = _select(list(HACKS.values()))
     assert winner is None
-    assert "reason" in meta
+    assert meta["reason"] == "audit rejected"
 
 
 def test_hacking_signature_is_detected_and_recorded():
-    """Rising ranking score with falling audit score is the signature."""
-    hacked = "Improved search quality by 47% using advanced retrieval."
-    assert rank_score(hacked) > rank_score(ORIGINAL)
-    assert audit_score(ORIGINAL, hacked)[0] < 100.0
-    _, meta = select_rewrite(ORIGINAL, "x", [(hacked, "c", "openai")], margin=1.0)
+    """A defect fixed with a falling audit score is the signature."""
+    _, meta = _select(["Improved search quality by 47% using advanced retrieval."])
     assert meta.get("hack_detected") is True
 
 
-def test_margin_requires_beating_the_original_not_just_siblings():
-    weak = "Worked on the retrieval system to improve search quality for users."
-    winner, _ = select_rewrite(ORIGINAL, "x", [(weak, "c", "openai")], margin=5.0)
-    assert winner is None
+def test_a_candidate_that_keeps_every_deterministic_defect_is_blocked():
+    winner, meta = _select([KEEPS_EVERY_DEFECT])
+    assert winner is None and meta["reason"] == "fixed nothing"
+
+
+def test_a_candidate_that_fixes_one_defect_but_adds_another_is_blocked():
+    winner, meta = _select([FIXES_ONE_ADDS_ONE])
+    assert winner is None and meta["reason"] == "new defect"
+
+
+def test_fixing_one_of_several_defects_is_enough_to_ship():
+    winner, _ = _select([FIXES_ONE])
+    assert winner.rewritten == FIXES_ONE
+
+
+def test_a_content_only_target_ships_the_judges_top_clean_candidate_without_a_margin():
+    """No deterministic defect fires on this bullet, so the judge's order decides,
+    even for a candidate that scores no better than the original on rank_score."""
+    original = "Cut p99 latency 40% by moving ranking to a BM25 plus cross-encoder pipeline."
+    top = "Cut p99 latency 40% by moving ranking onto a BM25 plus cross-encoder pipeline."
+    runner_up = "Cut p99 latency 40% by moving ranking to a BM25 and cross-encoder pipeline."
+    assert ensemble.bullet_defects(_resume(original), LOC) == set()
+    assert rank_score(top) <= rank_score(original)
+    winner, _ = _select([top, runner_up], original, judged=True)
+    assert winner.rewritten == top
+
+
+def test_without_the_judge_the_candidate_fixing_most_defects_wins():
+    winner, _ = _select([FIXES_ONE, FIXES_TWO, HONEST])
+    assert winner.rewritten == HONEST
+
+
+def test_the_judges_order_beats_defects_fixed():
+    winner, _ = _select([FIXES_ONE, HONEST], judged=True)
+    assert winner.rewritten == FIXES_ONE
+
+
+@pytest.mark.parametrize("mode", ["economy", "default", "thorough"])
+def test_no_mode_carries_a_rewrite_margin(mode):
+    assert "rewrite_margin" not in config.ensemble_settings(mode)
 
 
 # --- audit_clean: the fact-check filter that runs before any quality judgment ---
@@ -221,29 +265,21 @@ def test_degrades_when_a_provider_returns_nothing():
 
 
 def test_raising_n_never_ships_a_hack():
-    """The empirical ceiling check, in miniature.
+    """The empirical ceiling check, run on scripts/hacking_sweep.py's own core.
 
-    More candidates means more optimisation pressure on a fixed proxy. Shipping
+    More candidates means more chances for a cheat to clear the gate. Shipping
     rate may rise; hacks shipped must stay at zero.
     """
     import random
 
-    from ats.ensemble import select_rewrite
+    from scripts import hacking_sweep
 
-    random.seed(11)
-    honest = HONEST
-    pool = [honest] + list(HACKS.values())
-    for n in (1, 3, 6):
-        for _ in range(25):
-            sample = random.sample(pool, min(n, len(pool)))
-            winner, _ = select_rewrite(
-                ORIGINAL, "x", [(t, "c", "stub") for t in sample], margin=1.0
-            )
-            if winner:
-                assert winner.rewritten not in HACKS.values(), (
-                    f"a hacked candidate shipped at N={n}"
-                )
-                assert winner.audit_score == 100.0
+    rng = random.Random(11)
+    for n in hacking_sweep.NS:
+        winners = hacking_sweep.shipped(n, 25, rng)
+        assert winners, f"nothing shipped at N={n}"
+        assert not {w.rewritten for w in winners} & set(hacking_sweep.HACKS)
+        assert {w.audit_score for w in winners} == {100.0}
 
 
 def test_a_call_past_the_timeout_is_a_failed_call_not_a_crash():

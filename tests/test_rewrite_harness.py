@@ -70,10 +70,9 @@ def test_fixed_not_fixed_and_not_swapped():
 
 @pytest.mark.parametrize("selection, reason", [
     ({"locator": "exp[0].bullet[0]", "reason": "no candidates"}, "no candidates"),
-    ({"locator": "exp[0].bullet[0]",
-      "reason": "no candidate beat the original without regressing"}, "no margin"),
-    ({"locator": "exp[0].bullet[0]", "reason": "no candidate beat the original without "
-      "regressing", "rejected_for_audit": [{"problems": ["invented 62%"]}]}, "audit rejected"),
+    ({"locator": "exp[0].bullet[0]", "reason": "audit rejected"}, "audit rejected"),
+    ({"locator": "exp[0].bullet[0]", "reason": "new defect"}, "new defect"),
+    ({"locator": "exp[0].bullet[0]", "reason": "fixed nothing"}, "fixed nothing"),
     (None, "no selection"),
 ])
 def test_not_shipped_carries_a_reason_that_quotes_nothing(selection, reason):
@@ -114,7 +113,7 @@ def _document(name, *targets, control=None):
 RUN = {"documents": [
     _document("one", {"kind": "deterministic", "outcome": "fixed"},
               {"kind": "content", "outcome": "fixed"},
-              {"kind": "content", "outcome": "not_shipped", "reason": "no margin"},
+              {"kind": "content", "outcome": "not_shipped", "reason": "fixed nothing"},
               control={"findings": 4, "vanished": 1}),
     _document("two", {"kind": "content", "outcome": "not_fixed"},
               control={"findings": 4, "vanished": 1}),
@@ -126,11 +125,11 @@ def test_tally_and_table_split_kinds_and_report_the_control_beside_the_fix_rate(
     total = rewrite_eval.tally(RUN["documents"])
     assert total["outcomes"]["content"] == {"fixed": 1, "not_shipped": 1, "not_fixed": 1}
     assert total["control"] == {"findings": 8, "vanished": 2}
-    assert total["not_shipped_reasons"] == {"no margin": 1}
+    assert total["not_shipped_reasons"] == {"fixed nothing": 1}
 
     table = rewrite_eval.render(RUN)
     assert "2 of 8 content findings vanished (25%)" in table
-    assert "(50%)" in table and "no margin 1" in table and "three: no text layer" in table
+    assert "(50%)" in table and "fixed nothing 1" in table and "three: no text layer" in table
     assert QUOTE not in table
 
 
@@ -197,8 +196,7 @@ def test_evaluate_runs_before_control_and_after_against_stubbed_passes(monkeypat
     record = rewrite_eval.evaluate("strong", str(fixtures["strong"]), [provider], [provider],
                                    {"content_votes": 3, "temperature": 0.7, "slop_samples": 3,
                                     "slop_vote_k": 2, "rewrite_objectives": 3,
-                                    "rewrite_samples": 1, "rewrite_judge": True,
-                                    "rewrite_margin": 1.0})
+                                    "rewrite_samples": 1, "rewrite_judge": True})
 
     assert len(calls) == 3 and REWRITE in calls[2] and REWRITE not in calls[1]
     assert record["control"] == {"findings": 1, "vanished": 0}  # fix-rate set only
@@ -216,8 +214,7 @@ def test_a_failed_control_leaves_content_outcomes_unmeasured(monkeypatch, fixtur
     record = rewrite_eval.evaluate("strong", str(fixtures["strong"]), [provider], [provider],
                                    {"content_votes": 3, "temperature": 0.7, "slop_samples": 3,
                                     "slop_vote_k": 2, "rewrite_objectives": 3,
-                                    "rewrite_samples": 1, "rewrite_judge": True,
-                                    "rewrite_margin": 1.0})
+                                    "rewrite_samples": 1, "rewrite_judge": True})
     assert record["control"] is None
     assert {t["outcome"] for t in record["targets"]} == {"unmeasured"}
 

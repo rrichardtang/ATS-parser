@@ -87,13 +87,14 @@ is kept. A model is weakest at spotting its own idiom.
 Pass 3 never runs on upload. It is a separate button, so you always know when extra calls
 are being spent. It generates candidates under three framings, drops any that fail a
 fact-check before anything judges their quality, ranks the survivors, lightly polishes the
-winner, and ships it only if it beats your original bullet by a margin. Where a bullet
+winner, and ships it only if it trips no mechanical check your original bullet passed and,
+where your bullet tripped any, clears at least one of them. Where a bullet
 needs a number you never gave, you get `[add: eval metric]`, not a plausible figure.
 
 Picking the best of N candidates invites gaming whatever picks them, so the checks are
-split. One set ranks candidates; a separate audit set (invented figures, vacuous numbers,
-padding) is never ranked on and only watches for gaming. A ranking score that rises while
-the audit score falls is logged, and a test asserts it is caught.
+split. The gate selects on the bullet's own defects going away; a separate audit set
+(invented figures, vacuous numbers, padding) is never selected on and only watches for
+gaming. A defect fixed while the audit score falls is logged, and a test asserts it is caught.
 
 ### Weights come from job postings
 
