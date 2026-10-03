@@ -1,6 +1,6 @@
 type: task (AFK)
 status: open
-claimed:
+claimed: claude
 blocked-by: 01, 02
 
 # The final gate asks whether the defect is gone
