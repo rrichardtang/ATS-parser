@@ -1,6 +1,6 @@
 type: task (AFK)
 status: open
-claimed:
+claimed: claude
 blocked-by: —
 
 # Measure what rewrites fix
