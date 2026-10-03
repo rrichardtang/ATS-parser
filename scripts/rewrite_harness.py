@@ -105,6 +105,9 @@ def main() -> None:
     if not key and not args.dry_run:
         raise SystemExit("no API key found; set OPENAI_API_KEY (this harness is OpenAI only)")
     targets, _ = select_targets(args)
+    # The file stem can be a name, and the summary is committed.
+    stem = Path(args.resume).expanduser().stem if args.resume else None
+    targets = [("resume" if name == stem else name, path) for name, path in targets]
     settings = config.ensemble_settings("default")
     providers, others = providers_for(settings, key)
     counts = rewrite_eval.call_counts(settings)

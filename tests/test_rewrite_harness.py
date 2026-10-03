@@ -87,9 +87,18 @@ def test_slop_pass_findings_and_an_unjudged_content_rerun_are_unmeasured():
 
 
 def test_the_control_counts_findings_that_vanish_with_no_edit():
-    before = [_finding("a"), _finding("b"), _finding("c", "exp[0].bullet[1]")]
+    measured = {("exp[0].bullet[0]", "a"), ("exp[0].bullet[0]", "b"),
+                ("exp[0].bullet[1]", "c")}
     control = [_finding("a"), _finding("z")]
-    assert rewrite_eval.control_counts(before, control) == {"findings": 3, "vanished": 2}
+    assert rewrite_eval.control_counts(measured, control) == {"findings": 3, "vanished": 2}
+
+
+def test_swap_text_refuses_a_substring_or_a_repeated_original():
+    assert rewrite_eval.swap_text("- Led team of 5 engineers\n- Led team\n", "Led team",
+                                  "NEW") is None
+    assert rewrite_eval.swap_text("The Ledger closed", "Led", "NEW") is None
+    assert rewrite_eval.swap_text("- Led team of 5\n- Led team\n", "Led team of 5",
+                                  "NEW") == "- NEW\n- Led team\n"
 
 
 def _document(name, *targets, control=None):
@@ -126,6 +135,9 @@ def test_the_summary_holds_no_bullet_or_quote_text():
         {"documents": [{**RUN["documents"][0], "rewrites": [_rewrite().model_dump()]},
                        RUN["documents"][2]]}))
     assert "Leveraged" not in out and "evidence" not in out and "rewrite" not in out
+    slop = {**RUN["documents"][0]["targets"][0], "kind": "slop", "rule_id": "slop/jane-doe"}
+    assert "jane-doe" not in json.dumps(rewrite_eval.summary(
+        {"documents": [{"name": "d", "targets": [slop]}]}))
     assert "exp[0].bullet[0]" in out and "no text layer" in out
 
 
@@ -168,26 +180,67 @@ def test_evaluate_runs_before_control_and_after_against_stubbed_passes(monkeypat
     def content(providers, resume, text, jd, deterministic, votes, temperature, digest):
         calls.append(text)
         # first asking and the control find a content defect; after the swap it is gone
-        defect = [] if REWRITE in text else [_finding("content/x")]
+        defect = [] if REWRITE in text else [_finding("content/x", shipped.locator)]
         return PassResult(data=defect)
 
-    resume = harness.parse(harness.extract(str(fixtures["slop"])).text)
-    BULLET_TEXT = resume.bullets[0][1]
-    shipped = Rewrite(locator="exp[0].bullet[0]", original=BULLET_TEXT, rewritten=REWRITE,
-                      what_changed="x")
+    shipped = _rewrite_for(fixtures)
     monkeypatch.setattr(pipeline, "deterministic", lambda *a: [])
     monkeypatch.setattr(passes, "content_pass", content)
     monkeypatch.setattr(passes, "slop_pass", lambda *a: PassResult())
     monkeypatch.setattr(passes, "rewrite_pass", lambda *a: PassResult(data=[shipped]))
     provider = Provider("openai", "-", "m")
 
-    record = rewrite_eval.evaluate("slop", str(fixtures["slop"]), [provider], [provider],
+    record = rewrite_eval.evaluate("strong", str(fixtures["strong"]), [provider], [provider],
                                    {"content_votes": 3, "temperature": 0.7, "slop_samples": 3,
                                     "slop_vote_k": 2, "rewrite_objectives": 3,
                                     "rewrite_samples": 1, "rewrite_judge": True,
                                     "rewrite_margin": 1.0})
 
     assert len(calls) == 3 and REWRITE in calls[2] and REWRITE not in calls[1]
-    assert record["control"] == {"findings": 1, "vanished": 0}
+    assert record["control"] == {"findings": 1, "vanished": 0}  # fix-rate set only
     fixed = {(t["rule_id"], t["outcome"]) for t in record["targets"]}
     assert ("content/x", "fixed") in fixed
+
+
+def test_a_failed_control_leaves_content_outcomes_unmeasured(monkeypatch, fixtures):
+    monkeypatch.setattr(pipeline, "deterministic", lambda *a: [])
+    runs = iter([PassResult(data=[_finding("c", _rewrite_for(fixtures).locator)]), PassResult(errors=["boom"]), PassResult()])
+    monkeypatch.setattr(passes, "content_pass", lambda *a: next(runs))
+    monkeypatch.setattr(passes, "slop_pass", lambda *a: PassResult())
+    monkeypatch.setattr(passes, "rewrite_pass", lambda *a: PassResult(data=[_rewrite_for(fixtures)]))
+    provider = Provider("openai", "-", "m")
+    record = rewrite_eval.evaluate("strong", str(fixtures["strong"]), [provider], [provider],
+                                   {"content_votes": 3, "temperature": 0.7, "slop_samples": 3,
+                                    "slop_vote_k": 2, "rewrite_objectives": 3,
+                                    "rewrite_samples": 1, "rewrite_judge": True,
+                                    "rewrite_margin": 1.0})
+    assert record["control"] is None
+    assert {t["outcome"] for t in record["targets"]} == {"unmeasured"}
+
+
+def _rewrite_for(fixtures):
+    locator, original = _unique_bullet(fixtures)
+    return Rewrite(locator=locator, original=original, rewritten=REWRITE, what_changed="x")
+
+
+def _unique_bullet(fixtures):
+    """A bullet that occurs once in the strong fixture (a repeated one cannot swap)."""
+    text = harness.extract(str(fixtures["strong"])).text
+    bullets = harness.parse(text).bullets
+    return next((loc, b) for loc, b in bullets
+                if rewrite_eval.swap_text(text, b, "x") is not None)
+
+
+def test_a_resume_is_summarised_under_a_fixed_label_not_its_file_stem(monkeypatch, fixtures,
+                                                                      tmp_path):
+    named = tmp_path / "Jane_Doe_Resume.pdf"
+    named.write_bytes(fixtures["strong"].read_bytes())
+    seen = []
+    monkeypatch.setenv("OPENAI_API_KEY", "k")
+    monkeypatch.setattr(rewrite_eval, "evaluate",
+                        lambda name, *a: seen.append(name) or {"name": name, "skipped": "x"})
+    monkeypatch.setattr("sys.argv", ["h", "--docs", "Jane_Doe_Resume", "--resume", str(named),
+                                     "--out", str(tmp_path / "run.json"), "--budget", "99",
+                                     "--openai-price", "0.10,0.50"])
+    harness.main()
+    assert seen == ["resume"]

@@ -33,11 +33,14 @@ OUTCOMES = ("fixed", "not_fixed", "not_shipped", "not_swapped", "unmeasured")
 
 
 def swap_text(text: str, original: str, rewritten: str) -> str | None:
-    """`text` with the first run of `original` replaced, matching across any
-    whitespace (a wrapped bullet is one line in the parse and several in the text)."""
-    pattern = r"\s+".join(map(re.escape, original.split()))
-    swapped, count = re.subn(pattern, lambda _: rewritten, text, count=1)
-    return swapped if count else None
+    """`text` with `original` replaced, matching across any whitespace (a wrapped bullet
+    is one line in the parse and several in the text) and only as whole words. None unless
+    it matches exactly once: a bullet that is a prefix of another, or repeated, cannot be
+    told apart from the one meant."""
+    pattern = r"(?<!\S)" + r"\s+".join(map(re.escape, original.split())) + r"(?!\S)"
+    if len(re.findall(pattern, text)) != 1:
+        return None
+    return re.sub(pattern, lambda _: rewritten, text)
 
 
 def swap(text: str, resume: Resume, rewrites: list[Rewrite]) -> tuple[str, Resume, set[str]]:
@@ -94,11 +97,11 @@ def classify(
     return entries
 
 
-def control_counts(before: list[Finding], control: list[Finding]) -> dict[str, int]:
-    """How many placed content findings the unchanged resume lost on a second asking."""
+def control_counts(measured: set[tuple[str, str]], control: list[Finding]) -> dict[str, int]:
+    """How many of the content findings the fix rate counts (shipped, swapped, measured)
+    the unchanged resume lost on a second asking, so the two rates share a denominator."""
     kept = {(f.locator, f.rule_id) for f in control}
-    keys = {(f.locator, f.rule_id) for f in before}
-    return {"findings": len(keys), "vanished": len(keys - kept)}
+    return {"findings": len(measured), "vanished": len(measured - kept)}
 
 
 def evaluate(name: str, path: str, providers, others, settings: dict) -> dict:
@@ -136,12 +139,15 @@ def evaluate(name: str, path: str, providers, others, settings: dict) -> dict:
     kinds = {(f.locator, f.rule_id): "content" for f in before.data}
     kinds |= {(f.locator, f.rule_id): "deterministic" for f in deterministic}
     after_keys = {(f.locator, f.rule_id) for f in deterministic_after + after.data}
+    targets = classify(passes.rewrite_targets(resume, findings), kinds, rewrite.data,
+                       rewrite.meta.get("selections", []), missed, after_keys,
+                       not (after.errors or control.errors))
+    counted = {(t["locator"], t["rule_id"]) for t in targets
+               if t["kind"] == "content" and t["outcome"] in ("fixed", "not_fixed")}
     return {
         "name": name,
-        "targets": classify(passes.rewrite_targets(resume, findings), kinds, rewrite.data,
-                            rewrite.meta.get("selections", []), missed, after_keys,
-                            not after.errors),
-        "control": None if control.errors else control_counts(before.data, control.data),
+        "targets": targets,
+        "control": None if control.errors else control_counts(counted, control.data),
         "rewrites": [r.model_dump() for r in rewrite.data],
         "selections": rewrite.meta.get("selections", []),
         "errors": {label: result.errors for label, result in
@@ -173,7 +179,9 @@ def summary(run: dict) -> dict:
         "documents": {
             d["name"]: {"skipped": d["skipped"]} if "skipped" in d else {
                 **tally([d]),
-                "targets": [{k: t[k] for k in ("locator", "rule_id", "kind", "outcome", "reason")}
+                "targets": [{"locator": t["locator"], "kind": t["kind"], "outcome": t["outcome"],
+                             "reason": t["reason"],
+                             "rule_id": t["kind"] if t["kind"] == "slop" else t["rule_id"]}
                             for t in d["targets"]],
             } for d in documents},
     }
@@ -223,8 +231,8 @@ def worst_case(providers, others, settings: dict, documents: list[tuple[Resume, 
                price) -> float:
     """Dollars, every reply at its cap and every call repaired (ats/budget.py).
 
-    Pass 3's prompts are estimated from the longest the writer is sent: six bullets with
-    a 260-character defect each; the judge and polish calls also carry every candidate.
+    Pass 3's prompts are estimated from the longest the writer is sent: the six longest
+    bullets with five 260-character defects each; the judge and polish calls also carry every candidate.
     """
     counts = call_counts(settings)
     digest = config.jd_digest()
@@ -235,8 +243,9 @@ def worst_case(providers, others, settings: dict, documents: list[tuple[Resume, 
     label, instruction = prompts.OBJECTIVES[0]
     writer = [budget.input_tokens(
         prompts.rewrite_system(label, instruction),
-        prompts.rewrite_user([{"locator": loc, "bullet": text, "defects": ["x" * 260]}
-                              for loc, text in r.bullets[:passes.MAX_REWRITE_TARGETS]]))
+        prompts.rewrite_user([{"locator": loc, "bullet": text, "defects": ["x" * 260] * 5}
+                              for loc, text in sorted(r.bullets, key=lambda b: -len(b[1]))
+                              [:passes.MAX_REWRITE_TARGETS]]))
         for r, _, _ in documents]
     candidates = 1 + int(settings["rewrite_objectives"]) * int(settings["rewrite_samples"])
     phases = [(providers, content, counts["content"]), (others, slop, counts["slop"]),
