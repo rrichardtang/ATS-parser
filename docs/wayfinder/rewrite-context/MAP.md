@@ -14,7 +14,9 @@ Done when a rewrite's prompt carries the criterion, its quote, the target postin
 the rest of the role, unmet criteria come back as drafts in the report, and 06 has
 measured the fix rate before and after on the acceptance set.
 
-**Status, 3 October: opened.** 02 is built (awaiting review). 01, 03 and 04 are the frontier.
+**Status, 3 October: 02 is closed; 01 is built and waits on a key.** 01's harness runs offline
+but its baseline needs `OPENAI_API_KEY`, and it must run on commit `14c6a89`, before 02
+(see 01's Found). 03 and 04 are the frontier.
 
 ## Why this map exists
 
