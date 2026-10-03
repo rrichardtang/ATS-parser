@@ -64,8 +64,11 @@ partial run and printing the documents skipped. A single document's worst case o
 budget refuses the run. A document with a failed call is charged its worst case if that is more than was
 measured, because a timed-out reply is billed but never reports its usage. Worst case per document is about $0.44; real cost is expected near $3.
 
-The baseline command (the 30 drawn documents, without the 7 fixtures):
+**Run the baseline on commit `14c6a89`**, the last commit before ticket 02 changes what
+the writer is told. A run on a later commit measures 02, not the baseline. (A
+`rewrite-baseline` tag was meant to mark it, but this environment refuses tag pushes.)
 
+    git checkout 14c6a89
     .venv/bin/python scripts/rewrite_harness.py --acceptance-set --no-fixtures --openai-price 0.10,0.50 --budget 4
 
 Its dry run (`--dry-run` added), with the document and per-document lines elided:
