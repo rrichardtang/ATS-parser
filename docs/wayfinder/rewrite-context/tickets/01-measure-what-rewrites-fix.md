@@ -118,3 +118,33 @@ Its dry run (`--dry-run` added), with the path lines elided:
       30-junior-genai-product worst case $0.47
       10-new-grad-agentic worst case $0.47
     Worst case $2.35 in all. Real spend is measured per reply and no document starts that could take it past the $2.50 budget, counting the worst case of every running one (5 at once).
+
+**First live run, 3 October (the owner's machine): five drawn documents, post-02 code.**
+Not the baseline: it ran on `e783162`, after 02. Command as above; $0.40 measured.
+
+| kind | fixed | not fixed | not shipped | unmeasured | fix rate |
+|---|---|---|---|---|---|
+| deterministic | 12 | 19 | 44 | 0 | 39% |
+| content | 1 | 8 | 17 | 0 | 11% |
+| slop | 0 | 0 | 3 | 2 | n/a |
+
+- **Content rewrites fix nothing measurable.** 1 of 9 measured content findings went away
+  after the rewrite; 1 of the same 9 went away in the control with no edit (11% both).
+  Nine is a small sample, but the fix rate sits exactly on the noise floor.
+- **Most rewrites never ship.** 64 of 106 targets were not shipped: 54 because no candidate
+  beat the original by `rewrite_margin` on `ensemble.rank_score`, 10 rejected by the
+  fact-check. The final gate ranks on regex invariants, slop hits and length, not on the
+  defect, so it throws away most of what the writer produces. This is 05's question,
+  and it now has a number.
+- **Timing (seconds, median / max across the five).** before-content 151 / 159, slop 8 / 14,
+  rewrite 50 / 59 (generate 23, judge 15, polish 10), control 123 / 158, after 128 / 166,
+  document total 429 / 548; slowest single call 151 / 166; at least 3 of the 5 documents' slowest calls were
+  content calls (longer than any slop or rewrite step).
+  In the app a resume is scored by one content pass (slop runs beside it), so scoring takes
+  about 2.5 minutes, perhaps a little less without five documents competing,
+  and rewrites about 50 seconds more on request. The harness takes about 7 minutes because
+  it scores three times.
+- **Tokens.** 729,772 output across up to 85 calls, of which 502,921 (69%) are reasoning and
+  226,851 visible. If time tracks tokens, shortening the visible reply could cut at most about a
+  third of the writing time; the rest is the model's thinking at `high` effort. That is an
+  estimate: the two kinds of token need not generate at the same speed.

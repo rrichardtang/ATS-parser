@@ -18,6 +18,13 @@ measured the fix rate before and after on the acceptance set.
 but its baseline needs `OPENAI_API_KEY`, and it must run on commit `14c6a89`, before 02
 (see 01's Found). 03 and 04 are the frontier.
 
+**Status, 3 October: a first five-document run (post-02) says the gate is the problem.**
+Content rewrites fixed 1 of 9 findings, the same as the no-edit control; 64 of 106 targets
+never shipped, 54 of them for missing `rewrite_margin` on the regex ranking score. Scoring
+takes about 2.5 minutes a resume in the app; across the whole run, 69% of output tokens
+are reasoning. See 01's Found. The
+baseline on `14c6a89` is still not run.
+
 ## Why this map exists
 
 `rubric-migration` moved scoring onto criteria and left one question unanswered in its
