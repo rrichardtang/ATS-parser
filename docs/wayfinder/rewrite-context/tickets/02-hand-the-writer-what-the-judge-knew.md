@@ -1,6 +1,6 @@
 type: task (AFK)
 status: open
-claimed:
+claimed: claude
 blocked-by: —
 
 # Hand the writer what the judge knew
