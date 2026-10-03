@@ -22,6 +22,7 @@ it is what catches a hacking attempt that made it past everything upstream.
 from __future__ import annotations
 
 import concurrent.futures
+import contextvars
 import logging
 import re
 from dataclasses import dataclass, field
@@ -56,7 +57,8 @@ def gather(fns: list, timeout: float = CALL_TIMEOUT) -> tuple[list, list[str]]:
     if not fns:
         return results, errors
     pool = concurrent.futures.ThreadPoolExecutor(max_workers=len(fns))
-    futures = [pool.submit(fn) for fn in fns]
+    # Each call runs in a copy of the caller's context, so `llm.usage_key` follows it.
+    futures = [pool.submit(contextvars.copy_context().run, fn) for fn in fns]
     collected: set = set()
 
     def take(future) -> None:

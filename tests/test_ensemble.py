@@ -277,7 +277,7 @@ def test_a_future_finishing_between_the_take_loop_and_the_late_count_is_classifi
         def __init__(self, max_workers):
             pass
 
-        def submit(self, fn):
+        def submit(self, fn, *args):
             return FinishesAfterFirstLook()
 
         def shutdown(self, wait, cancel_futures):

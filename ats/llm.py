@@ -5,6 +5,7 @@ Keys are read from the request or the environment, never persisted, never logged
 """
 from __future__ import annotations
 
+import contextvars
 import json
 import logging
 import os
@@ -202,29 +203,38 @@ def anthropic_text(provider: Provider, message) -> str:
 
 
 _usage_lock = threading.Lock()
-_usage = [0, 0, 0]
+_usage: dict = {}
+USAGE_FIELDS = ("input", "cached", "output", "reasoning", "slowest_seconds")
+
+# Whose OpenAI usage a reply is recorded under. The rewrite harness sets one per document
+# and `ensemble.gather` carries it into its worker threads; the app leaves it at None.
+usage_key: contextvars.ContextVar = contextvars.ContextVar("usage_key", default=None)
 
 
-def take_usage() -> tuple[int, int, int]:
-    """OpenAI (input, cached input, output) tokens recorded since the last call, then
-    reset. The rewrite harness reads real spend with it; the app never does."""
+def take_usage(key=None) -> dict[str, float]:
+    """OpenAI tokens (input, cached input, output, reasoning, which output includes) and
+    the slowest reply's seconds recorded under `key` since it was last taken, then reset.
+    The rewrite harness reads real spend with it; the app never does."""
     with _usage_lock:
-        taken = tuple(_usage)
-        _usage[:] = [0, 0, 0]
-    return taken
+        taken = _usage.pop(key, None)
+    return taken or dict.fromkeys(USAGE_FIELDS, 0)
 
 
-def _log_openai_usage(provider: Provider, usage, finish_reason: str | None) -> None:
+def _log_openai_usage(provider: Provider, usage, finish_reason: str | None,
+                      seconds: float) -> None:
     if usage is None:
         return
     cached = getattr(usage.prompt_tokens_details, "cached_tokens", None) or 0
-    with _usage_lock:
-        for i, n in enumerate((usage.prompt_tokens, cached, usage.completion_tokens)):
-            _usage[i] += n
     reasoning = getattr(usage.completion_tokens_details, "reasoning_tokens", None) or 0
-    log.info("%s used %s input (%s cached) and %s output tokens (%s reasoning) "
+    with _usage_lock:
+        tally = _usage.setdefault(usage_key.get(), dict.fromkeys(USAGE_FIELDS, 0))
+        for field, n in zip(USAGE_FIELDS, (usage.prompt_tokens, cached,
+                                           usage.completion_tokens, reasoning)):
+            tally[field] += n
+        tally["slowest_seconds"] = max(tally["slowest_seconds"], seconds)
+    log.info("%s used %s input (%s cached) and %s output tokens (%s reasoning) in %.1fs "
              "(finish_reason=%s)", provider.label, usage.prompt_tokens, cached,
-             usage.completion_tokens, reasoning, finish_reason)
+             usage.completion_tokens, reasoning, seconds, finish_reason)
 
 
 def _dispatch(provider: Provider, system: str, user: str, temperature: float) -> str:
@@ -257,9 +267,11 @@ def _dispatch(provider: Provider, system: str, user: str, temperature: float) ->
             request["temperature"] = temperature
         else:
             request["reasoning_effort"] = provider.openai_effort
+        started = time.monotonic()
         response = client.chat.completions.create(**request)
         choice = response.choices[0]
-        _log_openai_usage(provider, response.usage, choice.finish_reason)
+        _log_openai_usage(provider, response.usage, choice.finish_reason,
+                          time.monotonic() - started)
         _truncated(provider.label, choice.finish_reason, provider.openai_max_tokens)
         return choice.message.content or ""
 

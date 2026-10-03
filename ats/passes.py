@@ -11,6 +11,7 @@ from __future__ import annotations
 import functools
 import logging
 import re
+import time
 from dataclasses import dataclass, field, replace
 
 from . import ensemble, prompts, rubric
@@ -520,6 +521,23 @@ def _voted_item(
     return {**voted, "try_places": try_places} if try_places else voted
 
 
+def _seconds_since(started: float) -> float:
+    return round(time.monotonic() - started, 2)
+
+
+def timed(pass_fn):
+    """Records the pass's wall-clock seconds in its meta, which run_meta and the rewrite
+    harness show."""
+    @functools.wraps(pass_fn)
+    def run(*args, **kwargs) -> ensemble.PassResult:
+        started = time.monotonic()
+        result = pass_fn(*args, **kwargs)
+        result.meta["seconds"] = _seconds_since(started)
+        return result
+    return run
+
+
+@timed
 def content_pass(
     providers: list[Provider],
     resume: Resume,
@@ -636,6 +654,7 @@ def judge_categories(judgments: list[ContentJudgment]) -> dict[Category, JudgedC
     return judged
 
 
+@timed
 def slop_pass(
     providers: list[Provider],
     resume: Resume,
@@ -761,6 +780,7 @@ def defect_brief(defect: str | dict, criteria: dict[str, dict]) -> str:
     return f"{criterion['name']}: {criterion['question']}"
 
 
+@timed
 def rewrite_pass(
     providers: list[Provider],
     resume: Resume,
@@ -802,7 +822,9 @@ def rewrite_pass(
                     )
                 )
 
+    started = time.monotonic()
     raw, errors = ensemble.gather(jobs)
+    step_seconds = {"generate": _seconds_since(started)}
 
     by_target: dict[str, list[tuple[str, str, str, str]]] = {}
     for provider_name, objective, payload in raw:
@@ -848,11 +870,13 @@ def rewrite_pass(
             providers,
             [c["provider"] for clean in clean_by_target.values() for c in clean],
         )
+        started = time.monotonic()
         judge_raw, judge_errors = ensemble.gather([
             lambda p=judge_provider: call(
                 p, prompts.JUDGE_SYSTEM, prompts.judge_user(judge_payload, digest), 0.0
             )
         ])
+        step_seconds["judge"] = _seconds_since(started)
         rankings: dict[str, list[dict]] = {}
         for payload in judge_raw:
             for entry in payload.get("rankings") or []:
@@ -885,11 +909,13 @@ def rewrite_pass(
             polish_provider = ensemble.adjudicator_provider(
                 providers, [w["provider"] for w in winners.values()]
             )
+            started = time.monotonic()
             polish_raw, polish_errors = ensemble.gather([
                 lambda p=polish_provider: call(
                     p, prompts.POLISH_SYSTEM, prompts.polish_user(polish_payload), 0.0
                 )
             ])
+            step_seconds["polish"] = _seconds_since(started)
             for payload in polish_raw:
                 for item in payload.get("polished") or []:
                     loc = (item.get("locator") or "").strip()
@@ -942,5 +968,6 @@ def rewrite_pass(
             "candidates_generated": sum(len(v) for v in by_target.values()),
             "candidates_audit_clean": sum(len(v) for v in clean_by_target.values()),
             "polished_count": len(polished),
+            "step_seconds": step_seconds,
         },
     )

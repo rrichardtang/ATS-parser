@@ -170,7 +170,7 @@ def test_openai_usage_is_logged(monkeypatch, caplog):
     with caplog.at_level("INFO", logger="ats.llm"):
         llm.call(OPENAI, "sys", "user")
     assert ("openai:gpt-6-luna used 7 input (3 cached) and 42 output tokens "
-            "(30 reasoning) (finish_reason=stop)") in caplog.text
+            "(30 reasoning) in 0.0s (finish_reason=stop)") in caplog.text
 
 
 def test_a_truncated_openai_reply_fails_at_the_cap_it_was_sent(monkeypatch):

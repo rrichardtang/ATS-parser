@@ -21,6 +21,7 @@ from __future__ import annotations
 import copy
 import json
 import re
+import statistics
 from collections import Counter
 from dataclasses import replace
 
@@ -31,6 +32,10 @@ from .sections import Resume, parse
 
 KINDS = ("deterministic", "content", "slop")
 OUTCOMES = ("fixed", "not_fixed", "not_shipped", "not_swapped", "unmeasured")
+# Wall-clock seconds per document: each pass, pass 3's own steps, the document's total
+# (the harness adds it) and its slowest single reply.
+STEPS = ("before", "slop", "rewrite", "generate", "judge", "polish", "control", "after",
+         "total", "slowest_call")
 
 
 def swap_text(text: str, original: str, rewritten: str) -> str | None:
@@ -143,6 +148,8 @@ def evaluate(name: str, path: str, providers, others, settings: dict) -> dict:
     targets = classify(passes.rewrite_targets(resume, findings), kinds, rewrite.data,
                        rewrite.meta.get("selections", []), missed, after_keys,
                        not (after.errors or control.errors))
+    passes_run = {"before": before, "slop": slop, "rewrite": rewrite, "control": control,
+                  "after": after}
     counted = {(t["locator"], t["rule_id"]) for t in targets
                if t["kind"] == "content" and t["outcome"] in ("fixed", "not_fixed")}
     return {
@@ -151,21 +158,23 @@ def evaluate(name: str, path: str, providers, others, settings: dict) -> dict:
         "control": None if control.errors else control_counts(counted, control.data),
         "rewrites": [r.model_dump() for r in rewrite.data],
         "selections": rewrite.meta.get("selections", []),
-        "errors": {label: result.errors for label, result in
-                   [("before", before), ("slop", slop), ("rewrite", rewrite),
-                    ("control", control), ("after", after)] if result.errors},
+        "errors": {label: result.errors for label, result in passes_run.items()
+                   if result.errors},
+        "seconds": {**{label: result.meta.get("seconds")
+                       for label, result in passes_run.items()},
+                    **rewrite.meta.get("step_seconds", {})},
     }
 
 
-def spend_of(usage: tuple[int, int, int], price: tuple[float, float]) -> dict:
-    """Tokens and dollars of one `llm.take_usage()`; cached input is priced as input."""
-    tokens, cached, output = usage
-    return {"input": tokens, "cached": cached, "output": output,
-            "dollars": (tokens * price[0] + output * price[1]) / 1e6}
+def spend_of(usage: dict, price: tuple[float, float]) -> dict:
+    """Tokens and dollars of one `llm.take_usage()`; cached input is priced as input and
+    reasoning, which output includes, as output."""
+    tokens = {k: usage[k] for k in ("input", "cached", "output", "reasoning")}
+    return {**tokens, "dollars": (tokens["input"] * price[0] + tokens["output"] * price[1]) / 1e6}
 
 
 def total_spend(documents: list[dict]) -> dict:
-    keys = ("input", "cached", "output", "dollars")
+    keys = ("input", "cached", "output", "reasoning", "dollars")
     return {**{k: sum(d.get("spend", {}).get(k, 0) for d in documents) for k in keys},
             "charged": sum(d.get("charged", 0) for d in documents)}
 
@@ -195,6 +204,7 @@ def summary(run: dict) -> dict:
         "documents": {
             d["name"]: {"skipped": d["skipped"]} if "skipped" in d else {
                 **tally([d]),
+                "seconds": d.get("seconds", {}),
                 "targets": [{"locator": t["locator"], "kind": t["kind"], "outcome": t["outcome"],
                              "reason": t["reason"],
                              "rule_id": t["kind"] if t["kind"] == "slop" else t["rule_id"]}
@@ -209,6 +219,17 @@ def _rate(part: int, whole: int) -> str:
 
 def fix_rate(counts: dict[str, int]) -> str:
     return _rate(counts.get("fixed", 0), counts.get("fixed", 0) + counts.get("not_fixed", 0))
+
+
+def timing(documents: list[dict]) -> list[str]:
+    """Median and max seconds of each step across the documents that recorded it."""
+    rows = [f"{'seconds':<16}{'median':>9}{'max':>9}"]
+    for step in STEPS:
+        values = [d["seconds"][step] for d in documents
+                  if d.get("seconds", {}).get(step) is not None]
+        if values:
+            rows.append(f"  {step:<14}{statistics.median(values):>9.1f}{max(values):>9.1f}")
+    return rows if len(rows) > 1 else []
 
 
 def render(run: dict) -> str:
@@ -234,12 +255,15 @@ def render(run: dict) -> str:
                  f"{r} {n}" for r, n in total["not_shipped_reasons"].items()) or "none")]
     spend = total_spend(documents)
     rows.append(f"Real spend: {spend['input']} input ({spend['cached']} cached) + "
-                f"{spend['output']} output tokens = ${spend['dollars']:.2f} measured, "
+                f"{spend['output']} output tokens ({spend['reasoning']} reasoning, "
+                f"{spend['output'] - spend['reasoning']} visible) = "
+                f"${spend['dollars']:.2f} measured, "
                 f"${spend['charged']:.2f} charged to the budget")
     if run.get("skipped_for_budget"):
         rows.append(f"Stopped for budget: {len(run['skipped_for_budget'])} document(s) skipped; "
                     f"${spend['charged']:.2f} charged so far.")
-    return "\n".join(rows + [f"Skipped: {s}" for s in skipped])
+    rows += [f"Skipped: {s}" for s in skipped]
+    return "\n".join(rows + ["", *timing(documents)]).rstrip()
 
 
 def call_counts(settings: dict) -> dict[str, int]:

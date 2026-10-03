@@ -76,3 +76,45 @@ Its dry run (`--dry-run` added), with the document and per-document lines elided
     30 resume(s) x (9 content + 3 slop + 3 rewrite + 2 judge and polish) = up to 510 calls
     ...
     Worst case $13.21 in all. Real spend is measured per reply and the run stops before any document that could take it past the $4.00 budget.
+
+**Concurrent documents and timing, 3 October.** The 30-document run took hours: documents
+ran one after another, each about seven sequential LLM waits. The harness now takes
+`--jobs N` (default 5) and records where the time goes.
+
+- Up to N documents run at once; each document's own steps are unchanged. Usage is
+  attributed per document: `llm.usage_key` (a contextvar) names the document a reply is
+  recorded under, and `ensemble.gather` runs each call in a copy of the caller's context so
+  the key follows it into the worker threads. The app never sets the key, so its behaviour
+  is unchanged. A document starts only if what finished documents were charged, plus the
+  worst case of every running one, plus its own, is within `--budget`. A document with
+  errors, a 429 or a crash included, is still charged max(measured, worst case), so late
+  threads and timed-out calls stay inside the cap. Per-document spend stays exact.
+- The saved run and the table list documents in target order whatever order they finish
+  in; the partial run is saved when the budget stops it; a progress line prints as each
+  document starts and finishes.
+- `ats/llm.py` logs each OpenAI reply's wall-clock seconds and records reasoning tokens
+  apart from output. The three passes record their seconds in `meta["seconds"]` and pass 3
+  its generate, judge and polish steps in `meta["step_seconds"]`, so the app's run_meta
+  (pass1, pass2, pass3, and pass3 from `generate_rewrites`) shows them too.
+- Each document records the seconds of before, slop, rewrite (and generate, judge, polish),
+  control, after, its total and its slowest single reply, plus reasoning and visible output
+  tokens. The table adds the median and max of each, and the summary carries the seconds.
+- With `--jobs`, a budget below N worst cases runs fewer than N at once: at $0.47 a
+  document, `--budget 1` would run two at a time, then one.
+
+This harness now runs on code after ticket 02, so a timing run measures the post-02 prompt.
+The baseline is still commit `14c6a89`, which has no `--jobs`. The shorter timing run, on
+five drawn documents from shortest (902 characters) to longest (2,418):
+
+    .venv/bin/python scripts/rewrite_harness.py --docs 15-backend-junior-no-ai,19-academic-terse-mid,06-data-platform-senior,30-junior-genai-product,10-new-grad-agentic --openai-price 0.10,0.50 --budget 2.5 --jobs 5
+
+Its dry run (`--dry-run` added), with the path lines elided:
+
+    5 resume(s) x (9 content + 3 slop + 3 rewrite + 2 judge and polish) = up to 85 calls (a resume with no text layer is skipped before any call)
+    ...
+      15-backend-junior-no-ai worst case $0.47
+      19-academic-terse-mid worst case $0.47
+      06-data-platform-senior worst case $0.47
+      30-junior-genai-product worst case $0.47
+      10-new-grad-agentic worst case $0.47
+    Worst case $2.35 in all. Real spend is measured per reply and no document starts that could take it past the $2.50 budget, counting the worst case of every running one (5 at once).

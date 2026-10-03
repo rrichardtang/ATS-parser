@@ -257,6 +257,9 @@ def test_judge_and_polish_run_and_polish_is_gated_like_any_candidate(monkeypatch
 
     pass3 = report.run_meta.get("pass3", {})
     assert pass3.get("judge_used") is True
+    assert set(pass3["step_seconds"]) == {"generate", "judge", "polish"}
+    assert sum(pass3["step_seconds"].values()) <= pass3["seconds"] + 0.03  # each rounded
+    assert report.run_meta["pass1"]["seconds"] >= 0 <= report.run_meta["pass2"]["seconds"]
     assert pass3.get("polished_count", 0) >= 1, "polish step never ran"
     for rewrite in report.rewrites:
         assert "40%" not in rewrite.rewritten, "a hallucinated polish figure shipped"
