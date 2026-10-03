@@ -18,7 +18,9 @@ builds it (weights.toml's "default" mode); the key comes from OPENAI_API_KEY. `-
 (default $3) caps real spend: each reply's token usage is read as it arrives (a JSON
 repair included, cached input priced as input) and the run stops before any document
 whose own worst case would take spend past it, saving what it has. It refuses to start if
-one document's worst case alone is over. A live run needs `--openai-price IN,OUT`.
+one document's worst case alone is over. A document with a failed call is charged
+its worst case if that is more than was measured: a timed-out reply is billed but never
+reports its usage. A live run needs `--openai-price IN,OUT`.
 `--dry-run` prints each document's worst case and the total, without a key.
 `--acceptance-set --no-fixtures` runs the 30 drawn documents only.
 
@@ -43,8 +45,9 @@ sys.path.insert(0, str(ROOT))
 from ats import budget, config, llm, passes, pipeline, rewrite_eval  # noqa: E402
 from ats.extract import extract  # noqa: E402
 from ats.sections import parse  # noqa: E402
+from tests.make_fixtures import OUT as FIXTURES  # noqa: E402
 from scripts.agreement_harness import (  # noqa: E402
-    _positive, _price, acceptance_targets, fixture_targets, _shown, _stamped, _write, select_targets,
+    _positive, _price, _shown, _stamped, _write, select_targets,
 )
 
 
@@ -87,7 +90,7 @@ def main() -> None:
     parser.add_argument("--acceptance-set", action="store_true",
                         help="also run 08's 30 drawn documents (corpus/resumes/)")
     parser.add_argument("--no-fixtures", action="store_true",
-                        help="with --acceptance-set, run only the 30 drawn documents")
+                        help="with --acceptance-set, drop the 7 fixtures (a --resume still runs)")
     parser.add_argument("--out", help="where to save the run (default runs/rewrite-eval-*.json)")
     parser.add_argument("--summary", metavar="PATH", help="write a counts-only JSON here")
     parser.add_argument("--from", dest="replay", help="re-render a saved run; no calls")
@@ -116,8 +119,7 @@ def main() -> None:
         parser.error("--no-fixtures needs --acceptance-set")
     targets, _ = select_targets(args)
     if args.no_fixtures:
-        fixtures = {name for name, _ in fixture_targets([])}
-        targets = [t for t in targets if t[0] not in fixtures]
+        targets = [t for t in targets if Path(t[1]).parent != FIXTURES]
     # The file stem can be a name, and the summary is committed.
     stem = Path(args.resume).expanduser().stem if args.resume else None
     targets = [("resume" if name == stem else name, path) for name, path in targets]
@@ -154,18 +156,16 @@ def main() -> None:
         if spent + worst.get(name, 0) > args.budget:
             run["skipped_for_budget"] = [n for n, _ in targets[len(run["documents"]):]]
             break
-        llm.take_usage()
         document = rewrite_eval.evaluate(name, path, providers, others, settings)
         document["spend"] = rewrite_eval.spend_of(llm.take_usage(), args.openai_price)
-        spent += document["spend"]["dollars"]
+        document["charged"] = (max(document["spend"]["dollars"], worst.get(name, 0))
+                               if document.get("errors") else document["spend"]["dollars"])
+        spent += document["charged"]
         run["documents"].append(document)
         _write(out, run)
         print(f"  [{len(run['documents'])}/{len(targets)}] {name}", flush=True)
     _write(out, run)
     print("\n" + rewrite_eval.render(run))
-    if run["skipped_for_budget"]:
-        print(f"Stopped for budget: {len(run['skipped_for_budget'])} document(s) skipped; "
-              f"real spend so far ${spent:.2f} of ${args.budget:.2f}.")
     print(f"Raw run saved to {_shown(out)}")
     if args.summary:
         save_summary(run, args.summary)

@@ -165,7 +165,8 @@ def spend_of(usage: tuple[int, int, int], price: tuple[float, float]) -> dict:
 
 def total_spend(documents: list[dict]) -> dict:
     keys = ("input", "cached", "output", "dollars")
-    return {k: sum(d.get("spend", {}).get(k, 0) for d in documents) for k in keys}
+    return {**{k: sum(d.get("spend", {}).get(k, 0) for d in documents) for k in keys},
+            "charged": sum(d.get("charged", 0) for d in documents)}
 
 
 def tally(documents: list[dict]) -> dict:
@@ -232,7 +233,11 @@ def render(run: dict) -> str:
                  f"{r} {n}" for r, n in total["not_shipped_reasons"].items()) or "none")]
     spend = total_spend(documents)
     rows.append(f"Real spend: {spend['input']} input ({spend['cached']} cached) + "
-                f"{spend['output']} output tokens = ${spend['dollars']:.2f}")
+                f"{spend['output']} output tokens = ${spend['dollars']:.2f} measured, "
+                f"${spend['charged']:.2f} charged to the budget")
+    if run.get("skipped_for_budget"):
+        rows.append(f"Stopped for budget: {len(run['skipped_for_budget'])} document(s) skipped; "
+                    f"${spend['charged']:.2f} charged so far.")
     return "\n".join(rows + [f"Skipped: {s}" for s in skipped])
 
 

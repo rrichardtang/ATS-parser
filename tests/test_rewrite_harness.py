@@ -10,6 +10,7 @@ from ats.llm import Provider
 from ats.models import Category, Finding, Gate, Rewrite, Severity
 from ats.sections import Resume, Role
 from scripts import rewrite_harness as harness
+from scripts.agreement_harness import acceptance_targets
 
 QUOTE = "Leveraged cutting-edge synergies"
 BULLET = "Leveraged cutting-edge synergies to ship the thing"
@@ -262,7 +263,7 @@ def test_usage_accumulator_sums_concurrent_records():
     assert llm.take_usage() == (0, 0, 0)
 
 
-def _stub_run(monkeypatch, tmp_path, *args, tokens=(1_000_000, 0, 0)):
+def _stub_run(monkeypatch, tmp_path, *args, tokens=(1_000_000, 0, 0), errors=None):
     """Run main() live with evaluate stubbed to record `tokens` per document."""
     from ats import llm
 
@@ -271,7 +272,7 @@ def _stub_run(monkeypatch, tmp_path, *args, tokens=(1_000_000, 0, 0)):
     def evaluate(name, *a):
         seen.append(name)
         llm._usage[:] = tokens
-        return {"name": name, "targets": []}
+        return {"name": name, "targets": [], "errors": errors or {}}
 
     monkeypatch.setenv("OPENAI_API_KEY", "k")
     monkeypatch.setattr(rewrite_eval, "evaluate", evaluate)
@@ -289,7 +290,7 @@ def test_the_guard_stops_before_a_document_that_could_pass_the_budget(monkeypatc
     assert run["skipped_for_budget"] == ["slop", "two_column"]
     assert run["documents"][0]["spend"]["dollars"] == 1.0
     out = capsys.readouterr().out
-    assert "2 document(s) skipped" in out and "real spend so far $1.00" in out
+    assert "2 document(s) skipped" in out and "$1.00 charged so far" in out
     assert "Real spend: 1000000 input" in out
 
 
@@ -299,6 +300,7 @@ def test_real_spend_is_in_the_raw_run_and_the_summary(monkeypatch, tmp_path):
                        tokens=(2000, 500, 100))
     assert run["documents"][0]["spend"] == {"input": 2000, "cached": 500, "output": 100,
                                             "dollars": 0.0021}
+    assert run["documents"][0]["charged"] == 0.0021
     assert rewrite_eval.summary(run)["spend"]["output"] == 100
 
 
@@ -306,5 +308,15 @@ def test_no_fixtures_selects_exactly_the_drawn_documents(monkeypatch, tmp_path):
     monkeypatch.setattr(rewrite_eval, "worst_case", lambda *a: 0.0)
     seen, _ = _stub_run(monkeypatch, tmp_path, "--acceptance-set", "--no-fixtures",
                         "--budget", "5", tokens=(0, 0, 0))
-    drawn = {name for name, _ in harness.acceptance_targets()}
+    drawn = {name for name, _ in acceptance_targets()}
     assert len(seen) == 30 and set(seen) == drawn
+
+
+def test_a_document_with_failed_calls_is_charged_its_worst_case(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(rewrite_eval, "worst_case", lambda *a: 1.5)
+    seen, run = _stub_run(monkeypatch, tmp_path, "--docs", "strong,slop,two_column",
+                          "--budget", "2.9", errors={"before": ["timed out"]})
+    assert seen == ["strong"]
+    assert run["documents"][0]["spend"]["dollars"] == 1.0
+    assert run["documents"][0]["charged"] == 1.5
+    assert "$1.50 charged so far" in capsys.readouterr().out

@@ -59,9 +59,10 @@ records the printed table here and in the map.
 
 `--budget` caps real spend. Each OpenAI reply's token usage (a JSON repair included; cached
 input priced as input) is accumulated in `ats/llm.py` and read per document, and the run stops
-before any document whose own worst case would take real spend past the budget, saving the
+before any document whose own worst case would take spend past the budget, saving the
 partial run and printing the documents skipped. A single document's worst case over the
-budget refuses the run. Worst case per document is about $0.44; real cost is expected near $3.
+budget refuses the run. A document with a failed call is charged its worst case if that is more than was
+measured, because a timed-out reply is billed but never reports its usage. Worst case per document is about $0.44; real cost is expected near $3.
 
 The baseline command (the 30 drawn documents, without the 7 fixtures):
 
